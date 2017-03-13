@@ -20,6 +20,7 @@ var g_websocket *websocket.Conn ;
 
 
 /////////////////////////////////////////////////////////
+// think how to close the hub connection and a close tag to break
 
 type connection struct {
     ws *websocket.Conn
