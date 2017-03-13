@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+	
+</head>
+<body>	
+	<script src="flv.js"></script>
+<video id="videoElement"></video>
+<script>
+    if (flvjs.isSupported()) {
+    	  var urlws = "ws://" + window.location.host + "/wsflvlive?deviceid=123abcdef123abcde";
+        var videoElement = document.getElementById('videoElement');
+        var flvPlayer = flvjs.createPlayer({
+            type: 'flv',
+            url: urlws
+        });
+        flvPlayer.attachMediaElement(videoElement);
+        flvPlayer.load();
+        flvPlayer.play();
+    }
+</script>
+</body>
+</html>
