@@ -7,10 +7,12 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
+	"html/template"
 	"io"
 	"log"
 	"net"
 	"net/http"
+	"sort"
 )
 
 var g_websocket *websocket.Conn
@@ -87,14 +89,16 @@ func (c *connection) writer() {
 func wsflvlive(ws *websocket.Conn) {
 	//fmt.Println("new web client")
 	deviceid := ws.Request().FormValue("deviceid")
-	fmt.Println("device id %s", deviceid)
-	h, _ := g_mapHub[deviceid]
-	/*if !exists {
-		fmt.Println("hub not exists")
+	fmt.Println("ws device id %s", deviceid)
+	h, exist := g_mapHub[deviceid]
+	if false == exist {
+		fmt.Println("in ws hub not exists %d", exist)
 		h = CreateHub()
+		h.url = deviceid
+		go h.run()
 		g_mapHub[deviceid] = h
-		h.run()
-	}*/
+	}
+
 	c := &connection{send: make(chan []byte, 3), ws: ws}
 	h.register <- c
 	defer func() { h.unregister <- c }()
@@ -109,18 +113,20 @@ type hub struct {
 	unregister  chan *connection
 	exit        chan struct{}
 	flvheader   *[]byte
+	url         string
 }
 
 var g_mapHub map[string]*hub
 
-func CreateHub(flvhead *[]byte) *hub {
+func CreateHub() *hub {
 	return &hub{
 		broadcast:   make(chan []byte),
 		register:    make(chan *connection),
 		unregister:  make(chan *connection),
 		connections: make(map[*connection]bool),
 		exit:        make(chan struct{}),
-		flvheader:   flvhead,
+		flvheader:   nil,
+		url:         "",
 	}
 }
 
@@ -131,11 +137,16 @@ func (h *hub) run() {
 		case c := <-h.register:
 			h.connections[c] = true
 			//send flvheader to client
-			c.send <- *(h.flvheader)
+			if h.flvheader != nil {
+				c.send <- *(h.flvheader)
+			}
 		case c := <-h.unregister:
 			if _, ok := h.connections[c]; ok {
 				delete(h.connections, c)
 				close(c.send)
+			}
+			if 0 == len(h.connections) && nil == h.flvheader {
+				h.close()
 			}
 		case m := <-h.broadcast:
 			for c := range h.connections {
@@ -164,6 +175,7 @@ func (h *hub) close() {
 		delete(h.connections, c)
 		close(c.send)
 	}
+	delete(g_mapHub, h.url)
 }
 
 func readOnceBytes(c net.Conn) ([]byte, error) {
@@ -197,10 +209,17 @@ func handleConn(c net.Conn) {
 	strdeviceid := string(bufdeviceid[:])
 	fmt.Println("tcp socket url is %s", strdeviceid)
 
-	_, exists := g_mapHub[strdeviceid]
+	h, exists := g_mapHub[strdeviceid]
 	if exists {
-		fmt.Println("name is in just return")
-		return
+		if h.flvheader != nil {
+			fmt.Println("are u kidding me ??")
+			return
+		}
+	} else {
+		h = CreateHub()
+		h.url = strdeviceid
+		go h.run()
+		g_mapHub[strdeviceid] = h
 	}
 
 	flvheader, err := readOnceBytes(c)
@@ -208,9 +227,9 @@ func handleConn(c net.Conn) {
 		return
 	}
 
-	var h *hub = CreateHub(&flvheader)
-	g_mapHub[strdeviceid] = h
-	go h.run()
+	h.flvheader = &flvheader
+	h.broadcast <- flvheader
+
 	bufFrame := make([]byte, 1*1024*1024)
 	lenbuf := make([]byte, 4)
 
@@ -226,7 +245,7 @@ func handleConn(c net.Conn) {
 		binary.Read(b_buf, binary.LittleEndian, &lenreal)
 
 		//fmt.Printf("buf len is %d\n", lenreal)
-
+		//buftemp := make([]byte, lenreal)
 		_, err = io.ReadFull(c, bufFrame[:lenreal])
 		if err != nil {
 			log.Println(err)
@@ -235,6 +254,7 @@ func handleConn(c net.Conn) {
 
 		h.broadcast <- bufFrame[:lenreal]
 	}
+
 	h.close()
 }
 
@@ -258,6 +278,63 @@ func localTcp() {
 
 }
 
+func HandleRoot(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(r.URL.RawPath, r.URL.Path)
+	const tpl = `
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>{{.Title}}</title>
+    </head>
+    <body>
+        {{range .Items}}<a href="/realplay?deviceid={{ . }}"> {{ . }}</a>{{else}}<div><strong>no device on line</strong></div>{{end}}
+    </body>
+</html>`
+	t, _ := template.New("webpage").Parse(tpl)
+
+	data := struct {
+		Title string
+		Items []string
+	}{
+		Title: "My page",
+	}
+
+	sorted_keys := make([]string, 0)
+	for k, _ := range g_mapHub {
+		sorted_keys = append(sorted_keys, k)
+	}
+	sort.Strings(sorted_keys)
+	data.Items = sorted_keys
+	t.Execute(w, data)
+	//w.Write([]byte("this is good"))
+
+}
+func HandleRealplay(w http.ResponseWriter, r *http.Request) {
+	strdeviceid := r.FormValue("deviceid")
+	if 0 == len(strdeviceid) {
+		w.Write([]byte("bad deviceid"))
+		return
+	}
+	fmt.Println(strdeviceid)
+	data := struct {
+		Url string
+	}{
+		Url: strdeviceid,
+	}
+	t, err := template.New("flv.html").ParseFiles("./public/flv.html")
+	if err != nil {
+		fmt.Println("1")
+		fmt.Println(err)
+	}
+	err = t.Execute(w, data)
+	if err != nil {
+		fmt.Println("2")
+		fmt.Println(err)
+	}
+
+}
+
 ///////////////////////////////////////////////////////
 
 func main() {
@@ -266,7 +343,9 @@ func main() {
 
 	http.Handle("/wsflvlive", websocket.Handler(wsflvlive))
 
-	http.Handle("/", http.FileServer(http.Dir("./public")))
+	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("./public"))))
+	http.HandleFunc("/", HandleRoot)
+	http.HandleFunc("/realplay", HandleRealplay)
 
 	err := http.ListenAndServe(":80", nil)
 

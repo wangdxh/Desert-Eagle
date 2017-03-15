@@ -4,11 +4,12 @@
 	
 </head>
 <body>	
-	<script src="flv.js"></script>
+	<script src="public/flv.js"></script>
+{{.Url}}
 <video id="videoElement"></video>
 <script>
     if (flvjs.isSupported()) {
-    	  var urlws = "ws://" + window.location.host + "/wsflvlive?deviceid=123abcdef32153421";
+    	  var urlws = "ws://" + window.location.host + "/wsflvlive?deviceid={{ .Url }}";
         var videoElement = document.getElementById('videoElement');
         var flvPlayer = flvjs.createPlayer({
             type: 'flv',
