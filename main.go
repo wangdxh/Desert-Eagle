@@ -278,18 +278,11 @@ func localTcp() {
 
 func HandleRoot(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.URL.RawPath, r.URL.Path)
-	const tpl = `
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <title>{{.Title}}</title>
-    </head>
-    <body>
-        {{range .Items}}<a href="/realplay?deviceid={{ . }}"> {{ . }}</a>{{else}}<div><strong>no device on line</strong></div>{{end}}
-    </body>
-</html>`
-	t, _ := template.New("webpage").Parse(tpl)
+
+	t, err := template.New("urllist.html").ParseFiles("./public/urllist.html")
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	data := struct {
 		Title string
@@ -304,7 +297,11 @@ func HandleRoot(w http.ResponseWriter, r *http.Request) {
 	}
 	sort.Strings(sorted_keys)
 	data.Items = sorted_keys
-	t.Execute(w, data)
+
+	err = t.Execute(w, data)
+	if err != nil {
+		fmt.Println(err)
+	}
 	//w.Write([]byte("this is good"))
 
 }
@@ -322,12 +319,10 @@ func HandleRealplay(w http.ResponseWriter, r *http.Request) {
 	}
 	t, err := template.New("flv.html").ParseFiles("./public/flv.html")
 	if err != nil {
-		fmt.Println("1")
 		fmt.Println(err)
 	}
 	err = t.Execute(w, data)
 	if err != nil {
-		fmt.Println("2")
 		fmt.Println(err)
 	}
 
@@ -345,7 +340,7 @@ func main() {
 	http.HandleFunc("/", HandleRoot)
 	http.HandleFunc("/realplay", HandleRealplay)
 
-	err := http.ListenAndServe(":80", nil)
+	err := http.ListenAndServe(":1980", nil)
 
 	if err != nil {
 		panic("ListenAndServe: " + err.Error())
