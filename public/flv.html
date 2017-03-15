@@ -5,8 +5,8 @@
 </head>
 <body>	
 	<script src="public/flv.js"></script>
-{{.Url}}
-<video id="videoElement"></video>
+{{.Url}}<br/>
+<video id="videoElement"  width="960" height="540" controls="controls"></video>
 <script>
     if (flvjs.isSupported()) {
     	  var urlws = "ws://" + window.location.host + "/wsflvlive?deviceid={{ .Url }}";
