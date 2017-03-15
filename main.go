@@ -93,8 +93,7 @@ func wsflvlive(ws *websocket.Conn) {
 	h, exist := g_mapHub[deviceid]
 	if false == exist {
 		fmt.Println("in ws hub not exists %d", exist)
-		h = CreateHub()
-		h.url = deviceid
+		h = CreateHub(deviceid)
 		go h.run()
 		g_mapHub[deviceid] = h
 	}
@@ -118,7 +117,7 @@ type hub struct {
 
 var g_mapHub map[string]*hub
 
-func CreateHub() *hub {
+func CreateHub(strurl string) *hub {
 	return &hub{
 		broadcast:   make(chan []byte),
 		register:    make(chan *connection),
@@ -126,7 +125,7 @@ func CreateHub() *hub {
 		connections: make(map[*connection]bool),
 		exit:        make(chan struct{}),
 		flvheader:   nil,
-		url:         "",
+		url:         strurl,
 	}
 }
 
@@ -216,8 +215,7 @@ func handleConn(c net.Conn) {
 			return
 		}
 	} else {
-		h = CreateHub()
-		h.url = strdeviceid
+		h = CreateHub(strdeviceid)
 		go h.run()
 		g_mapHub[strdeviceid] = h
 	}
