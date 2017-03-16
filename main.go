@@ -52,9 +52,9 @@ func (c *connection) writer() {
 			// write file
 		} else {
 			// just keyframe
-			if 1 != message[0] {
+			/*if 1 != message[0] {
 				continue
-			}
+			}*/
 			tagheader[0] = 9
 			// 1 2 3 big taglen = len(message)
 			taglen := len(message)
