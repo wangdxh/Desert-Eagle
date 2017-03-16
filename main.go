@@ -13,6 +13,7 @@ import (
 	"net"
 	"net/http"
 	"sort"
+	"time"
 )
 
 var g_websocket *websocket.Conn
@@ -50,6 +51,10 @@ func (c *connection) writer() {
 			}
 			// write file
 		} else {
+			// just keyframe
+			if 1 != message[0] {
+				continue
+			}
 			tagheader[0] = 9
 			// 1 2 3 big taglen = len(message)
 			taglen := len(message)
@@ -228,7 +233,7 @@ func handleConn(c net.Conn) {
 	h.flvheader = &flvheader
 	h.broadcast <- flvheader
 
-	bufFrame := make([]byte, 1*1024*1024)
+	//bufFrame := make([]byte, 1*1024*1024)
 	lenbuf := make([]byte, 4)
 
 	for {
@@ -243,14 +248,15 @@ func handleConn(c net.Conn) {
 		binary.Read(b_buf, binary.LittleEndian, &lenreal)
 
 		//fmt.Printf("buf len is %d\n", lenreal)
-		//buftemp := make([]byte, lenreal)
-		_, err = io.ReadFull(c, bufFrame[:lenreal])
+		buftemp := make([]byte, lenreal)
+		//_, err = io.ReadFull(c, bufFrame[:lenreal])
+		_, err = io.ReadFull(c, buftemp)
 		if err != nil {
 			log.Println(err)
 			break
 		}
 
-		h.broadcast <- bufFrame[:lenreal]
+		h.broadcast <- buftemp
 	}
 
 	h.close()
@@ -328,9 +334,55 @@ func HandleRealplay(w http.ResponseWriter, r *http.Request) {
 
 }
 
+var input chan int
+
+func test2() {
+	time.Sleep(time.Second * 5)
+	for m := range input {
+		fmt.Println(m)
+	}
+	fmt.Println(100)
+}
+func test() {
+	input = make(chan int, 5)
+	go test2()
+	input <- 1
+	input <- 2
+
+	fmt.Println(99)
+	input <- 3
+	input <- 4
+	input <- 5
+	close(input)
+	select {
+	case input <- 6:
+		{
+			fmt.Println("ok")
+		}
+	default:
+		{
+			fmt.Println("no")
+		}
+	}
+	//input <- 7
+
+	fmt.Println(101)
+	/*for {
+
+		select {
+		case c := <-input:
+			{
+				fmt.Println(c)
+			}
+
+		}
+	}*/
+}
+
 ///////////////////////////////////////////////////////
 
 func main() {
+
 	g_mapHub = make(map[string]*hub)
 	go localTcp()
 
