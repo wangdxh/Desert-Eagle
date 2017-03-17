@@ -9,7 +9,7 @@
 <video id="videoElement"  width="960" height="540" controls="controls"></video>
 <script>
     if (flvjs.isSupported()) {
-    	  var urlws = "http://" + window.location.host + "/live/liveflv?deviceid={{ .Url }}";
+    	  var urlws = "ws://" + window.location.host + "/wsflvlive?deviceid={{ .Url }}";
         var videoElement = document.getElementById('videoElement');
         var flvPlayer = flvjs.createPlayer({
             type: 'flv',

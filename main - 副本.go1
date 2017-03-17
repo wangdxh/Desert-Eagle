@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"html/template"
 	"io"
 	"log"
@@ -13,105 +14,125 @@ import (
 	"time"
 )
 
+var g_websocket *websocket.Conn
+
 /////////////////////////////////////////////////////////
 // think how to close the hub connection and a close tag to break
 
 type connection struct {
-	ws                  *http.ResponseWriter
-	send                chan []byte
-	tagheader           []byte
-	dwtime              uint32
-	firstcomin          bool
-	firstKeyframeSended bool
+	ws   *websocket.Conn
+	send chan []byte
 }
 
-func (c *connection) sendFrame(message []byte) (err error) {
-	if false == c.firstcomin {
-		// flv header 直接发送出去
-		c.firstcomin = true
-		_, err = (*(c.ws)).Write(message)
-		if err != nil {
-			return
-		}
-		// write file
-	} else {
-		// 先找第一帧关键帧
-		if false == c.firstKeyframeSended {
-			if 1 != message[0] {
-				return
-			}
-			c.firstKeyframeSended = true
-		}
-		// 发送flvtag 信息
-		c.tagheader[0] = 9
-		// 1 2 3 big taglen = len(message)
-		taglen := len(message)
-		c.tagheader[1] = (byte)((taglen >> 16) & 0xff)
-		c.tagheader[2] = (byte)((taglen >> 8) & 0xff)
-		c.tagheader[3] = (byte)(taglen & 0xff)
-
-		c.tagheader[4] = (byte)((c.dwtime >> 16) & 0xff)
-		c.tagheader[5] = (byte)((c.dwtime >> 8) & 0xff)
-		c.tagheader[6] = (byte)(c.dwtime & 0xff)
-		c.tagheader[7] = (byte)((c.dwtime >> 24) & 0xff)
-
-		iskey := message[0]
-		c.tagheader[11] = 0x27
-		if 1 == iskey {
-			c.tagheader[11] = 0x17
-		}
-		c.tagheader[12] = 1
-
-		_, err = (*(c.ws)).Write(c.tagheader)
-		if err != nil {
-			return
-		}
-		// first send header then send message
-		_, err = (*(c.ws)).Write(message[1:])
-		if err != nil {
-			return
-		}
-		c.dwtime += 40
-
-	}
-	flush, ok := (*(c.ws)).(http.Flusher)
-	if !ok {
-		fmt.Println("do not support flush")
-		return
-	}
-	flush.Flush()
-	return
-}
-func (c *connection) writer() {
-
-	for message := range c.send {
-
-		err := c.sendFrame(message)
+func (c *connection) reader() {
+	defer func() {
+		c.ws.Close()
+	}()
+	//r := bufio.NewReader(c.ws)
+	c.ws.SetReadLimit(maxMessageSize)
+	for {
+		_, _, err := c.ws.ReadMessage()
 		if err != nil {
 			break
 		}
-		nLen := len(c.send)
-		if nLen > 0 {
-			for inx := 0; inx < nLen; inx++ {
-				message2 := <-c.send
-				err := c.sendFrame(message2)
-				if err != nil {
-					break
-				}
-			}
-		}
-		fmt.Println("send need len %d", len(c.send))
+	}
+	fmt.Println("ws socket reader close")
+}
 
+func (c *connection) writer() {
+	defer func() {
+		c.ws.Close()
+	}()
+
+	tagheader := make([]byte, 16)
+	var dwtime uint32 = 0
+	var firstcomin bool = false
+	var firstKeyframeSended bool = false
+	for message := range c.send {
+		c.ws.SetWriteDeadline(time.Now().Add(writeWait))
+		w, err := c.ws.NextWriter(websocket.BinaryMessage)
+		if err != nil {
+			return
+		}
+		if false == firstcomin {
+			// flv header 直接发送出去
+			firstcomin = true
+			w.Write(message)
+			// write file
+		} else {
+			// just keyframe
+			/*if 1 != message[0] {
+				continue
+			}*/
+			// 先找第一帧关键帧
+			if false == firstKeyframeSended {
+				if 1 != message[0] {
+					continue
+				}
+				firstKeyframeSended = true
+			}
+			// 发送flvtag 信息
+			tagheader[0] = 9
+			// 1 2 3 big taglen = len(message)
+			taglen := len(message)
+			tagheader[1] = (byte)((taglen >> 16) & 0xff)
+			tagheader[2] = (byte)((taglen >> 8) & 0xff)
+			tagheader[3] = (byte)(taglen & 0xff)
+
+			tagheader[4] = (byte)((dwtime >> 16) & 0xff)
+			tagheader[5] = (byte)((dwtime >> 8) & 0xff)
+			tagheader[6] = (byte)(dwtime & 0xff)
+			tagheader[7] = (byte)((dwtime >> 24) & 0xff)
+
+			iskey := message[0]
+			tagheader[11] = 0x27
+			if 1 == iskey {
+				tagheader[11] = 0x17
+			}
+			tagheader[12] = 1
+
+			w.Write(tagheader)
+
+			// first send header then send message
+			w.Write(message[1:])
+
+			dwtime += 30
+		}
+		if err := w.Close(); err != nil {
+			return
+		}
 	}
 	fmt.Println("ws socket write close")
 }
 
-func HandleLiveflv(w http.ResponseWriter, r *http.Request) {
-	deviceid := r.FormValue("deviceid")
-	if len(deviceid) == 0 {
-		fmt.Println("bad device id")
+const (
+	// Time allowed to write a message to the peer.
+	writeWait = 10 * time.Second
+
+	// Time allowed to read the next pong message from the peer.
+	pongWait = 60 * time.Second
+
+	// Send pings to peer with this period. Must be less than pongWait.
+	pingPeriod = (pongWait * 9) / 10
+
+	// Maximum message size allowed from peer.
+	maxMessageSize = 2048
+)
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 100 * 1024,
+}
+
+func wsflvlive(w http.ResponseWriter, r *http.Request) {
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println(err)
 		return
 	}
+
+	//fmt.Println("new web client")
+	deviceid := r.FormValue("deviceid")
 	fmt.Println("ws device id %s", deviceid)
 	h, exist := g_mapHub[deviceid]
 	if false == exist {
@@ -121,17 +142,11 @@ func HandleLiveflv(w http.ResponseWriter, r *http.Request) {
 		g_mapHub[deviceid] = h
 	}
 
-	w.Header().Set("Content-Type", "video/x-flv")
-	w.Header().Set("Connection", "close")
-	c := &connection{send: make(chan []byte, 10), ws: &w}
-	c.tagheader = make([]byte, 16)
-	c.dwtime = 0
-	c.firstcomin = false
-	c.firstKeyframeSended = false
-
+	c := &connection{send: make(chan []byte, 100), ws: ws}
 	h.register <- c
 	defer func() { h.unregister <- c }()
-	c.writer()
+	go c.writer()
+	c.reader()
 }
 
 type hub struct {
@@ -163,13 +178,11 @@ func (h *hub) run() {
 	for {
 		select {
 		case c := <-h.register:
+			h.connections[c] = true
 			//send flvheader to client
 			if h.flvheader != nil {
-				//c.send <- *(h.flvheader)
-				c.sendFrame(*(h.flvheader))
+				c.send <- *(h.flvheader)
 			}
-			h.connections[c] = true
-
 		case c := <-h.unregister:
 			if _, ok := h.connections[c]; ok {
 				delete(h.connections, c)
@@ -180,10 +193,11 @@ func (h *hub) run() {
 			}
 		case m := <-h.broadcast:
 			for c := range h.connections {
-				//c.send <- m
 				select {
 				case c.send <- m:
 				default:
+					/*delete(h.connections, c)
+					  close(c.send)*/
 					fmt.Println("send to soment client not that fast")
 				}
 			}
@@ -258,7 +272,7 @@ func handleConn(c net.Conn) {
 	h.flvheader = &flvheader
 	h.broadcast <- flvheader
 
-	bufFrame := make([]byte, 1*1024*1024)
+	//bufFrame := make([]byte, 1*1024*1024)
 	lenbuf := make([]byte, 4)
 
 	for {
@@ -273,22 +287,15 @@ func handleConn(c net.Conn) {
 		binary.Read(b_buf, binary.LittleEndian, &lenreal)
 
 		//fmt.Printf("buf len is %d\n", lenreal)
-		//buftemp := make([]byte, lenreal)
-		_, err = io.ReadFull(c, bufFrame[:lenreal])
-		//_, err = io.ReadFull(c, buftemp)
+		buftemp := make([]byte, lenreal)
+		//_, err = io.ReadFull(c, bufFrame[:lenreal])
+		_, err = io.ReadFull(c, buftemp)
 		if err != nil {
 			log.Println(err)
 			break
 		}
 
-		//h.broadcast <- buftemp
-		//bufFrame[:lenreal]
-		for c := range h.connections {
-			if err = c.sendFrame(bufFrame[:lenreal]); err != nil {
-				close(c.send)
-				delete(h.connections, c)
-			}
-		}
+		h.broadcast <- buftemp
 	}
 
 	h.close()
@@ -366,6 +373,14 @@ func HandleRealplay(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func HandleLiveflv(w http.ResponseWriter, r *http.Request) {
+	strdeviceid := r.FormValue("deviceid")
+	if 0 == len(strdeviceid) {
+		w.Write([]byte("bad deviceid"))
+		return
+	}
+}
+
 var input chan int
 
 func test2() {
@@ -417,6 +432,8 @@ func main() {
 
 	g_mapHub = make(map[string]*hub)
 	go localTcp()
+
+	http.HandleFunc("/wsflvlive", wsflvlive)
 
 	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("./public"))))
 	http.HandleFunc("/", HandleRoot)
