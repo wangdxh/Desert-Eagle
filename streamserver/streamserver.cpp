@@ -6,11 +6,9 @@
 #include "flvbuffer.h"
 
 
-
 int _tmain(int argc, _TCHAR* argv[])
 {	
 	{
-
 		char szinfo[11] = {"1111111111"};
 		boost::asio::mutable_buffer buftest(szinfo, strlen(szinfo));
 		shared_const_buffer_flv tempbuf(buftest);
