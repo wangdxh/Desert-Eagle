@@ -42,10 +42,9 @@ public:
 	{
 		// should use make_shared but in the debug, vs the pointer is no correct
 		int nLen = boost::asio::buffer_size(buff);
-		const uint8_t* pData = boost::asio::buffer_cast<const uint8_t*>(buff);				
-        m_bykeyframe = pData[0];
-		memcpy(m_streamdata.get(), pData+1, nLen-1);
-		m_abuffer[1] = boost::asio::buffer(m_streamdata.get(), nLen-1);
+		const uint8_t* pData = boost::asio::buffer_cast<const uint8_t*>(buff);
+		memcpy(m_streamdata.get(), pData, nLen);
+		m_abuffer[1] = boost::asio::buffer(m_streamdata.get(), nLen);
 	}
 	
 	const boost::asio::const_buffer* getstreamdata()
@@ -57,10 +56,6 @@ public:
 		m_abuffer[0] = boost::asio::buffer(pHeaderChunk, dwChunkLen);
 		m_abuffer[2] = boost::asio::buffer(pChunkEnd, dwChunkEndLen);
 	}
-    bool iskeyframe()
-    {
-        return m_bykeyframe;
-    }
 
 	// Implement the ConstBufferSequence requirements.
 	typedef boost::asio::const_buffer value_type;
@@ -71,7 +66,6 @@ public:
 public:
 	std::shared_ptr<uint8_t> m_streamdata;	
 	boost::asio::const_buffer m_abuffer[FLV_ASIO_BUFFER];
-    uint8_t m_bykeyframe;
 };
 
 
@@ -319,44 +313,37 @@ private:
 	void do_write()
 	{
 		auto self(shared_from_this());
-		if (m_dwflvheadersended < 2)
-		{
-            m_dwflvheadersended++;
-		} 
-		else
-		{
-            // compute chunked and flv time header
-            shared_const_buffer_flv& ptag = write_msgs_.front();
-            const boost::asio::const_buffer* pbuffer = ptag.getstreamdata();
-            int nsize = boost::asio::buffer_size(*pbuffer);
-            
-            memset(m_szchunkbuf, sizeof(m_szchunkbuf), 0);
-            int nLen = sprintf(m_szchunkbuf, "%x\r\n", nsize);
-            m_szchunkbuf[nLen+0] = 9; //video								
-            m_szchunkbuf[nLen+1] = (nsize >> 16) & 0xff;
-            m_szchunkbuf[nLen+2] = (nsize >> 8) & 0xff;
-            m_szchunkbuf[nLen+3] = nsize & 0xff;
 
-            // nb timestamp
-            m_szchunkbuf[nLen+4] = (m_dwtime>> 16) & 0xff;
-            m_szchunkbuf[nLen+5] = (m_dwtime>> 8) & 0xff;
-            m_szchunkbuf[nLen+6] = m_dwtime& 0xff;
-            m_szchunkbuf[nLen+7] = (m_dwtime>> 24) & 0xff;
+		// compute chunked and flv time header
+		shared_const_buffer_flv& ptagflvbuf = write_msgs_.front();
+		const boost::asio::const_buffer* pbuffer = ptagflvbuf.getstreamdata();
+		int nsize = boost::asio::buffer_size(*pbuffer);
+		int ntaglen = nsize -4;
+		const char* pdata = boost::asio::buffer_cast<const char*>(*pbuffer);
+		if (pdata[0] == 0x17 || pdata[0] == 0x27)
+		{
+			memset(m_szchunkbuf, sizeof(m_szchunkbuf), 0);
+			int nLen = sprintf(m_szchunkbuf, "%x\r\n", nsize+11);
+			m_szchunkbuf[nLen+0] = 9; //video								
+			m_szchunkbuf[nLen+1] = (ntaglen >> 16) & 0xff;
+			m_szchunkbuf[nLen+2] = (ntaglen >> 8) & 0xff;
+			m_szchunkbuf[nLen+3] = ntaglen & 0xff;
 
-            m_szchunkbuf[11] = ptag.iskeyframe()? 0x17 : 0x27;
-            m_szchunkbuf[nLen+12] = 1;;
-            const uint8_t* pbyte = boost::asio::buffer_cast<const uint8_t*>(*pbuffer);
-            if (0x17 == pbyte[0])
-            {
-            }
-            
-            ptag.setchunk(m_szchunkbuf, nLen+16, m_szchunkend, 2);
-            
+			// nb timestamp
+			m_szchunkbuf[nLen+4] = (m_dwtime>> 16) & 0xff;
+			m_szchunkbuf[nLen+5] = (m_dwtime>> 8) & 0xff;
+			m_szchunkbuf[nLen+6] = m_dwtime& 0xff;
+			m_szchunkbuf[nLen+7] = (m_dwtime>> 24) & 0xff;
+
+			ptagflvbuf.setchunk(m_szchunkbuf, nLen+11, m_szchunkend, 2);
+
 			m_dwtime += 40;
 		}
 
+
+
 		boost::asio::async_write(socket_,//µ±Ç°sessionµÄsocket
-			write_msgs_.front(),
+			ptagflvbuf,
 			[this, self](boost::system::error_code ec, std::size_t /*length*/)
 		{
 			if (!ec)
