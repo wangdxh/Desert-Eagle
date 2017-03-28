@@ -1,3 +1,14 @@
 *.tmp
 *.bak
 *.exe
+*.log
+*.obj
+*.pch
+*.pdb
+*.idb
+*.sdf
+*.pyc
+*.ilk
+*.tlog
+*.lastbuildstate
+*.ipch
