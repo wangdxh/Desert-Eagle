@@ -45,6 +45,7 @@ public:
 		const uint8_t* pData = boost::asio::buffer_cast<const uint8_t*>(buff);
 		memcpy(m_streamdata.get(), pData, nLen);
 		m_abuffer[1] = boost::asio::buffer(m_streamdata.get(), nLen);
+        m_bneedchunk = true;
 	}
 	
 	const boost::asio::const_buffer* getstreamdata()
@@ -56,6 +57,14 @@ public:
 		m_abuffer[0] = boost::asio::buffer(pHeaderChunk, dwChunkLen);
 		m_abuffer[2] = boost::asio::buffer(pChunkEnd, dwChunkEndLen);
 	}
+    void setneedchunk(bool bneed)
+    {
+        m_bneedchunk = bneed;
+    }
+    bool needchunk()
+    {
+        return m_bneedchunk;
+    }
 
 	// Implement the ConstBufferSequence requirements.
 	typedef boost::asio::const_buffer value_type;
@@ -63,9 +72,10 @@ public:
 	const boost::asio::const_buffer* begin() const { return m_abuffer; }
 	const boost::asio::const_buffer* end() const { return m_abuffer + FLV_ASIO_BUFFER; }
 
-public:
+private:
 	std::shared_ptr<uint8_t> m_streamdata;	
 	boost::asio::const_buffer m_abuffer[FLV_ASIO_BUFFER];
+    bool m_bneedchunk;
 };
 
 
@@ -174,9 +184,9 @@ private:
 			[this, self](boost::system::error_code ec, std::size_t /*length*/)//lambada
 		{
 			if (!ec)
-			{
-				uint32_t dwMsgLen = m_szMsgLen[0] | (m_szMsgLen[1]<<8) |
-									 (m_szMsgLen[2]<<16) | (m_szMsgLen[3]<<24);
+			{                
+				uint32_t dwMsgLen = (m_szMsgLen[3]<<24) | (m_szMsgLen[2]<<16) |
+                                                   (m_szMsgLen[1]<<8) | m_szMsgLen[0] ;									  
 				do_read_body(dwMsgLen);// read body
 			}
 			else
@@ -198,14 +208,15 @@ private:
                 boost::asio::mutable_buffer steambuf (m_bufmsg, length);
                 if (false == m_bget_stream_name)
                 {
-                    m_bufmsg[length] = '\0';
-                    m_streamname = (char*)m_bufmsg;
                     m_bget_stream_name = true;
+                    m_bufmsg[length] = '\0';
+                    m_streamname = (char*)m_bufmsg;                    
                     room_ = create_stream_hub(m_streamname);
                 }
                 else if(false == m_bget_flv_header)
                 {
-                    room_->setmetadata(steambuf);
+                    m_bget_flv_header = true;
+                    room_->setmetadata(steambuf);                    
                 }
                 else
                 {
@@ -239,10 +250,10 @@ class stream_httpflv_to:
 public:
 	stream_httpflv_to(tcp::socket socket)
 		: socket_(std::move(socket))
-	{
-        m_dwflvheadersended = 0;
+	{        
         m_dwtime = 0;
         m_szchunkend= "\r\n";
+        m_bfirstkeycoming = false;
 	}
 	void start()
 	{	
@@ -286,22 +297,28 @@ private:
                     }
                 }                
                                                 
+                std::string strresponse;
+                if (!m_streamname.empty())
+                {                    
+                    strresponse = 		
+                        "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: video/x-flv\r\nTransfer-Encoding: chunked\r\nAccess-Control-Allow-Origin: *\r\n\r\n";                                        
+                }
+                else
+                {
+                    strresponse = "HTTP/1.1 404 notfounded \r\n\r\n";
+                }			    
+                shared_const_buffer_flv httpresponse(boost::asio::buffer(strresponse));
+                httpresponse.setneedchunk(false);
+                this->deliver(httpresponse);
                 if (!m_streamname.empty())
                 {
                     room_ = create_stream_hub(m_streamname);
-                    std::string strresponse = 		
-                        "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: video/x-flv\r\nTransfer-Encoding: chunked\r\nAccess-Control-Allow-Origin: *\r\n\r\n";
-                    shared_const_buffer_flv httpresponse(boost::asio::buffer(strresponse));
-                    this->deliver(httpresponse);
                     room_->join(shared_from_this());
                 }
                 else
                 {
-                    std::string strresponse = 
-                        "HTTP/1.1 404 notfounded \r\n\r\n";
-                    shared_const_buffer_flv httpresponse(boost::asio::buffer(strresponse));
-                    this->deliver(httpresponse);
-                }			    
+                    // close  elegant
+                }
 			}
 			else
 			{
@@ -313,33 +330,73 @@ private:
 	void do_write()
 	{
 		auto self(shared_from_this());
-
-		// compute chunked and flv time header
+		
 		shared_const_buffer_flv& ptagflvbuf = write_msgs_.front();
-		const boost::asio::const_buffer* pbuffer = ptagflvbuf.getstreamdata();
-		int nsize = boost::asio::buffer_size(*pbuffer);
-		int ntaglen = nsize -4;
-		const char* pdata = boost::asio::buffer_cast<const char*>(*pbuffer);
-		if (pdata[0] == 0x17 || pdata[0] == 0x27)
-		{
-			memset(m_szchunkbuf, sizeof(m_szchunkbuf), 0);
-			int nLen = sprintf(m_szchunkbuf, "%x\r\n", nsize+11);
-			m_szchunkbuf[nLen+0] = 9; //video								
-			m_szchunkbuf[nLen+1] = (ntaglen >> 16) & 0xff;
-			m_szchunkbuf[nLen+2] = (ntaglen >> 8) & 0xff;
-			m_szchunkbuf[nLen+3] = ntaglen & 0xff;
+        if (ptagflvbuf.needchunk())
+        {
+            const boost::asio::const_buffer* pbuffer = ptagflvbuf.getstreamdata();
+            int nsize = boost::asio::buffer_size(*pbuffer);
+            const char* pdata = boost::asio::buffer_cast<const char*>(*pbuffer);
+            int nLen;
+            //memset(m_szchunkbuf, sizeof(m_szchunkbuf), 0);
+            if (pdata[0] == 0x17 || pdata[0] == 0x27)
+            {
+                if (pdata[0] == 0x17)
+                {
+                    printf("get keyframe %s\r\n", m_streamname.c_str());
+                }
+                /*if (!m_bfirstkeycoming && pdata[0] != 0x17)
+                {                    
+                    write_msgs_.pop_front();
+                    if (!write_msgs_.empty())
+                    {
+                        return do_write();
+                    }
+                }
+                else
+                {
+                    m_bfirstkeycoming = true;
+                }*/
 
-			// nb timestamp
-			m_szchunkbuf[nLen+4] = (m_dwtime>> 16) & 0xff;
-			m_szchunkbuf[nLen+5] = (m_dwtime>> 8) & 0xff;
-			m_szchunkbuf[nLen+6] = m_dwtime& 0xff;
-			m_szchunkbuf[nLen+7] = (m_dwtime>> 24) & 0xff;
+                int ntaglen = nsize -4;
+                nLen = sprintf(m_szchunkbuf, "%x\r\n", nsize+11);
+                m_szchunkbuf[nLen+0] = 9; //video
+                m_szchunkbuf[nLen+1] = (ntaglen >> 16) & 0xff;
+                m_szchunkbuf[nLen+2] = (ntaglen >> 8) & 0xff;
+                m_szchunkbuf[nLen+3] = ntaglen & 0xff;
 
-			ptagflvbuf.setchunk(m_szchunkbuf, nLen+11, m_szchunkend, 2);
-
-			m_dwtime += 40;
-		}
-
+                // nb timestamp
+                m_szchunkbuf[nLen+4] = (m_dwtime>> 16) & 0xff;
+                m_szchunkbuf[nLen+5] = (m_dwtime>> 8) & 0xff;
+                m_szchunkbuf[nLen+6] = m_dwtime& 0xff;
+                m_szchunkbuf[nLen+7] = (m_dwtime>> 24) & 0xff;
+                m_szchunkbuf[nLen+8] = 0;
+                m_szchunkbuf[nLen+9] = 0;
+                m_szchunkbuf[nLen+10] = 0;
+                FILE* pfile = fopen("c:\\my.flv", "ab+");
+                if (pfile)
+                {
+                    fwrite(&m_szchunkbuf[nLen], 1, 11, pfile);
+                    fwrite(pdata, 1, nsize, pfile);
+                    fclose(pfile);
+                }
+                
+                // more 3 byte stream id 
+                nLen += 11;
+                m_dwtime += 40;
+            }
+            else
+            {
+                nLen = sprintf(m_szchunkbuf, "%x\r\n", nsize);
+                FILE* pfile = fopen("c:\\my.flv", "ab+");
+                if (pfile)
+                {
+                    fwrite(pdata, 1, nsize, pfile);
+                    fclose(pfile);
+                }
+            }
+            ptagflvbuf.setchunk(m_szchunkbuf, nLen, m_szchunkend, 2);            
+        }
 
 
 		boost::asio::async_write(socket_,//µ±Ç°sessionµÄsocket
@@ -365,11 +422,11 @@ private:
 	tcp::socket socket_;	
 	stream_message_queue write_msgs_;
     boost::asio::streambuf m_readstreambuf;
-	
-	uint32_t m_dwflvheadersended;
+		
 	uint32_t m_dwtime;
     char* m_szchunkend;
     char m_szchunkbuf[32];
+    bool m_bfirstkeycoming;
 };//seesion
 
 template <class T>
