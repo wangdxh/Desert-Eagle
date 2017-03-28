@@ -413,15 +413,19 @@ public:
 				
 			}						
 			else
-			{
-				
+			{				
 				u32 taglen = 5 + tFrame.GetTotalFrameSize();
-				u32 dwflvtaglen = taglen-5+1+4;
+				u32 dwflvtaglen = taglen+4;
 				
 				u8* dstflvbuffer = pBufFlvFrame->pBuffer;
 				
-				dstflvbuffer[0] = tFrame.IsKeyFrame() ? 0x1 : 0x0;
-				int nindex = 1;
+				dstflvbuffer[0] = tFrame.IsKeyFrame() ? 0x17 : 0x27;
+				dstflvbuffer[1] = 1;
+				dstflvbuffer[2] = 0;
+				dstflvbuffer[3] = 0;
+				dstflvbuffer[4] = 0;
+
+				int nindex = 5;
 				tFrame.WriteFrameToBuffer(&dstflvbuffer[nindex]);
 				nindex += tFrame.GetTotalFrameSize();
 				
