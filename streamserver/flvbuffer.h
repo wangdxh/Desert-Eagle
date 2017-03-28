@@ -48,7 +48,7 @@ public:
         m_bneedchunk = true;
 	}
 	
-	const boost::asio::const_buffer* getstreamdata()
+	const boost::asio::const_buffer* getstreamdata() const
 	{
 		return &m_abuffer[1];
 	}
@@ -254,9 +254,12 @@ public:
         m_dwtime = 0;
         m_szchunkend= "\r\n";
         m_bfirstkeycoming = false;
+        sprintf(m_szendpoint, "ip:%s port:%d", socket_.remote_endpoint().address().to_string().c_str(),
+                                                                    socket_.remote_endpoint().port());
 	}
 	void start()
 	{	
+        
 		do_read_header();
 	}
     void close()
@@ -265,6 +268,22 @@ public:
     }
 	void deliver(const shared_const_buffer_flv& msg)
 	{		
+        if (false == m_bfirstkeycoming )
+        {
+            const boost::asio::const_buffer* pbuffer = msg.getstreamdata();        
+            const char* pdata = boost::asio::buffer_cast<const char*>(*pbuffer);
+
+            if (pdata[0] == 0x27)
+            {
+                printf("fflvdata keyframe is not coming %s  firstdata:0x%x\r\n", m_szendpoint, pdata[0]);
+                return;
+            }
+            else if(pdata[0] == 0x17)
+            {
+                m_bfirstkeycoming = true;
+            }            
+        }
+        
 		bool write_in_progress = !write_msgs_.empty();
 		write_msgs_.push_back(msg);//会将消息先放到write_msgs_中
 		if (!write_in_progress)
@@ -337,6 +356,15 @@ private:
             const boost::asio::const_buffer* pbuffer = ptagflvbuf.getstreamdata();
             int nsize = boost::asio::buffer_size(*pbuffer);
             const char* pdata = boost::asio::buffer_cast<const char*>(*pbuffer);
+            if (pdata[0] == 0x17 || pdata[0] == 0x27)
+            {
+                printf("send flvdata %s  firstdata:0x%x\r\n", m_szendpoint, pdata[0]);
+            }
+            else
+            {
+                printf("send header %s\r\n", m_szendpoint);
+            }
+
             int nLen;
             //memset(m_szchunkbuf, sizeof(m_szchunkbuf), 0);
             if (pdata[0] == 0x17 || pdata[0] == 0x27)
@@ -422,11 +450,13 @@ private:
 	tcp::socket socket_;	
 	stream_message_queue write_msgs_;
     boost::asio::streambuf m_readstreambuf;
-		
+	
 	uint32_t m_dwtime;
     char* m_szchunkend;
     char m_szchunkbuf[32];
     bool m_bfirstkeycoming;
+
+    char m_szendpoint[32];
 };//seesion
 
 template <class T>
