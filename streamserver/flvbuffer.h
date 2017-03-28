@@ -115,10 +115,13 @@ public:
 
 	void deliver(const boost::asio::mutable_buffer& msg)
 	{
-		shared_const_buffer_flv flvbuf(msg);
+		if (participants_.size() > 0)
+		{
+			shared_const_buffer_flv flvbuf(msg);
 
-		for (auto participant: participants_)
-			participant->deliver(flvbuf);
+			for (auto participant: participants_)
+				participant->deliver(flvbuf);
+		}		
 	}
     void setmetadata(const boost::asio::mutable_buffer& msg)
     {
@@ -380,18 +383,6 @@ private:
                 {
                     printf("get keyframe %s\r\n", m_streamname.c_str());
                 }
-                /*if (!m_bfirstkeycoming && pdata[0] != 0x17)
-                {                    
-                    write_msgs_.pop_front();
-                    if (!write_msgs_.empty())
-                    {
-                        return do_write();
-                    }
-                }
-                else
-                {
-                    m_bfirstkeycoming = true;
-                }*/
 
                 int ntaglen = nsize -4;
                 nLen = sprintf(m_szchunkbuf, "%x\r\n", nsize+11);
@@ -407,28 +398,14 @@ private:
                 m_szchunkbuf[nLen+7] = (m_dwtime>> 24) & 0xff;
                 m_szchunkbuf[nLen+8] = 0;
                 m_szchunkbuf[nLen+9] = 0;
-                m_szchunkbuf[nLen+10] = 0;
-                FILE* pfile = fopen("c:\\my.flv", "ab+");
-                if (pfile)
-                {
-                    fwrite(&m_szchunkbuf[nLen], 1, 11, pfile);
-                    fwrite(pdata, 1, nsize, pfile);
-                    fclose(pfile);
-                }
-                
-                // more 3 byte stream id 
+                m_szchunkbuf[nLen+10] = 0;             
+                              
                 nLen += 11;
                 m_dwtime += 40;
             }
             else
             {
-                nLen = sprintf(m_szchunkbuf, "%x\r\n", nsize);
-                FILE* pfile = fopen("c:\\my.flv", "ab+");
-                if (pfile)
-                {
-                    fwrite(pdata, 1, nsize, pfile);
-                    fclose(pfile);
-                }
+                nLen = sprintf(m_szchunkbuf, "%x\r\n", nsize);               
             }
             ptagflvbuf.setchunk(m_szchunkbuf, nLen, m_szchunkend, 2);            
         }
