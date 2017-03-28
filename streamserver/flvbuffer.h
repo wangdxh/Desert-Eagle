@@ -4,7 +4,6 @@
 #include <boost/asio.hpp>
 using boost::asio::ip::tcp;
 
-
 class copyed_buffer
 {
 public:
@@ -93,7 +92,6 @@ public:
 typedef std::shared_ptr<stream_session> stream_session_ptr;//shared ptr
 
 
-
 class stream_hub
 {
 public:    
@@ -107,7 +105,7 @@ public:
         {
             shared_const_buffer_flv flvheader(m_buf_header.m_buffer);// send flv header
             participant->deliver(flvheader);
-        }		
+        }
 	}
 
 	void leave(stream_session_ptr participant)
@@ -318,14 +316,14 @@ private:
                                                 
                 std::string strresponse;
                 if (!m_streamname.empty())
-                {                    
+                {
                     strresponse = 		
                         "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: video/x-flv\r\nTransfer-Encoding: chunked\r\nAccess-Control-Allow-Origin: *\r\n\r\n";                                        
                 }
                 else
                 {
                     strresponse = "HTTP/1.1 404 notfounded \r\n\r\n";
-                }			    
+                }
                 shared_const_buffer_flv httpresponse(boost::asio::buffer(strresponse));
                 httpresponse.setneedchunk(false);
                 this->deliver(httpresponse);
@@ -493,7 +491,5 @@ private:
 };
 
 
-
-
-
 #endif // ! _WXH_FLV_BUFFER_H_
+   
