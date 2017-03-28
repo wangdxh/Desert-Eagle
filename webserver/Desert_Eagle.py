@@ -7,8 +7,7 @@ import urllib2
 import json
 
 g_maplist = dict()
-g_maplist['123'] = '123aa'
-g_maplist['456'] = '456aa'
+g_maplist['123abcdef32153421'] = '123abcdef32153421'
 
 print 'Moriturus te saluto!!!'
 
@@ -41,4 +40,4 @@ def liveflv():
     else:        
         return {'deviceid':None}
 if __name__ == '__main__':
-    run(host='0.0.0.0', port=81)
+    run(host='0.0.0.0', port=80)
