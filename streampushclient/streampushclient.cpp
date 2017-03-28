@@ -61,7 +61,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 
     //FILE* pFile = fopen("D:\\dashmp4-master\\dashmp4demo\\Debug\\test.h264", "rb");
-    FILE* pFile = fopen("d:\\test.h264", "rb");
+    FILE* pFile = fopen("./testokmy.h264", "rb");
     if (!pFile)
     {
         printf("read file error");
