@@ -60,7 +60,7 @@ public:
     {
         m_bneedchunk = bneed;
     }
-    bool needchunk()
+    bool needchunk() const
     {
         return m_bneedchunk;
     }
@@ -161,6 +161,10 @@ public:
         m_bget_stream_name = false;
         m_bget_flv_header = false;
 	}
+	~stream_flv_from()
+	{
+		this->close();
+	}
 	void start()
 	{	
 		do_read_header();
@@ -186,10 +190,6 @@ private:
 				uint32_t dwMsgLen = (m_szMsgLen[3]<<24) | (m_szMsgLen[2]<<16) |
                                                    (m_szMsgLen[1]<<8) | m_szMsgLen[0] ;									  
 				do_read_body(dwMsgLen);// read body
-			}
-			else
-			{
-				close();
 			}
 		});
 	}
@@ -223,10 +223,6 @@ private:
 				
 				do_read_header();//
 			}
-			else
-			{
-				close();
-			}
 		});
 	}
 private:
@@ -241,6 +237,8 @@ private:
 	uint32_t m_dwTime;
 };//seesion
 
+
+#define MAX_HTTP_FLV_NUMS 10
 class stream_httpflv_to:
 	public stream_session,
 	public std::enable_shared_from_this<stream_httpflv_to>
@@ -255,33 +253,48 @@ public:
         sprintf(m_szendpoint, "ip:%s port:%d", socket_.remote_endpoint().address().to_string().c_str(),
                                                                     socket_.remote_endpoint().port());
 	}
+	~stream_httpflv_to()
+	{
+		this->close();
+	}
 	void start()
-	{	
-        
+	{	        
 		do_read_header();
 	}
     void close()
     {
-
+		if (!m_streamname.empty())
+		{
+			room_->leave(shared_from_this());
+		}		
     }
 	void deliver(const shared_const_buffer_flv& msg)
 	{		
-        if (false == m_bfirstkeycoming )
-        {
-            const boost::asio::const_buffer* pbuffer = msg.getstreamdata();        
-            const char* pdata = boost::asio::buffer_cast<const char*>(*pbuffer);
+		if (msg.needchunk())
+		{
+			if (false == m_bfirstkeycoming )
+			{
+				const boost::asio::const_buffer* pbuffer = msg.getstreamdata();        
+				const char* pdata = boost::asio::buffer_cast<const char*>(*pbuffer);
 
-            if (pdata[0] == 0x27)
-            {
-                printf("fflvdata keyframe is not coming %s  firstdata:0x%x\r\n", m_szendpoint, pdata[0]);
-                return;
-            }
-            else if(pdata[0] == 0x17)
-            {
-                m_bfirstkeycoming = true;
-            }            
-        }
-        
+				if (pdata[0] == 0x27)
+				{
+					printf("fflvdata keyframe is not coming %s  firstdata:0x%x\r\n", m_szendpoint, pdata[0]);
+					return;
+				}
+				else if(pdata[0] == 0x17)
+				{
+					m_bfirstkeycoming = true;
+				}            
+			}
+		}
+		if (write_msgs_.size() > MAX_HTTP_FLV_NUMS)
+		{
+			//buffer is full, do not need p-frame,so wait the I-frame
+			m_bfirstkeycoming = false;
+			printf("the buffer over the max number %d, %s\r\n", MAX_HTTP_FLV_NUMS, m_szendpoint);
+			return;
+		}
 		bool write_in_progress = !write_msgs_.empty();
 		write_msgs_.push_back(msg);//会将消息先放到write_msgs_中
 		if (!write_in_progress)
@@ -336,10 +349,6 @@ private:
                 {
                     // close  elegant
                 }
-			}
-			else
-			{
-				close();
 			}
 		});
 	}
@@ -436,10 +445,6 @@ private:
 				{
 					do_write();
 				}
-			}
-			else
-			{
-				room_->leave(shared_from_this());
 			}
 		});
 	}
