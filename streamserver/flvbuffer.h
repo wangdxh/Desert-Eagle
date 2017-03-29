@@ -269,6 +269,7 @@ public:
 		if (!m_streamname.empty())
 		{
 			room_->leave(shared_from_this());
+            m_streamname.clear();
 		}		
     }
 	void deliver(const shared_const_buffer_flv& msg)
@@ -423,6 +424,10 @@ private:
 					do_write();
 				}
 			}
+            else
+            {
+                this->close();//must close to call the leave
+            }
 		});
 	}
 	std::shared_ptr<stream_hub> room_;    
