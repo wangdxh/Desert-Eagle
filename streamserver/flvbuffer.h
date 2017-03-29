@@ -86,7 +86,7 @@ class stream_session
 {
 public:
 	virtual ~stream_session() {}
-	virtual void deliver(const shared_const_buffer_flv& msg) = 0; //participant should deliver message
+	virtual void deliver(const shared_const_buffer_flv& msg) = 0; //participant should deliver message    
 };
 
 typedef std::shared_ptr<stream_session> stream_session_ptr;//shared ptr
@@ -95,8 +95,14 @@ typedef std::shared_ptr<stream_session> stream_session_ptr;//shared ptr
 class stream_hub
 {
 public:    
-    explicit stream_hub()
+    explicit stream_hub(std::string& name)
     {
+        m_strname = name;
+        printf("new stream hub create %s\r\n", name.c_str());
+    }
+    ~stream_hub()
+    {
+        printf("stream hub destroy %s\r\n", m_strname.c_str());
     }
 	void join(stream_session_ptr participant)
 	{
@@ -128,27 +134,53 @@ public:
         m_buf_header = copyed_buffer(msg);
         this->deliver(m_buf_header.m_buffer);
     }
+    void eraseallsession()
+    {
+        participants_.clear();
+        //no data send they will close soon
+    }
 private:
 	std::set<stream_session_ptr> participants_;//all client
 	copyed_buffer m_buf_header;
-	//boost::asio::mutable_buffer m_buf_header;	
+	std::string m_strname;
 };
 
 typedef std::shared_ptr<stream_hub> stream_hub_ptr;
 std::map< std::string, stream_hub_ptr > g_map_stream_hubs;
+
 stream_hub_ptr create_stream_hub(std::string& name)
 {
     stream_hub_ptr room_;
     std::map< std::string, stream_hub_ptr >::iterator iter = g_map_stream_hubs.find(name);
     if (iter != g_map_stream_hubs.end())
     {
-        room_ = iter->second;
+        printf("error error***************************** stream  had exitsed name : %s\r\n", name.c_str());
     }
     else
     {
-        room_ = std::shared_ptr<stream_hub>(new stream_hub());
+        room_ = std::shared_ptr<stream_hub>(new stream_hub(name));
         g_map_stream_hubs[name] = room_;        
     }
+    return room_;
+}
+bool is_stream_hub_exists(std::string& name)
+{
+    std::map< std::string, stream_hub_ptr >::iterator iter = g_map_stream_hubs.find(name);
+    if (iter != g_map_stream_hubs.end())
+    {
+        return true;
+    }
+    return false;    
+}
+
+stream_hub_ptr get_stream_hub(std::string& name)
+{    
+    std::map< std::string, stream_hub_ptr >::iterator iter = g_map_stream_hubs.find(name);
+    if (iter == g_map_stream_hubs.end())
+    {
+        printf("error error***************************** stream not exit name : %s\r\n", name.c_str());
+    }
+    stream_hub_ptr  room_ = iter->second;
     return room_;
 }
 
@@ -163,9 +195,14 @@ public:
 	{
         m_bget_stream_name = false;
         m_bget_flv_header = false;
+
+        sprintf(m_szendpoint, "ip:%s port:%d", socket_.remote_endpoint().address().to_string().c_str(),
+            socket_.remote_endpoint().port());
+        printf("fromed new client info : %s\r\n", m_szendpoint);
 	}
 	~stream_flv_from()
 	{
+        printf("fromed client  leave info : %s\r\n", m_szendpoint);
 		this->close();
 	}
 	void start()
@@ -175,8 +212,8 @@ public:
 	void close()
     {
         if (!m_streamname.empty())
-        {
-            //room_->closeall();
+        {            
+            room_->eraseallsession();
             g_map_stream_hubs.erase(m_streamname);
         }
     }
@@ -238,6 +275,7 @@ private:
     std::string m_streamname;
     bool m_bget_flv_header;
 	uint32_t m_dwTime;
+    char m_szendpoint[32];
 };//seesion
 
 
@@ -255,23 +293,18 @@ public:
         m_bfirstkeycoming = false;
         sprintf(m_szendpoint, "ip:%s port:%d", socket_.remote_endpoint().address().to_string().c_str(),
                                                                     socket_.remote_endpoint().port());
+        printf("httpflv new client info : %s\r\n", m_szendpoint);
 	}
 	~stream_httpflv_to()
 	{
-		this->close();
+		//this->close();
+        printf("httpflv client leave info : %s\r\n", m_szendpoint);
 	}
 	void start()
 	{	        
 		do_read_header();
 	}
-    void close()
-    {
-		if (!m_streamname.empty())
-		{
-			room_->leave(shared_from_this());
-            m_streamname.clear();
-		}		
-    }
+    
 	void deliver(const shared_const_buffer_flv& msg)
 	{		
 		if (msg.needchunk())
@@ -330,28 +363,27 @@ private:
                         m_streamname = std::string(pstart+strlen(tag), nlen);                        
                     }
                 }                
-                                                
+                
+                bool bexists = is_stream_hub_exists(m_streamname);
                 std::string strresponse;
-                if (!m_streamname.empty())
+                if (bexists)
                 {
                     strresponse = 		
-                        "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: video/x-flv\r\nTransfer-Encoding: chunked\r\nAccess-Control-Allow-Origin: *\r\n\r\n";                                        
+                        "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: video/x-flv\r\nTransfer-Encoding: chunked\r\nAccess-Control-Allow-Origin: *\r\n\r\n";
                 }
                 else
                 {
-                    strresponse = "HTTP/1.1 404 notfounded \r\n\r\n";
+                    strresponse = "HTTP/1.1 404 notfounded \r\n\r\n";   
                 }
+                
                 shared_const_buffer_flv httpresponse(boost::asio::buffer(strresponse));
                 httpresponse.setneedchunk(false);
                 this->deliver(httpresponse);
-                if (!m_streamname.empty())
+                                                
+                if (bexists)
                 {
-                    room_ = create_stream_hub(m_streamname);
+                    room_ = get_stream_hub(m_streamname);
                     room_->join(shared_from_this());
-                }
-                else
-                {
-                    // close  elegant
                 }
 			}
 		});
@@ -366,25 +398,12 @@ private:
         {
             const boost::asio::const_buffer* pbuffer = ptagflvbuf.getstreamdata();
             int nsize = boost::asio::buffer_size(*pbuffer);
-            const char* pdata = boost::asio::buffer_cast<const char*>(*pbuffer);
-            if (pdata[0] == 0x17 || pdata[0] == 0x27)
-            {
-                printf("send flvdata %s  firstdata:0x%x\r\n", m_szendpoint, pdata[0]);
-            }
-            else
-            {
-                printf("send header %s\r\n", m_szendpoint);
-            }
+            const char* pdata = boost::asio::buffer_cast<const char*>(*pbuffer);            
 
             int nLen;
             //memset(m_szchunkbuf, sizeof(m_szchunkbuf), 0);
             if (pdata[0] == 0x17 || pdata[0] == 0x27)
             {
-                if (pdata[0] == 0x17)
-                {
-                    printf("get keyframe %s\r\n", m_streamname.c_str());
-                }
-
                 int ntaglen = nsize -4;
                 nLen = sprintf(m_szchunkbuf, "%x\r\n", nsize+11);
                 m_szchunkbuf[nLen+0] = 9; //video
@@ -426,7 +445,11 @@ private:
 			}
             else
             {
-                this->close();//must close to call the leave
+                if (!m_streamname.empty())
+                {
+                    room_->leave(shared_from_this());
+                    m_streamname.clear();
+                }
             }
 		});
 	}
