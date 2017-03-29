@@ -44,7 +44,17 @@ public:
 		const uint8_t* pData = boost::asio::buffer_cast<const uint8_t*>(buff);
 		memcpy(m_streamdata.get(), pData, nLen);
 		m_abuffer[1] = boost::asio::buffer(m_streamdata.get(), nLen);
-        m_bneedchunk = true;
+        m_bisflvstream = true;
+
+        if (0x17 == pData[0])
+        {
+            m_bkeyframe = true;
+        }
+        else
+        {
+            m_bkeyframe = false;
+        }
+        m_bisheader = false;
 	}
 	
 	const boost::asio::const_buffer* getstreamdata() const
@@ -56,13 +66,25 @@ public:
 		m_abuffer[0] = boost::asio::buffer(pHeaderChunk, dwChunkLen);
 		m_abuffer[2] = boost::asio::buffer(pChunkEnd, dwChunkEndLen);
 	}
-    void setneedchunk(bool bneed)
+    void setisflvstream(bool isflvsteam)
     {
-        m_bneedchunk = bneed;
+        m_bisflvstream = isflvsteam;
     }
-    bool needchunk() const
+    bool isflvstream() const
     {
-        return m_bneedchunk;
+        return m_bisflvstream;
+    }
+    bool iskeyframe() const
+    {
+        return m_bkeyframe;
+    }
+    void setisflvheader(bool bisheader) 
+    {
+        m_bisheader = bisheader;
+    }
+    bool isflvheader() const
+    {
+        return m_bisheader;
     }
 
 	// Implement the ConstBufferSequence requirements.
@@ -74,7 +96,9 @@ public:
 private:
 	std::shared_ptr<uint8_t> m_streamdata;	
 	boost::asio::const_buffer m_abuffer[FLV_ASIO_BUFFER];
-    bool m_bneedchunk;
+    bool m_bisflvstream;
+    bool m_bkeyframe;
+    bool m_bisheader;
 };
 
 
@@ -110,6 +134,7 @@ public:
         if (!m_buf_header.isnull())
         {
             shared_const_buffer_flv flvheader(m_buf_header.m_buffer);// send flv header
+            flvheader.setisflvheader(true);
             participant->deliver(flvheader);
         }
 	}
@@ -119,12 +144,12 @@ public:
 		participants_.erase(participant);//remove a client
 	}
 
-	void deliver(const boost::asio::mutable_buffer& msg)
+	void deliver(const boost::asio::mutable_buffer& msg, bool isheader = false)
 	{
 		if (participants_.size() > 0)
 		{
 			shared_const_buffer_flv flvbuf(msg);
-
+            flvbuf.setisflvheader(isheader);
 			for (auto participant: participants_)
 				participant->deliver(flvbuf);
 		}		
@@ -132,7 +157,7 @@ public:
     void setmetadata(const boost::asio::mutable_buffer& msg)
     {
         m_buf_header = copyed_buffer(msg);
-        this->deliver(m_buf_header.m_buffer);
+        this->deliver(m_buf_header.m_buffer, true);
     }
     void eraseallsession()
     {
@@ -279,7 +304,7 @@ private:
 };//seesion
 
 
-#define MAX_HTTP_FLV_NUMS 10
+#define MAX_STREAM_BUFFER_NUMS 10
 class stream_httpflv_to:
 	public stream_session,
 	public std::enable_shared_from_this<stream_httpflv_to>
@@ -307,29 +332,27 @@ public:
     
 	void deliver(const shared_const_buffer_flv& msg)
 	{		
-		if (msg.needchunk())
+		if (msg.isflvstream())
 		{
-			if (false == m_bfirstkeycoming )
+            // all flv info need chunked
+			if (!msg.isflvheader() && false == m_bfirstkeycoming )
 			{
-				const boost::asio::const_buffer* pbuffer = msg.getstreamdata();        
-				const char* pdata = boost::asio::buffer_cast<const char*>(*pbuffer);
-
-				if (pdata[0] == 0x27)
-				{
-					printf("fflvdata keyframe is not coming %s  firstdata:0x%x\r\n", m_szendpoint, pdata[0]);
-					return;
-				}
-				else if(pdata[0] == 0x17)
-				{
-					m_bfirstkeycoming = true;
-				}            
+                if (!msg.iskeyframe())
+                {
+                    printf("flvdata keyframe is not coming %s  \r\n", m_szendpoint);
+                    return;
+                }
+                else
+                {
+                    m_bfirstkeycoming = true;
+                }				            
 			}
 		}
-		if (write_msgs_.size() > MAX_HTTP_FLV_NUMS)
+		if (write_msgs_.size() > MAX_STREAM_BUFFER_NUMS)
 		{
 			//buffer is full, do not need p-frame,so wait the I-frame
 			m_bfirstkeycoming = false;
-			printf("the buffer over the max number %d, %s\r\n", MAX_HTTP_FLV_NUMS, m_szendpoint);
+			printf("the buffer over the max number %d, %s\r\n", MAX_STREAM_BUFFER_NUMS, m_szendpoint);
 			return;
 		}
 		bool write_in_progress = !write_msgs_.empty();
@@ -377,7 +400,7 @@ private:
                 }
                 
                 shared_const_buffer_flv httpresponse(boost::asio::buffer(strresponse));
-                httpresponse.setneedchunk(false);
+                httpresponse.setisflvstream(false);
                 this->deliver(httpresponse);
                                                 
                 if (bexists)
@@ -394,7 +417,7 @@ private:
 		auto self(shared_from_this());
 		
 		shared_const_buffer_flv& ptagflvbuf = write_msgs_.front();
-        if (ptagflvbuf.needchunk())
+        if (ptagflvbuf.isflvstream())
         {
             const boost::asio::const_buffer* pbuffer = ptagflvbuf.getstreamdata();
             int nsize = boost::asio::buffer_size(*pbuffer);
@@ -430,10 +453,9 @@ private:
             ptagflvbuf.setchunk(m_szchunkbuf, nLen, m_szchunkend, 2);            
         }
 
-
 		boost::asio::async_write(socket_,//µ±Ç°sessionµÄsocket
 			ptagflvbuf,
-			[this, self](boost::system::error_code ec, std::size_t /*length*/)
+			[this, self](boost::system::error_code ec, std::size_t length/*length*/)
 		{
 			if (!ec)
 			{
@@ -445,6 +467,7 @@ private:
 			}
             else
             {
+                printf("httpflv_to writemessage %s\r\n", ec.message().c_str());
                 if (!m_streamname.empty())
                 {
                     room_->leave(shared_from_this());
