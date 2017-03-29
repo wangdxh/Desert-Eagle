@@ -159,6 +159,10 @@ public:
         m_buf_header = copyed_buffer(msg);
         this->deliver(m_buf_header.m_buffer, true);
     }
+	const boost::asio::mutable_buffer& getmetadata() const
+	{
+		return m_buf_header.m_buffer;
+	}
     void eraseallsession()
     {
         participants_.clear();
@@ -467,7 +471,6 @@ private:
 			}
             else
             {
-                printf("httpflv_to writemessage %s\r\n", ec.message().c_str());
                 if (!m_streamname.empty())
                 {
                     room_->leave(shared_from_this());
