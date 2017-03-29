@@ -44,7 +44,7 @@ public:
 		const uint8_t* pData = boost::asio::buffer_cast<const uint8_t*>(buff);
 		memcpy(m_streamdata.get(), pData, nLen);
 		m_abuffer[1] = boost::asio::buffer(m_streamdata.get(), nLen);
-        m_bisflvstream = true;
+        m_bisflvstream = false;
 
         if (0x17 == pData[0])
         {
@@ -135,6 +135,7 @@ public:
         {
             shared_const_buffer_flv flvheader(m_buf_header.m_buffer);// send flv header
             flvheader.setisflvheader(true);
+			flvheader.setisflvstream(true);
             participant->deliver(flvheader);
         }
 	}
@@ -150,6 +151,7 @@ public:
 		{
 			shared_const_buffer_flv flvbuf(msg);
             flvbuf.setisflvheader(isheader);
+			flvbuf.setisflvstream(true);
 			for (auto participant: participants_)
 				participant->deliver(flvbuf);
 		}		
@@ -336,10 +338,10 @@ public:
     
 	void deliver(const shared_const_buffer_flv& msg)
 	{		
-		if (msg.isflvstream())
+		if (msg.isflvstream() && !msg.isflvheader())
 		{
             // all flv info need chunked
-			if (!msg.isflvheader() && false == m_bfirstkeycoming )
+			if (false == m_bfirstkeycoming )
 			{
                 if (!msg.iskeyframe())
                 {
@@ -351,14 +353,16 @@ public:
                     m_bfirstkeycoming = true;
                 }				            
 			}
+			// just drop the stream data but not the head and protocol
+			if (write_msgs_.size() > MAX_STREAM_BUFFER_NUMS)
+			{
+				//buffer is full, do not need p-frame,so wait the I-frame
+				m_bfirstkeycoming = false;
+				printf("the buffer over the max number %d, %s\r\n", MAX_STREAM_BUFFER_NUMS, m_szendpoint);
+				return;
+			}
 		}
-		if (write_msgs_.size() > MAX_STREAM_BUFFER_NUMS)
-		{
-			//buffer is full, do not need p-frame,so wait the I-frame
-			m_bfirstkeycoming = false;
-			printf("the buffer over the max number %d, %s\r\n", MAX_STREAM_BUFFER_NUMS, m_szendpoint);
-			return;
-		}
+		
 		bool write_in_progress = !write_msgs_.empty();
 		write_msgs_.push_back(msg);//会将消息先放到write_msgs_中
 		if (!write_in_progress)
@@ -404,7 +408,6 @@ private:
                 }
                 
                 shared_const_buffer_flv httpresponse(boost::asio::buffer(strresponse));
-                httpresponse.setisflvstream(false);
                 this->deliver(httpresponse);
                                                 
                 if (bexists)
