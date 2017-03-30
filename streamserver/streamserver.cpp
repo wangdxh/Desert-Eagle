@@ -4,7 +4,7 @@
 
 #include "stdafx.h"
 #include "flvbuffer.h"
-
+#include "rtspto.h"
 
 int _tmain(int argc, _TCHAR* argv[])
 {	
@@ -15,7 +15,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 		char szinfo[11] = {"1111111111"};
 		boost::asio::mutable_buffer buftest(szinfo, strlen(szinfo));
-		shared_const_buffer_flv tempbuf(buftest);
+		shared_const_buffer_flv tempbuf(buftest, shared_const_buffer_flv::em_http_flv);
         copyed_buffer buft = copyed_buffer(boost::asio::buffer(szinfo, strlen(szinfo)));
         copyed_buffer buft2 = buft;
         buft = copyed_buffer(boost::asio::buffer(szinfo, strlen(szinfo)));;
@@ -53,8 +53,10 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 	}
 	boost::asio::io_service io_service;	
+    tcp_server<stream_rtsp_to> server_rtsp_to(io_service, tcp::endpoint(tcp::v4(), 554));
 	tcp_server<stream_httpflv_to> server_Httpflv_to(io_service, tcp::endpoint(tcp::v4(), 1984));
 	tcp_server<stream_flv_from> server_flv_from(io_service, tcp::endpoint(tcp::v4(), 1985));
+    
 	io_service.run();
 
 	return 0;

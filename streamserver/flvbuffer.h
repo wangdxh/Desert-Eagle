@@ -1,8 +1,10 @@
 #ifndef  _WXH_FLV_BUFFER_H_
 #define _WXH_FLV_BUFFER_H_
 
+
 #include <boost/asio.hpp>
 using boost::asio::ip::tcp;
+#include "rtpoverrtsp.h"
 
 class copyed_buffer
 {
@@ -36,27 +38,69 @@ const uint32_t FLV_ASIO_BUFFER = 3;
 class shared_const_buffer_flv
 {
 public:
-	explicit shared_const_buffer_flv(const boost::asio::const_buffer& buff):
-		m_streamdata(new uint8_t[boost::asio::buffer_size(buff)], []( uint8_t *p ) { delete[] p; })
+    enum em_buffertype
+    {
+        em_http_flv,
+        em_rtsp,
+        em_message,
+    };
+public:
+	explicit shared_const_buffer_flv(const boost::asio::const_buffer& buff, em_buffertype etype = em_message)
 	{
-		// should use make_shared but in the debug, vs the pointer is no correct
-		int nLen = boost::asio::buffer_size(buff);
+		// should use make_shared but in the debug, vs the pointer is no correct		
 		const uint8_t* pData = boost::asio::buffer_cast<const uint8_t*>(buff);
-		memcpy(m_streamdata.get(), pData, nLen);
-		m_abuffer[1] = boost::asio::buffer(m_streamdata.get(), nLen);
         m_bisflvstream = false;
-
-        if (0x17 == pData[0])
+        m_bisheader = false;
+        m_bkeyframe = false;
+        if (0x17 == pData[0]) { m_bkeyframe = true; }
+        
+        int nLen = boost::asio::buffer_size(buff);
+        if (em_http_flv == etype || em_message == etype)
         {
-            m_bkeyframe = true;
+            // 发往每条httpflv客户端的时间戳，必须是从0开始的，然后连续地递增，所以在即将发送的时候，再重新把flv tag的头打上去
+            m_streamdata = std::shared_ptr<uint8_t>(new uint8_t[boost::asio::buffer_size(buff)], []( uint8_t *p ) { delete[] p; });
+            memcpy(m_streamdata.get(), pData, nLen);
+        }        
+        else
+        {
+            throw "type must be httpflv or message";
+        }
+		m_abuffer[1] = boost::asio::buffer(m_streamdata.get(), nLen);
+        
+	}
+	explicit shared_const_buffer_flv(const boost::asio::const_buffer& buff, em_buffertype etype, uint64_t dwtimestamp, uint32_t& dwsequence)
+    {
+        const uint8_t* pData = boost::asio::buffer_cast<const uint8_t*>(buff);
+        m_bisflvstream = false;
+        m_bisheader = false;
+        m_bkeyframe = false;
+        if (0x17 == pData[0]) { m_bkeyframe = true; }
+                
+        int nLen = boost::asio::buffer_size(buff);        
+        if (em_rtsp == etype)
+        {
+            // 发往每个rtsp客户端的rtp里面的时间戳，并不需要从0开始，而且h264转成rtp时，每个rtp的头，是掺杂在数据中间的，
+            // 所以时间戳的递增，从hub这里开始，然后递增，客户端拿到什么rtp时间，就是什么开始，并不受影响
+            if (0x17 == pData[0] || 0x27 == pData[0])
+            {
+                uint32_t dwtotallen;
+                uint32_t dwrtpnums;
+                get_rtsp_rtp_video_total_len(pData, nLen, dwtotallen, dwrtpnums);    
+                m_streamdata = std::shared_ptr<uint8_t>(new uint8_t[dwtotallen], []( uint8_t *p ) { delete[] p; });
+                uint32_t dwsequence = 1;
+                bool bret = generate_rtp_info_over_rtsp(pData, nLen, m_streamdata.get(), dwtotallen, dwtimestamp, dwsequence);
+                if (false == bret)
+                {
+                    throw "genereate rtp over rtsp len wrong totallen is %d, return %d";
+                }
+            }
         }
         else
         {
-            m_bkeyframe = false;
+            throw "steam type must be rtst to ";
         }
-        m_bisheader = false;
-	}
-	
+        m_abuffer[1] = boost::asio::buffer(m_streamdata.get(), nLen);
+    }
 	const boost::asio::const_buffer* getstreamdata() const
 	{
 		return &m_abuffer[1];
@@ -66,26 +110,11 @@ public:
 		m_abuffer[0] = boost::asio::buffer(pHeaderChunk, dwChunkLen);
 		m_abuffer[2] = boost::asio::buffer(pChunkEnd, dwChunkEndLen);
 	}
-    void setisflvstream(bool isflvsteam)
-    {
-        m_bisflvstream = isflvsteam;
-    }
-    bool isflvstream() const
-    {
-        return m_bisflvstream;
-    }
-    bool iskeyframe() const
-    {
-        return m_bkeyframe;
-    }
-    void setisflvheader(bool bisheader) 
-    {
-        m_bisheader = bisheader;
-    }
-    bool isflvheader() const
-    {
-        return m_bisheader;
-    }
+    void setisflvstream(bool isflvsteam) { m_bisflvstream = isflvsteam;}
+    bool isflvstream() const  { return m_bisflvstream;}    
+    void setisflvheader(bool bisheader) { m_bisheader = bisheader; }
+    bool isflvheader() const { return m_bisheader; }
+    bool iskeyframe() const { return m_bkeyframe; }
 
 	// Implement the ConstBufferSequence requirements.
 	typedef boost::asio::const_buffer value_type;
@@ -122,39 +151,60 @@ public:
     explicit stream_hub(std::string& name)
     {
         m_strname = name;
+        m_u64timestamp = 0;
+        m_dwsequence = 1;
         printf("new stream hub create %s\r\n", name.c_str());
     }
     ~stream_hub()
     {
         printf("stream hub destroy %s\r\n", m_strname.c_str());
     }
-	void join(stream_session_ptr participant)
+	void join_http_flv(stream_session_ptr participant)
 	{
-		participants_.insert(participant);//add a client		
+		http_flv_sessions_.insert(participant);//add a client		
         if (!m_buf_header.isnull())
         {
-            shared_const_buffer_flv flvheader(m_buf_header.m_buffer);// send flv header
+            shared_const_buffer_flv flvheader(m_buf_header.m_buffer, shared_const_buffer_flv::em_http_flv);// send flv header
             flvheader.setisflvheader(true);
 			flvheader.setisflvstream(true);
             participant->deliver(flvheader);
         }
 	}
-
-	void leave(stream_session_ptr participant)
+    
+	void leave_http_flv(stream_session_ptr participant)
 	{
-		participants_.erase(participant);//remove a client
+		http_flv_sessions_.erase(participant);//remove a client
 	}
+
+    void join_rtsp(stream_session_ptr participant)
+    {
+        rtsp_sessions_.insert(participant);
+        // rtsp do not need the flv header
+    }
+    void leave_rtsp(stream_session_ptr participant)
+    {
+        rtsp_sessions_.erase(participant);//remove a client
+    }
 
 	void deliver(const boost::asio::mutable_buffer& msg, bool isheader = false)
 	{
-		if (participants_.size() > 0)
+		if (http_flv_sessions_.size() > 0)
 		{
-			shared_const_buffer_flv flvbuf(msg);
+			shared_const_buffer_flv flvbuf(msg, shared_const_buffer_flv::em_http_flv);
             flvbuf.setisflvheader(isheader);
 			flvbuf.setisflvstream(true);
-			for (auto participant: participants_)
-				participant->deliver(flvbuf);
-		}		
+			for (auto session: http_flv_sessions_)
+				session->deliver(flvbuf);
+		}
+        if (rtsp_sessions_.size() > 0)
+        {
+            shared_const_buffer_flv flvbuf(msg, shared_const_buffer_flv::em_rtsp, m_u64timestamp, m_dwsequence);
+            flvbuf.setisflvheader(isheader);
+            flvbuf.setisflvstream(true);
+            for (auto session: rtsp_sessions_)
+                session->deliver(flvbuf);
+            m_u64timestamp += (40*90);
+        }
 	}
     void setmetadata(const boost::asio::mutable_buffer& msg)
     {
@@ -167,13 +217,16 @@ public:
 	}
     void eraseallsession()
     {
-        participants_.clear();
-        //no data send they will close soon
+        http_flv_sessions_.clear();
+        rtsp_sessions_.clear();        
     }
 private:
-	std::set<stream_session_ptr> participants_;//all client
+	std::set<stream_session_ptr> http_flv_sessions_;//all client
+    std::set<stream_session_ptr> rtsp_sessions_;//all client
 	copyed_buffer m_buf_header;
 	std::string m_strname;
+    uint64_t m_u64timestamp;
+    uint32_t m_dwsequence;
 };
 
 typedef std::shared_ptr<stream_hub> stream_hub_ptr;
@@ -413,7 +466,7 @@ private:
                 if (bexists)
                 {
                     room_ = get_stream_hub(m_streamname);
-                    room_->join(shared_from_this());
+                    room_->join_http_flv(shared_from_this());
                 }
 			}
 		});
@@ -476,7 +529,7 @@ private:
             {
                 if (!m_streamname.empty())
                 {
-                    room_->leave(shared_from_this());
+                    room_->leave_http_flv(shared_from_this());
                     m_streamname.clear();
                 }
             }

@@ -30,6 +30,9 @@
     <ClInclude Include="rtspto.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="rtpoverrtsp.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
