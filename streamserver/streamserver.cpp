@@ -5,9 +5,14 @@
 #include "stdafx.h"
 #include "flvbuffer.h"
 #include "rtspto.h"
-
+#include <iostream>
 int _tmain(int argc, _TCHAR* argv[])
 {	
+    {
+        std::string request_data = " OPTIONS    rtsp://192.168.1.188/h264/?deviceid=1234@kedacom.com&abc222=3333 RTSP/1.0 \r\n CSeq  :  2 \r\n User-Agent: LibVLC/2.1.2 (LIVE555 Streaming Media v2013.12.05) \r\n\r\n";
+        std::map< std::string, std::string > mapitem;
+       //get_all_options_from_text(request_data , mapitem);
+    }
 	{
         boost::asio::mutable_buffer buftest2;
         int nsize2 = boost::asio::buffer_size(buftest2);

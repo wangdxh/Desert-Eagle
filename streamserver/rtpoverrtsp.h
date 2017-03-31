@@ -50,10 +50,11 @@ typedef struct {
 
 void get_rtsp_rtp_video_total_len(const uint8_t* pbuffer, uint32_t dwbuflen, uint32_t& ntotallen, uint32_t& nrtpnums)
 {
+
     ntotallen = 0;
     nrtpnums = 0;
-    uint8_t* pdata = (uint8_t*)pbuffer;
-    uint8_t* pend = (uint8_t*)pbuffer+dwbuflen;
+    uint8_t* pdata = (uint8_t*)pbuffer+5;
+    uint8_t* pend = (uint8_t*)pbuffer+dwbuflen-9;
     while (pdata < pend)
     {
         int nnallen = (pdata[0]<<24) | (pdata[1]<<16) | (pdata[2]<<8) | (pdata[3]);
@@ -102,8 +103,8 @@ bool generate_rtp_info_over_rtsp(const uint8_t* pbuffer, uint32_t dwbuflen,
 {
     memset(pdest, 0, dwdestlen);
 
-    uint8_t* pdata = (uint8_t*)pbuffer;
-    uint8_t* pend = (uint8_t*)pbuffer+dwbuflen;
+    uint8_t* pdata = (uint8_t*)pbuffer +5;
+    uint8_t* pend = (uint8_t*)pbuffer+dwbuflen-9;
     uint32_t dwdestinx = 0;
     RTP_FIXED_HEADER* rtp_hdr; 
     NALU_HEADER* nalu_hdr;  
@@ -227,6 +228,68 @@ bool generate_rtp_info_over_rtsp(const uint8_t* pbuffer, uint32_t dwbuflen,
         pdata += nnallen;
     }
     return dwdestlen == dwdestinx;
+}
+
+#include <boost/regex.hpp>
+#include <boost/algorithm/string/regex.hpp>
+#include <boost/algorithm/string.hpp>  
+#include <iostream>
+// all the queryid and the option will in map ,  the request operator is get by 'command'
+bool get_all_options_from_text(const std::string& strrequest, std::map< std::string, std::string >& mapitems)
+{
+    mapitems.clear();
+    std::vector<std::string> veclines;
+    boost::split_regex( veclines, strrequest, boost::regex( "\r\n" ) ); 
+    bool byfirst = false;
+    for(auto& strline : veclines)
+    {
+        if (strline.empty()) {continue;}
+
+        if (false == byfirst)
+        {
+            byfirst = true;
+            std::vector<std::string> item;
+            boost::trim(strline);
+            boost::split_regex( item, strline, boost::regex( "[ ]+" ) );             
+            if (item.size() != 3)
+            {
+                return false;
+            }
+            mapitems["methond"] = item[0];
+            mapitems["url"] = item[1];
+            mapitems["protocol"] = item[2];
+            
+            boost::regex expression("([0-9a-zA-Z@.]+)=([0-9a-zA-Z@.]+)"); 
+            boost::smatch what;
+            std::string::const_iterator start = item[1].begin();
+            std::string::const_iterator end = item[1].end();
+            while( boost::regex_search(start, end, what, expression) )  
+            {
+                mapitems[what[1].str()] = what[2].str();
+                start = what[0].second;
+            }
+        }
+        else
+        {
+            std::vector<std::string> item;
+            boost::trim(strline);
+            boost::split_regex( item, strline, boost::regex( ":" ) ); 
+            if (item.size() != 2)
+            {
+                return false;
+            } 
+            else
+            {
+                boost::trim(item[0]);
+                boost::trim(item[1]);
+                mapitems[item[0]] = item[1];
+            }
+        }
+    }
+    for(auto& mapitems:mapitems)
+    {
+        std::cout << mapitems.first << ":" << mapitems.second << "*"<< std::endl;
+    }
 }
 
 #endif

@@ -21,7 +21,7 @@ public:
         m_bfirstkeycoming = false;
         sprintf(m_szendpoint, "ip:%s port:%d", socket_.remote_endpoint().address().to_string().c_str(),
             socket_.remote_endpoint().port());
-        printf("rtsp_to new client info : %s\r\n", m_szendpoint);
+        printf("rtsp_to new client info : %s\r\n", m_szendpoint);       
     }
     ~stream_rtsp_to()
     {        
@@ -77,83 +77,122 @@ private:
         {
             if (!ec)
             {
-                boost::asio::const_buffer buf2 = m_readstreambuf.data();
-                
+                boost::asio::const_buffer buf2 = m_readstreambuf.data();                
                 //½«boost::asio::streambuf×ªÎªstd::string  
                 boost::asio::streambuf::const_buffers_type cbt = m_readstreambuf.data(); 
                 std::string request_data(boost::asio::buffers_begin(cbt), boost::asio::buffers_end(cbt)); 
 
+                // reverse find
                 int nPos = request_data.find_last_of("\r\n\r\n");
-                m_readstreambuf.consume(nPos+1+4);
+                m_readstreambuf.consume(nPos+1);
                 buf2 = m_readstreambuf.data();
 
-                std::vector<std::string> vec;
-                boost::split_regex( vec, request_data, boost::regex( "\r\n\r\n" ) ); 
-                for(auto command : vec)
-                {
-                    std::vector<std::string> vecitem;
-                    boost::split_regex( vecitem, command, boost::regex( "\r\n" ) ); 
-                    for(auto item : vecitem)
-                    {
-                        if (!item.empty())
-                        {
-                            printf("item -%s- \r\n", item.c_str());
-                        }                        
-                    }
-                }
-                // for test 172.16.64.92:1984/live/liveflv?deviceid=12341234324
-                boost::asio::const_buffer buf = m_readstreambuf.data();
+                std::map< std::string, std::string > mapitems;
+                get_all_options_from_text(request_data , mapitems);
                 
-                const char* pData = boost::asio::buffer_cast<const char*>(buf);
-                char* tag = "deviceid=";
-                const char* pstart = strstr(pData, tag);
-                if (pstart)
+                bool bexists = true;                
+                bool bjoin = false;
+                if (m_streamname.empty())
                 {
-                    const char* pend = strstr(pstart, " ");
-                    if (pend)
-                    {
-                        int nlen = pend - pstart-strlen(tag);
-                        m_streamname = std::string(pstart+strlen(tag), nlen);                        
-                    }
-                }                
-
-                bool bexists = is_stream_hub_exists(m_streamname);
+                    m_streamname = mapitems["deviceid"];
+                     bexists = is_stream_hub_exists(m_streamname);
+                    if (false == bexists) m_streamname.clear();
+                }
+                                
                 std::string strresponse;
-                if (bexists)
+                std::string sss = mapitems["CSeq"];
+                if (false == bexists)
                 {
-                    strresponse = 		
-                        "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: video/x-flv\r\nTransfer-Encoding: chunked\r\nAccess-Control-Allow-Origin: *\r\n\r\n";
+                    strresponse = "RTSP/1.0 404 notfounded\r\n"  
+                                          "CSeq:"+mapitems["CSeq"]+"\r\n" 
+                                          "\r\n";  
                 }
                 else
                 {
-                    strresponse = "HTTP/1.1 404 notfounded \r\n\r\n";   
+                    std::string method = mapitems["methond"];
+                    if (0 == method.compare("OPTIONS"))
+                    {
+                        strresponse = "RTSP/1.0 200 OK\r\n" 
+                                              "CSeq:"+ mapitems["CSeq"] +"\r\n" 
+                                              "Public: OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE\r\n"
+                                              "\r\n";
+                    }
+                    else if (0 == method.compare("DESCRIBE"))
+                    {                                                
+                        std::string strsdp = "v=0\r\n"
+                            "o=- 1331092087436965 1 IN IP4 172.16.64.92\r\n"
+                            "s=H.264 Video, streamed by Little_wang\r\n"
+                            "t=0 0\r\n"
+                            "m=video 0 RTP/AVP 96\r\n"
+                            "c=IN IP4 0.0.0.0\r\n"
+                            "b=AS:500\r\n"
+                            "a=rtpmap:96 H264/90000\r\n"
+                            "a=fmtp:96 packetization-mode=1;profile-level-id=4D4033;sprop-parameter-sets=Z01AM5JUDAS0IAAAAwBAAAAM0eMGVA==,aO48gA==\r\n"
+                            "a=control:track1"
+                            ;
+                        std::stringstream stream;
+                        stream << "RTSP/1.0 200 OK\r\n"
+                                              "CSeq:" << mapitems["CSeq"] <<"\r\n"
+                                              "Content-Base: rtsp://172.16.64.92/realplay/\r\n"
+                                              "Content-Type: application/sdp\r\n"
+                                               "Content-Length:" << strsdp.length() << "\r\n"
+                                               "\r\n" << strsdp;
+                        strresponse = stream.str();
+                        
+                    }
+                    else if (0 == method.compare("SETUP"))
+                    {
+                        std::stringstream stream;
+                        stream << "RTSP/1.0 200 OK\r\n"
+                                   "CSeq:" << mapitems["CSeq"] <<"\r\n"
+                                   "Transport: RTP/AVP/TCP;unicast;destination=" << socket_.remote_endpoint().address().to_string()  
+                                            << ";source=" << socket_.local_endpoint().address().to_string() <<";interleaved=0-1\r\n"
+                                   "Session: 289BFEAE\r\n"
+                                   "\r\n";
+                        strresponse = stream.str();
+                    }
+                    else if (0 == method.compare("PLAY"))
+                    {
+                        std::stringstream stream;
+                        stream << "RTSP/1.0 200 OK\r\n"
+                            "CSeq:" << mapitems["CSeq"] <<"\r\n"
+                            "Range:" << mapitems["Range"] <<"\r\n"
+                            "Session: 289BFEAE\r\n"
+                            "RTP-Info: url=rtsp://172.16.64.92/realplay/track1;seq=1;rtptime=0\r\n"
+                            "\r\n";
+                        strresponse = stream.str();
+                        bjoin = true;
+                    }
+                    else
+                    {
+                        strresponse = "RTSP/1.0 404 notfounded\r\n"  
+                            "CSeq:"+mapitems["CSeq"]+"\r\n" 
+                            "\r\n";  
+                    }
                 }
+                
 
-                shared_const_buffer_flv httpresponse(boost::asio::buffer(strresponse));
-                httpresponse.setisflvstream(false);
+                shared_const_buffer_flv httpresponse(boost::asio::buffer(strresponse, strresponse.length()));                
                 this->deliver(httpresponse);
-
-                if (bexists)
+                if (bjoin)
                 {
                     hub_ = get_stream_hub(m_streamname);
                     hub_->join_rtsp(shared_from_this());
-                    // again
+                }
+                if (bexists)
+                {
                     do_read_header();
                 }
-                else
-                {
-                    // will exit and close this socket
-                    printf("no stream hub rtsp client will quit %s\r\n", m_szendpoint);
-                }                
             }
             else
             {
                 // read error
-                if (!m_streamname.empty())
+                if (hub_.get() != nullptr)
                 {
                     hub_->leave_rtsp(shared_from_this());
                     m_streamname.clear();
                 }
+                
             }
         });
     }
@@ -177,7 +216,7 @@ private:
             }
             else
             {
-                if (!m_streamname.empty())
+                if (hub_.get() != nullptr)
                 {
                     hub_->leave_rtsp(shared_from_this());
                     m_streamname.clear();
