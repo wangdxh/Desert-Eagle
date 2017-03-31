@@ -12,6 +12,14 @@ int _tmain(int argc, _TCHAR* argv[])
         std::string request_data = " OPTIONS    rtsp://192.168.1.188/h264/?deviceid=1234@kedacom.com&abc222=3333 RTSP/1.0 \r\n CSeq  :  2 \r\n User-Agent: LibVLC/2.1.2 (LIVE555 Streaming Media v2013.12.05) \r\n\r\n";
         std::map< std::string, std::string > mapitem;
        //get_all_options_from_text(request_data , mapitem);
+
+		request_data = "rtsp://172.16/fdsaf/fasfs/?abc=we";
+		std::string baseurl;
+		baseurl = get_base_rtsp_url(request_data);
+		std::cout << baseurl <<std::endl;
+		request_data = "rtsp://172.16/fdsaf/fasfs/";
+		baseurl = get_base_rtsp_url(request_data);
+		std::cout << baseurl  <<std::endl;;
     }
 	{
         boost::asio::mutable_buffer buftest2;

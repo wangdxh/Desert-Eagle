@@ -21,7 +21,9 @@ public:
         m_bfirstkeycoming = false;
         sprintf(m_szendpoint, "ip:%s port:%d", socket_.remote_endpoint().address().to_string().c_str(),
             socket_.remote_endpoint().port());
-        printf("rtsp_to new client info : %s\r\n", m_szendpoint);       
+        printf("rtsp_to new client info : %s\r\n", m_szendpoint);   
+		m_strlocalip = socket_.local_endpoint().address().to_string();
+		m_strremoteip = socket_.remote_endpoint().address().to_string();
     }
     ~stream_rtsp_to()
     {        
@@ -118,22 +120,24 @@ private:
                                               "\r\n";
                     }
                     else if (0 == method.compare("DESCRIBE"))
-                    {                                                
-                        std::string strsdp = "v=0\r\n"
-                            "o=- 1331092087436965 1 IN IP4 172.16.64.92\r\n"
+                    {                                       
+						std::stringstream sdpstream;
+                        sdpstream << "v=0\r\n"
+                            "o=- 1331092087436965 1 IN IP4 " << m_strlocalip << "\r\n"
                             "s=H.264 Video, streamed by Little_wang\r\n"
                             "t=0 0\r\n"
                             "m=video 0 RTP/AVP 96\r\n"
                             "c=IN IP4 0.0.0.0\r\n"
-                            "b=AS:500\r\n"
+                            //"b=AS:500\r\n"
                             "a=rtpmap:96 H264/90000\r\n"
                             "a=fmtp:96 packetization-mode=1;profile-level-id=4D4033;sprop-parameter-sets=Z01AM5JUDAS0IAAAAwBAAAAM0eMGVA==,aO48gA==\r\n"
                             "a=control:track1"
                             ;
+						std::string strsdp = sdpstream.str();
                         std::stringstream stream;
                         stream << "RTSP/1.0 200 OK\r\n"
                                               "CSeq:" << mapitems["CSeq"] <<"\r\n"
-                                              "Content-Base: rtsp://172.16.64.92/realplay/\r\n"
+                                              "Content-Base:" << mapitems["baseurl"] << "\r\n"
                                               "Content-Type: application/sdp\r\n"
                                                "Content-Length:" << strsdp.length() << "\r\n"
                                                "\r\n" << strsdp;
@@ -142,11 +146,14 @@ private:
                     }
                     else if (0 == method.compare("SETUP"))
                     {
+						// should see is track1 or track2
+						int track = get_url_track_num(mapitems["url"]);
+						std::cout << "setup track " << track << std::endl;
                         std::stringstream stream;
                         stream << "RTSP/1.0 200 OK\r\n"
                                    "CSeq:" << mapitems["CSeq"] <<"\r\n"
-                                   "Transport: RTP/AVP/TCP;unicast;destination=" << socket_.remote_endpoint().address().to_string()  
-                                            << ";source=" << socket_.local_endpoint().address().to_string() <<";interleaved=0-1\r\n"
+                                   "Transport: RTP/AVP/TCP;unicast;destination=" << m_strremoteip  
+                                            << ";source=" << m_strlocalip <<";interleaved=0-1\r\n"
                                    "Session: 289BFEAE\r\n"
                                    "\r\n";
                         strresponse = stream.str();
@@ -158,7 +165,7 @@ private:
                             "CSeq:" << mapitems["CSeq"] <<"\r\n"
                             "Range:" << mapitems["Range"] <<"\r\n"
                             "Session: 289BFEAE\r\n"
-                            "RTP-Info: url=rtsp://172.16.64.92/realplay/track1;seq=1;rtptime=0\r\n"
+                            "RTP-Info: url=rtsp://" << m_strlocalip << "/realplay/track1;seq=1;rtptime=0\r\n"
                             "\r\n";
                         strresponse = stream.str();
                         bjoin = true;
@@ -232,6 +239,8 @@ private:
     
     bool m_bfirstkeycoming;
     char m_szendpoint[32];
+	std::string m_strlocalip;
+	std::string m_strremoteip;
 };
 
 

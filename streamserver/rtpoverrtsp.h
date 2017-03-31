@@ -234,6 +234,37 @@ bool generate_rtp_info_over_rtsp(const uint8_t* pbuffer, uint32_t dwbuflen,
 #include <boost/algorithm/string/regex.hpp>
 #include <boost/algorithm/string.hpp>  
 #include <iostream>
+
+std::string get_base_rtsp_url(std::string& strurl)
+{
+	std::string baseurl;
+	std::vector<std::string> item;
+	boost::split_regex( item, strurl, boost::regex( "\\?" ) );             
+	if (item.size() > 2)
+	{
+		return strurl;
+	}
+	baseurl = item[0];
+	if (baseurl.back() != '/')
+	{
+		baseurl += '/';
+	}
+	return baseurl;
+}
+int get_url_track_num(std::string& strual)
+{
+	int track = 0;
+	if (strual.back() == '1')
+	{
+		track = 1;
+	}
+	else if (strual.back() == '2')
+	{
+		track = 2;
+	}
+	return track;
+}
+
 // all the queryid and the option will in map ,  the request operator is get by 'command'
 bool get_all_options_from_text(const std::string& strrequest, std::map< std::string, std::string >& mapitems)
 {
@@ -257,6 +288,7 @@ bool get_all_options_from_text(const std::string& strrequest, std::map< std::str
             }
             mapitems["methond"] = item[0];
             mapitems["url"] = item[1];
+			mapitems["baseurl"] = get_base_rtsp_url(item[1]);
             mapitems["protocol"] = item[2];
             
             boost::regex expression("([0-9a-zA-Z@.]+)=([0-9a-zA-Z@.]+)"); 
@@ -286,10 +318,14 @@ bool get_all_options_from_text(const std::string& strrequest, std::map< std::str
             }
         }
     }
+	std::cout << "-----------------------------------------------------------" << std::endl;
     for(auto& mapitems:mapitems)
-    {
-        std::cout << mapitems.first << ":" << mapitems.second << "*"<< std::endl;
+    {		
+        std::cout << mapitems.first << ":" << mapitems.second << std::endl;
     }
+	return true;
 }
+
+
 
 #endif
