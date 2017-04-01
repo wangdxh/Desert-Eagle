@@ -172,7 +172,7 @@ private:
                             "CSeq:" << mapitems["CSeq"] <<"\r\n"
                             "Range:" << mapitems["Range"] <<"\r\n"
                             "Session: 289BFEAE\r\n"
-                            "RTP-Info: url=rtsp://" << m_strlocalip << "/realplay/track1;seq=1;rtptime=0\r\n"
+                            "RTP-Info: url=rtsp://" << m_strlocalip << "/realplay/track1\r\n" //;seq=1;rtptime=0
                             "\r\n";
                         strresponse = stream.str();
                         bjoin = true;

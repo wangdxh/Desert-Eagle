@@ -1,6 +1,10 @@
 #ifndef _WXH_RTP_OVER_RTSP_H_
 #define _WXH_RTP_OVER_RTSP_H_
 
+#include <boost/regex.hpp>
+#include <boost/algorithm/string/regex.hpp>
+#include <boost/algorithm/string.hpp>  
+#include <iostream>
 #include <stdint.h>
 
 // h264 to rtp
@@ -102,7 +106,7 @@ bool generate_rtp_info_over_rtsp(const uint8_t* pbuffer, uint32_t dwbuflen,
                                  uint8_t* pdest, uint32_t dwdestlen,  uint32_t dwtimestample, uint32_t& seq_num)
 {
     memset(pdest, 0, dwdestlen);
-
+    std::cout << "generate rtp in \r\n";
     uint8_t* pdata = (uint8_t*)pbuffer +5;
     uint8_t* pend = (uint8_t*)pbuffer+dwbuflen-9;
     uint32_t dwdestinx = 0;
@@ -227,13 +231,11 @@ bool generate_rtp_info_over_rtsp(const uint8_t* pbuffer, uint32_t dwbuflen,
 
         pdata += nnallen;
     }
+    std::cout << "generate rtp out " << dwdestlen  <<" " << dwdestinx <<"\r\n";
     return dwdestlen == dwdestinx;
 }
 
-#include <boost/regex.hpp>
-#include <boost/algorithm/string/regex.hpp>
-#include <boost/algorithm/string.hpp>  
-#include <iostream>
+
 
 std::string get_base_rtsp_url(std::string& strurl)
 {

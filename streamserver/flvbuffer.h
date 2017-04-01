@@ -86,8 +86,7 @@ public:
                 uint32_t dwtotallen;
                 uint32_t dwrtpnums;
                 get_rtsp_rtp_video_total_len(pData, nLen, dwtotallen, dwrtpnums);    
-                m_streamdata = std::shared_ptr<uint8_t>(new uint8_t[dwtotallen], []( uint8_t *p ) { delete[] p; });
-                uint32_t dwsequence = 1;
+                m_streamdata = std::shared_ptr<uint8_t>(new uint8_t[dwtotallen], []( uint8_t *p ) { delete[] p; });                
                 bool bret = generate_rtp_info_over_rtsp(pData, nLen, m_streamdata.get(), dwtotallen, dwtimestamp, dwsequence);
                 if (false == bret)
                 {
