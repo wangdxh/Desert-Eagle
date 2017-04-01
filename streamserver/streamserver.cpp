@@ -9,6 +9,12 @@
 int _tmain(int argc, _TCHAR* argv[])
 {	
     {
+        char szinfo [128] = {0};
+        strcpy(szinfo, "ffffffffffxxxxxxxxxx");
+        szinfo[20] = 0;
+        std::string strinfo = std::string(&szinfo[0], 20);
+        int len = strinfo.length();
+
         std::string request_data = " OPTIONS    rtsp://192.168.1.188/h264/?deviceid=1234@kedacom.com&abc222=3333 RTSP/1.0 \r\n CSeq  :  2 \r\n User-Agent: LibVLC/2.1.2 (LIVE555 Streaming Media v2013.12.05) \r\n\r\n";
         std::map< std::string, std::string > mapitem;
        //get_all_options_from_text(request_data , mapitem);

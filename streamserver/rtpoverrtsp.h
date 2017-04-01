@@ -326,6 +326,61 @@ bool get_all_options_from_text(const std::string& strrequest, std::map< std::str
 	return true;
 }
 
+#define MAX_RTSP_TCP_BUFFER_LEN_  32*1024
+bool get_rtsp_message_from_buffer(boost::asio::streambuf& readstreambuf, std::string& strmessage)
+{
+    /*strmessage.clear();
+    boost::asio::const_buffer buffer = readstreambuf.data();
+    const char* pdatabuf = boost::asio::buffer_cast<char*>(buffer);
+    int nbuflen = boost::asio::buffer_size(buffer);*/
 
+    boost::asio::streambuf::const_buffers_type cbt = readstreambuf.data(); 
+    std::string request_data(boost::asio::buffers_begin(cbt), boost::asio::buffers_end(cbt)); 
+    int nbuflen = request_data.length(); 
+
+    //should not be this, but from the buffer alloc this maybe right
+        
+    char* ptempbuffer = (char*)request_data.c_str();
+    int nconsume = 0;
+    
+    while (nconsume < nbuflen)
+    {
+        if ('$' == ptempbuffer[nconsume])
+        {
+            int nleft = nbuflen-nconsume;
+            if ( nleft < 4) break;
+            
+            uint8_t byhigh = ptempbuffer[nconsume+2];
+            uint8_t bylow = ptempbuffer[nconsume+3];
+            int nrtplen = byhigh << 8 | bylow;
+
+            if(nleft < nrtplen+4) break;
+            nconsume += nrtplen+4;
+        }
+        else
+        {
+            const char* pend = strstr(&ptempbuffer[nconsume], "\r\n\r\n");
+            if (pend)
+            {
+                int nmsglen = pend - (&ptempbuffer[nconsume]) + 4;
+                strmessage += std::string(&ptempbuffer[nconsume], nmsglen);
+                nconsume += nmsglen;
+            }
+            else
+            {
+                break;
+            }            
+        }
+    }
+    if (nconsume > 0) readstreambuf.consume(nconsume);    
+    if (strmessage.length() > 0) return true;
+    
+    if (0 == nconsume && nbuflen > MAX_RTSP_TCP_BUFFER_LEN_)
+    {
+        std::cout << "the buffer is bigger than 32k, still no rtsp or rtp get, whar r u doing, clear all xxxxxx\r\n";
+        readstreambuf.consume(nbuflen);        
+    }    
+    return false;
+}
 
 #endif

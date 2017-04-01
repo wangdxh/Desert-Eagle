@@ -24,6 +24,7 @@ public:
         printf("rtsp_to new client info : %s\r\n", m_szendpoint);   
 		m_strlocalip = socket_.local_endpoint().address().to_string();
 		m_strremoteip = socket_.remote_endpoint().address().to_string();
+        this->m_readstreambuf.prepare(64*1024);
     }
     ~stream_rtsp_to()
     {        
@@ -72,27 +73,33 @@ public:
     }
 private:
     void do_read_header()
-    {
+    {        
+        boost::regex reg("\r\n\r\n");
         auto self(shared_from_this());
-        boost::asio::async_read_until(socket_, m_readstreambuf, "\r\n\r\n",
+        boost::asio::async_read_until(socket_, m_readstreambuf, reg,//"\r\n\r\n",
             [this, self](boost::system::error_code ec, std::size_t /*length*/)//lambada
         {
             if (!ec)
             {
-                boost::asio::const_buffer buf2 = m_readstreambuf.data();                
-                //将boost::asio::streambuf转为std::string  
-                boost::asio::streambuf::const_buffers_type cbt = m_readstreambuf.data(); 
-                std::string request_data(boost::asio::buffers_begin(cbt), boost::asio::buffers_end(cbt)); 
+                boost::asio::const_buffer buf2 = m_readstreambuf.data();
 
+                //将boost::asio::streambuf转为std::string  
+                //boost::asio::streambuf::const_buffers_type cbt = m_readstreambuf.data(); 
+                std::string request_data;//(boost::asio::buffers_begin(cbt), boost::asio::buffers_end(cbt)); 
+
+                bool bret = get_rtsp_message_from_buffer(m_readstreambuf, request_data);
+
+                if (false == bret) do_read_header();
+                
                 // reverse find
-                int nPos = request_data.find_last_of("\r\n\r\n");
-                m_readstreambuf.consume(nPos+1);
+                /*int nPos = request_data.find_last_of("\r\n\r\n");
+                m_readstreambuf.consume(nPos+1);*/
                 buf2 = m_readstreambuf.data();
 
                 std::map< std::string, std::string > mapitems;
                 get_all_options_from_text(request_data , mapitems);
                 
-                bool bexists = true;                
+                bool bexists = true;
                 bool bjoin = false;
                 if (m_streamname.empty())
                 {
