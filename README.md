@@ -12,12 +12,12 @@ boost asio flv video  http-flv http flv html5 flv.js
 配置头文件和lib库到vc的工程路径。
 
 
-###support
+### support
 http-flv
 
 rtsp，just rtp over rtsp,sdp暂时没有生成sps和pps,会在码流里面传输
 
-###test
+### test
 use live555 test rtp over rtsp
 
 test rtp over rtsp, 在 工具-> 首选项 -> 输入/编解码器  
