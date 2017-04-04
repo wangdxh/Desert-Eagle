@@ -15,7 +15,16 @@ boost asio flv video  http-flv http flv html5 flv.js
 ###support
 http-flv
 
-rtsp，只支持tcp浏览,sdp暂时没有生成sps和pps,会在码流里面传输
+rtsp，just rtp over rtsp,sdp暂时没有生成sps和pps,会在码流里面传输
+
+###test
+use live555 test rtp over rtsp
+
+test rtp over rtsp, 在 工具-> 首选项 -> 输入/编解码器  
+
+live555流传输 选择 rtp over rtsp(tcp)
+
+
 
 ### 待完成
 
