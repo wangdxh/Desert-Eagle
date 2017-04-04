@@ -22,4 +22,7 @@ rtsp，只支持tcp浏览,sdp暂时没有生成sps和pps,会在码流里面传�
 * 增加webrtc的服务器支持，进行单向码流转发
 
 
-thisismaster
+this is release 2.0, support rtsp, but just tcp
+test rtp over rtsp, 在 工具-> 首选项 -> 输入/编解码器  
+
+live555流传输 选择 rtp over rtsp(tcp)
