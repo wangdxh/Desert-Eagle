@@ -68,7 +68,7 @@ public:
 		m_abuffer[1] = boost::asio::buffer(m_streamdata.get(), nLen);
         
 	}
-	explicit shared_const_buffer_flv(const boost::asio::const_buffer& buff, em_buffertype etype, uint64_t dwtimestamp, uint32_t& dwsequence)
+	explicit shared_const_buffer_flv(const boost::asio::const_buffer& buff, em_buffertype etype, uint64_t dwtimestamp, uint16_t& dwsequence)
     {
         const uint8_t* pData = boost::asio::buffer_cast<const uint8_t*>(buff);
         m_bisflvstream = false;
@@ -76,14 +76,14 @@ public:
         m_bkeyframe = false;
         if (0x17 == pData[0]) { m_bkeyframe = true; }
                 
-        int nLen = boost::asio::buffer_size(buff);        
+        int nLen = boost::asio::buffer_size(buff);      
+		uint32_t dwtotallen = nLen;
         if (em_rtsp == etype)
         {
             // 发往每个rtsp客户端的rtp里面的时间戳，并不需要从0开始，而且h264转成rtp时，每个rtp的头，是掺杂在数据中间的，
             // 所以时间戳的递增，从hub这里开始，然后递增，客户端拿到什么rtp时间，就是什么开始，并不受影响
             if (0x17 == pData[0] || 0x27 == pData[0])
             {
-                uint32_t dwtotallen;
                 uint32_t dwnumnalus;
                 get_rtsp_rtp_video_total_len(pData, nLen, dwtotallen, dwnumnalus);    
                 m_streamdata = std::shared_ptr<uint8_t>(new uint8_t[dwtotallen], []( uint8_t *p ) { delete[] p; });                
@@ -99,7 +99,7 @@ public:
         {
             throw "steam type must be rtst to ";
         }
-        m_abuffer[1] = boost::asio::buffer(m_streamdata.get(), nLen);
+        m_abuffer[1] = boost::asio::buffer(m_streamdata.get(), dwtotallen);
     }
 	const boost::asio::const_buffer* getstreamdata() const
 	{
@@ -226,7 +226,7 @@ private:
 	copyed_buffer m_buf_header;
 	std::string m_strname;
     uint64_t m_u64timestamp;
-    uint32_t m_dwsequence;
+    uint16_t m_dwsequence;
 };
 
 typedef std::shared_ptr<stream_hub> stream_hub_ptr;

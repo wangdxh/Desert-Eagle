@@ -43,9 +43,9 @@ void get_rtsp_rtp_video_total_len(const uint8_t* pbuffer, uint32_t dwbuflen, uin
         int nnallen = (pdata[0]<<24) | (pdata[1]<<16) | (pdata[2]<<8) | (pdata[3]);
         pdata += 4;
 
-        if (nnallen <= MAX_RTP_PKT_LENGTH)
+        if ((nnallen-1) <= MAX_RTP_PKT_LENGTH)
         {
-            ntotallen += 4 + 12 + nnallen;         
+            ntotallen += 4 + 12 + nnallen;        //may be max_len + 1 
         }
         else
         {
@@ -62,7 +62,7 @@ void get_rtsp_rtp_video_total_len(const uint8_t* pbuffer, uint32_t dwbuflen, uin
 	}
 }
 
-void set_buf_rtp_video_header(uint8_t* pbuffer, uint32_t dwssrc, uint32_t dwtimestample, uint32_t dwseqnum, bool marker)
+void set_buf_rtp_video_header(uint8_t* pbuffer, uint32_t dwssrc, uint32_t dwtimestample, uint16_t dwseqnum, bool marker)
 {
     RTP_FIXED_HEADER* rtp_hdr = (RTP_FIXED_HEADER*)pbuffer;
     rtp_hdr->payload     = PAYLOAD_TYPE_H264;  //∏∫‘ÿ¿‡–Õ∫≈£¨  
@@ -82,7 +82,7 @@ void set_buf_rtp_over_rtsp_tag(uint8_t* pbuffer, uint8_t bychannel, uint16_t dwl
 }
 
 bool generate_rtp_info_over_rtsp(const uint8_t* pbuffer, uint32_t dwbuflen, 
-                                 uint8_t* pdest, uint32_t dwdestlen, uint32_t dwnumnalus, uint32_t dwtimestample, uint32_t& seq_num)
+                                 uint8_t* pdest, uint32_t dwdestlen, uint32_t dwnumnalus, uint32_t dwtimestample, uint16_t& seq_num)
 {
     memset(pdest, 0, dwdestlen);
     uint8_t* pdata = (uint8_t*)pbuffer +5;
@@ -100,7 +100,7 @@ bool generate_rtp_info_over_rtsp(const uint8_t* pbuffer, uint32_t dwbuflen,
         pdata += 4;
 
         uint8_t bynaltype = pdata[0];
-        if (nnallen <= MAX_RTP_PKT_LENGTH)
+        if ((nnallen-1) <= MAX_RTP_PKT_LENGTH)
         {
             set_buf_rtp_over_rtsp_tag(&pdest[dwdestinx], 0, 12+nnallen);
             dwdestinx += 4;
@@ -121,11 +121,11 @@ bool generate_rtp_info_over_rtsp(const uint8_t* pbuffer, uint32_t dwbuflen,
 				uint8_t* psrcnalu = pdata + 1 + inxpack * MAX_RTP_PKT_LENGTH;
 				if (inxpack == npacket-1)
 				{
-					npacketsize = (nnallen - 1) % MAX_RTP_PKT_LENGTH;
+					npacketsize = (nnallen - 1) - inxpack * MAX_RTP_PKT_LENGTH; // 2801 nallen  
 					blastfu = true;
 				}
 
-				set_buf_rtp_over_rtsp_tag(&pdest[dwdestinx], 0, npacketsize);
+				set_buf_rtp_over_rtsp_tag(&pdest[dwdestinx], 0, 12 + 2 + npacketsize);
 				dwdestinx += 4;
 
 				set_buf_rtp_video_header(&pdest[dwdestinx], dwssrc, dwtimestample, seq_num++, bmarker&blastfu);

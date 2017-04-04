@@ -1,4 +1,4 @@
-# Desert-Eagle
+﻿# Desert-Eagle
 boost asio flv video  http-flv http flv html5 flv.js
 
 启动2个server，再启动client，chrome网页输入ip地址即可。
@@ -11,9 +11,13 @@ boost asio flv video  http-flv http flv html5 flv.js
 
 配置头文件和lib库到vc的工程路径。
 
-### 待完成
 
-* 增加rtsp支持，只支持tcp浏览
+###support
+http-flv
+
+rtsp，只支持tcp浏览,sdp暂时没有生成sps和pps,会在码流里面传输
+
+### 待完成
 
 * 增加webrtc的服务器支持，进行单向码流转发
 

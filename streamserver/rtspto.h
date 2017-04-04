@@ -137,9 +137,10 @@ private:
                             "c=IN IP4 0.0.0.0\r\n"
                             //"b=AS:500\r\n"
                             "a=rtpmap:96 H264/90000\r\n"
-                            "a=fmtp:96 packetization-mode=1;profile-level-id=4D4033;sprop-parameter-sets=Z01AM5JUDAS0IAAAAwBAAAAM0eMGVA==,aO48gA==\r\n"
+                            "a=fmtp:96 packetization-mode=1;\r\n"
                             "a=control:track1"
                             ;
+						//profile-level-id=4D4033;sprop-parameter-sets=Z01AM5JUDAS0IAAAAwBAAAAM0eMGVA==,aO48gA==
 						std::string strsdp = sdpstream.str();
                         std::stringstream stream;
                         stream << "RTSP/1.0 200 OK\r\n"
