@@ -24,6 +24,8 @@ test rtp over rtsp, 在 工具-> 首选项 -> 输入/编解码器
 
 live555流传输 选择 rtp over rtsp(tcp)
 
+use this url ：  rtsp://127.0.0.1/realplay?deviceid=123abcdef32153421
+
 
 
 ### 待完成
