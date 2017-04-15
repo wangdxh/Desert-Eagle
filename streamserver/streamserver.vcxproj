@@ -82,10 +82,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="flvbuffer.h" />
+    <ClInclude Include="http_ts_to.h" />
     <ClInclude Include="rtpoverrtsp.h" />
     <ClInclude Include="rtspto.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="ts.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

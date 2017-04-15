@@ -5,6 +5,7 @@
 #include <boost/asio.hpp>
 using boost::asio::ip::tcp;
 #include "rtpoverrtsp.h"
+#include "ts.h"
 
 class copyed_buffer
 {
@@ -43,6 +44,7 @@ public:
         em_http_flv,
         em_rtsp,
         em_message,
+        em_ts,
     };
 public:
 	explicit shared_const_buffer_flv(const boost::asio::const_buffer& buff, em_buffertype etype = em_message)
@@ -101,6 +103,36 @@ public:
         }
         m_abuffer[1] = boost::asio::buffer(m_streamdata.get(), dwtotallen);
     }
+
+    explicit shared_const_buffer_flv(const boost::asio::const_buffer& buff, em_buffertype etype, uint64_t dwtimestamp, ts& tts)
+    {
+        // buffer is just h264 0001 start
+        const uint8_t* pData = boost::asio::buffer_cast<const uint8_t*>(buff);
+        m_bisflvstream = false;
+        m_bisheader = false;
+        m_bkeyframe = false;
+        if (0x17 == pData[0]) { m_bkeyframe = true; }
+
+        int nLen = boost::asio::buffer_size(buff);
+        uint32_t dwtotallen = nLen;
+        if (em_ts == etype)
+        {            
+            const uint8_t* prealh264 = pData+5;
+            int nreallen = nLen -9;
+            tts.get_ts_frame_totallen(prealh264, nreallen, m_bkeyframe, dwtotallen);
+            m_streamdata = std::shared_ptr<uint8_t>(new uint8_t[dwtotallen], []( uint8_t *p ) { delete[] p; });
+            tts.generate_ts_frame(prealh264, nreallen, m_streamdata.get(), dwtotallen, m_bkeyframe, dwtimestamp);
+            FILE* pfile = fopen("d:\\test.ts", "ab+");
+            fwrite(m_streamdata.get(), dwtotallen, 1, pfile);
+            fclose(pfile);
+        }
+        else
+        {
+            throw "steam type must be http ts to ";
+        }
+        m_abuffer[1] = boost::asio::buffer(m_streamdata.get(), dwtotallen);
+    }
+
 	const boost::asio::const_buffer* getstreamdata() const
 	{
 		return &m_abuffer[1];
@@ -186,6 +218,16 @@ public:
         rtsp_sessions_.erase(participant);//remove a client
     }
 
+    void join_http_ts(stream_session_ptr participant)
+    {
+        ts_sessions_.insert(participant);
+        // rtsp do not need the flv header
+    }
+    void leave_http_ts(stream_session_ptr participant)
+    {
+        ts_sessions_.erase(participant);//remove a client
+    }
+
 	void deliver(const boost::asio::mutable_buffer& msg, bool isheader = false)
 	{
 		if (http_flv_sessions_.size() > 0)
@@ -203,8 +245,24 @@ public:
             flvbuf.setisflvstream(true);
             for (auto session: rtsp_sessions_)
                 session->deliver(flvbuf);
-            m_u64timestamp += (40*90);
+            
         }
+        // change h264 buffer to 0 0 0 1 start
+        uint8_t* pData = boost::asio::buffer_cast<uint8_t*>(msg);
+        int nLen = boost::asio::buffer_size(msg);
+        if (isheader == false || pData[0] == 0x17 || pData[0] == 0x27)
+        {
+            change_flv_h264_buffer_to_0001_buffer(pData+5, nLen-9);
+        }
+        if (ts_sessions_.size() > 0)
+        {
+            shared_const_buffer_flv flvbuf(boost::asio::mutable_buffer(pData, nLen), shared_const_buffer_flv::em_ts, m_u64timestamp, m_ts);
+            flvbuf.setisflvheader(isheader);
+            flvbuf.setisflvstream(true);
+            for (auto session: ts_sessions_)
+                session->deliver(flvbuf);            
+        }
+        m_u64timestamp += (40*90);
 	}
     void setmetadata(const boost::asio::mutable_buffer& msg)
     {
@@ -223,10 +281,12 @@ public:
 private:
 	std::set<stream_session_ptr> http_flv_sessions_;//all client
     std::set<stream_session_ptr> rtsp_sessions_;//all client
+    std::set<stream_session_ptr> ts_sessions_;//all client
 	copyed_buffer m_buf_header;
 	std::string m_strname;
     uint64_t m_u64timestamp;
     uint16_t m_dwsequence;
+    ts m_ts;
 };
 
 typedef std::shared_ptr<stream_hub> stream_hub_ptr;

@@ -29,7 +29,27 @@ typedef struct
     unsigned long ssrc;            /**//* stream number is used here. */  
 } RTP_FIXED_HEADER;  
  
+void change_flv_h264_buffer_to_0001_buffer(uint8_t* pbuffer, uint32_t dwbuflen)
+{
 
+    uint8_t* pdata = (uint8_t*)pbuffer; // first 5 byte is the flv video prefix
+    uint8_t* pend = (uint8_t*)pbuffer+dwbuflen; // the last 4 bytes is the flv last tag len
+    while (pdata < pend)
+    {
+        int nnallen = (pdata[0]<<24) | (pdata[1]<<16) | (pdata[2]<<8) | (pdata[3]);
+        pdata[0] = 0;
+        pdata[1] = 0;
+        pdata[2] = 0;
+        pdata[3] = 1;
+        pdata += 4;        
+        pdata += nnallen;        
+    }
+    // 4¸ö×Ö½ÚÍ·£¬when rtp over rtsp
+    if (pdata != pend)
+    {
+        printf("**************************************************error rtp total len wrong\r\n");
+    }
+}
 
 void get_rtsp_rtp_video_total_len(const uint8_t* pbuffer, uint32_t dwbuflen, uint32_t& ntotallen, uint32_t& numbernalus)
 {

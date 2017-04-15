@@ -33,6 +33,12 @@
     <ClInclude Include="rtpoverrtsp.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="http_ts_to.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ts.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
