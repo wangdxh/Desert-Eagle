@@ -17,6 +17,8 @@ http-flv
 
 rtsp，just rtp over rtsp,sdp暂时没有生成sps和pps,会在码流里面传输
 
+hls
+
 ### test
 use live555 test rtp over rtsp
 
@@ -30,6 +32,7 @@ use this url ：  rtsp://127.0.0.1/realplay?deviceid=123abcdef32153421
 
 ### 待完成
 
+* hls+
 * 增加webrtc的服务器支持，进行单向码流转发
 
 
