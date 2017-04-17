@@ -185,10 +185,20 @@ public:
         m_strname = name;
         m_u64timestamp = 0;
         m_dwsequence = 1;
+        m_bsupporthls = true;
+        m_cur_file_num = 1;
+        m_cur_hls_sequence = 1;
+        m_file_ts = nullptr;
         printf("new stream hub create %s\r\n", name.c_str());
+        m_ts_stream_buff = std::shared_ptr<uint8_t>(new uint8_t[512*1024], []( uint8_t *p ) { delete[] p; });
     }
     ~stream_hub()
     {
+        if (nullptr != m_file_ts)
+        {
+            fclose(m_file_ts);
+            m_file_ts = nullptr;
+        }
         printf("stream hub destroy %s\r\n", m_strname.c_str());
     }
 	void join_http_flv(stream_session_ptr participant)
@@ -255,14 +265,58 @@ public:
             // generate m3u8 and ts file to the directory
             change_flv_h264_buffer_to_0001_buffer(pData+5, nLen-9);
         }
-        if (ts_sessions_.size() > 0)
+        if (m_bsupporthls)
+        {
+            if (isheader == false)
+            {
+                bool bkeyframe = false;
+                if (pData[0] == 0x17)
+                {
+                    bkeyframe = true;
+                    if (nullptr != m_file_ts)
+                    {
+                        fclose(m_file_ts);
+                        m_cur_file_num++;
+                        if (m_cur_file_num - m_cur_hls_sequence  > 3)
+                        {   
+                            char szfilepath[256] = {0};
+                            sprintf(szfilepath, "D:\\github\\Desert-Eagle\\webserver\\static\\%d.ts", m_cur_hls_sequence);
+                            m_cur_hls_sequence++;
+                            ::remove(szfilepath);
+                        }
+
+                        // write m3u8 file
+                        std::stringstream strm3u8;
+                        strm3u8 << "#EXTM3U\r\n"
+                            << "#EXT-X-TARGETDURATION:2\r\n"
+                            << "#EXT-X-MEDIA-SEQUENCE:" << m_cur_hls_sequence << "\r\n";
+                        for(int inx = m_cur_hls_sequence; inx < m_cur_file_num; inx++)
+                        {
+                            strm3u8 << "http://172.16.64.92/static/" << inx << ".ts\r\n" ;
+                        }
+                        std::string strtemp = strm3u8.str();
+                        FILE* file_m3u8 = fopen("D:\\github\\Desert-Eagle\\webserver\\static\\abc.m3u8", "wb");
+                        fwrite(strtemp.c_str(), strtemp.length(), 1, file_m3u8);                        
+                        fclose(file_m3u8);
+                    }                    
+                    char szfilepath[256] = {0};
+                    sprintf(szfilepath, "D:\\github\\Desert-Eagle\\webserver\\static\\%d.ts", m_cur_file_num);
+                    m_file_ts = fopen(szfilepath, "wb");                                        
+                }
+                uint32_t dwtotallen = 0;
+                m_ts.get_ts_frame_totallen(pData+5, nLen-9, bkeyframe, dwtotallen);
+                m_ts.generate_ts_frame(pData+5, nLen-9, m_ts_stream_buff.get(), dwtotallen, bkeyframe, m_u64timestamp);
+                fwrite(m_ts_stream_buff.get(), dwtotallen, 1, m_file_ts);                
+            }
+        }
+        /*if (ts_sessions_.size() > 0)
         {
             shared_const_buffer_flv flvbuf(boost::asio::mutable_buffer(pData, nLen), shared_const_buffer_flv::em_ts, m_u64timestamp, m_ts);
             flvbuf.setisflvheader(isheader);
             flvbuf.setisflvstream(true);
             for (auto session: ts_sessions_)
                 session->deliver(flvbuf);            
-        }
+        }*/
         m_u64timestamp += (40*90);
 	}
     void setmetadata(const boost::asio::mutable_buffer& msg)
@@ -288,6 +342,12 @@ private:
     uint64_t m_u64timestamp;
     uint16_t m_dwsequence;
     ts m_ts;
+
+    bool m_bsupporthls;
+    uint32_t m_cur_hls_sequence;
+    uint32_t m_cur_file_num;
+    FILE* m_file_ts;
+    std::shared_ptr<uint8_t> m_ts_stream_buff;	
 };
 
 typedef std::shared_ptr<stream_hub> stream_hub_ptr;
