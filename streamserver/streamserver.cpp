@@ -75,9 +75,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	boost::asio::io_service io_service;	
     tcp_server<stream_rtsp_to> server_rtsp_to(io_service, tcp::endpoint(tcp::v4(), 554));
 	tcp_server<stream_httpflv_to> server_Httpflv_to(io_service, tcp::endpoint(tcp::v4(), 1984));
-	tcp_server<stream_flv_from> server_flv_from(io_service, tcp::endpoint(tcp::v4(), 1985));
-    tcp_server<stream_http_ts_to> server_http_ts_to(io_service, tcp::endpoint(tcp::v4(), 1986));
-    // http://172.16.64.92:1986/realplay?deviceid=123abcdef32153421
+	tcp_server<stream_flv_from> server_flv_from(io_service, tcp::endpoint(tcp::v4(), 1985));        
 
 	io_service.run();
 

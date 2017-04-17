@@ -252,6 +252,7 @@ public:
         int nLen = boost::asio::buffer_size(msg);
         if (isheader == false || pData[0] == 0x17 || pData[0] == 0x27)
         {
+            // generate m3u8 and ts file to the directory
             change_flv_h264_buffer_to_0001_buffer(pData+5, nLen-9);
         }
         if (ts_sessions_.size() > 0)

@@ -82,7 +82,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="flvbuffer.h" />
-    <ClInclude Include="http_ts_to.h" />
     <ClInclude Include="rtpoverrtsp.h" />
     <ClInclude Include="rtspto.h" />
     <ClInclude Include="stdafx.h" />
