@@ -63,4 +63,4 @@ m3u8文件的文件名称就是推流的时候，自定义的流名称。
 * 增加webrtc的服务器支持，进行单向码流转发
 
 
-thisismaster
+this is hls
