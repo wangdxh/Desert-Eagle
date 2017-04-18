@@ -185,12 +185,21 @@ public:
         m_strname = name;
         m_u64timestamp = 0;
         m_dwsequence = 1;
+        printf("new stream hub create %s\r\n", name.c_str());
+
         m_bsupporthls = true;
         m_cur_file_num = 1;
         m_cur_hls_sequence = 1;
-        m_file_ts = nullptr;
-        printf("new stream hub create %s\r\n", name.c_str());
+        m_file_ts = nullptr;        
         m_ts_stream_buff = std::shared_ptr<uint8_t>(new uint8_t[512*1024], []( uint8_t *p ) { delete[] p; });
+        m_dw_ts_slice_num = 4;
+        for(int inx = 0; inx < m_dw_ts_slice_num; inx++)
+        {
+            m_a_file_duration.push_back(0);
+        }
+        m_m3u8_ts_directory = "D:\\github\\Desert-Eagle\\webserver\\static\\";
+        //std::string strdirectory = "D:\\nginx-1.10.3\\html\\";
+        m_m3u8_ts_prefix = "http://172.16.64.92/static/";
     }
     ~stream_hub()
     {
@@ -254,8 +263,7 @@ public:
             flvbuf.setisflvheader(isheader);
             flvbuf.setisflvstream(true);
             for (auto session: rtsp_sessions_)
-                session->deliver(flvbuf);
-            
+                session->deliver(flvbuf);            
         }
         // change h264 buffer to 0 0 0 1 start
         uint8_t* pData = boost::asio::buffer_cast<uint8_t*>(msg);
@@ -275,33 +283,53 @@ public:
                     bkeyframe = true;
                     if (nullptr != m_file_ts)
                     {
+                        fflush(m_file_ts);
                         fclose(m_file_ts);
+
+                        uint64_t utemp = m_a_file_duration[(m_cur_file_num-1)%3];
+                        m_a_file_duration[(m_cur_file_num-1)%3] = (m_u64timestamp - utemp)/90000;// now is duration second
+                        printf("ts file is %d duration is %llu\r\n", m_cur_file_num, m_a_file_duration[(m_cur_file_num-1)%3]);
+                                                
+                        // file number add 1
                         m_cur_file_num++;
-                        if (m_cur_file_num - m_cur_hls_sequence  > 3)
+                        if (m_cur_file_num - m_cur_hls_sequence  > m_dw_ts_slice_num)
                         {   
                             char szfilepath[256] = {0};
-                            sprintf(szfilepath, "D:\\github\\Desert-Eagle\\webserver\\static\\%d.ts", m_cur_hls_sequence);
+                            sprintf(szfilepath, "%s%s-%d.ts", m_m3u8_ts_directory.c_str(), m_strname.c_str(), m_cur_hls_sequence);
                             m_cur_hls_sequence++;
-                            ::remove(szfilepath);
+                            ::remove(szfilepath);                            
                         }
+                        
+                        uint64_t maxduration = 0;
+                        for(int inx = m_cur_hls_sequence; inx < m_cur_file_num; inx++)
+                        {
+                            maxduration = std::max(maxduration, m_a_file_duration[(inx-1)%3]);
+                        }
+                        printf("update m3u8 file max duration is %llu\r\n", maxduration);
 
                         // write m3u8 file
                         std::stringstream strm3u8;
                         strm3u8 << "#EXTM3U\r\n"
-                            << "#EXT-X-TARGETDURATION:2\r\n"
+                            << "#EXT-X-ALLOW-CACHE:NO\r\n"
+                            << "#EXT-X-TARGETDURATION:" <<maxduration <<"\r\n"
                             << "#EXT-X-MEDIA-SEQUENCE:" << m_cur_hls_sequence << "\r\n";
                         for(int inx = m_cur_hls_sequence; inx < m_cur_file_num; inx++)
                         {
-                            strm3u8 << "http://172.16.64.92/static/" << inx << ".ts\r\n" ;
-                        }
+                            strm3u8 << "#EXTINF:" << m_a_file_duration[(inx-1)%3] <<"\r\n"
+                                << m_m3u8_ts_prefix  << m_strname.c_str() << "-"<< inx << ".ts\r\n" ;
+                        }                        
                         std::string strtemp = strm3u8.str();
-                        FILE* file_m3u8 = fopen("D:\\github\\Desert-Eagle\\webserver\\static\\abc.m3u8", "wb");
-                        fwrite(strtemp.c_str(), strtemp.length(), 1, file_m3u8);                        
+                        std::string strm3u8filepath = m_m3u8_ts_directory + m_strname +".m3u8";
+                        FILE* file_m3u8 = fopen(strm3u8filepath.c_str(), "wb");
+                        fwrite(strtemp.c_str(), strtemp.length(), 1, file_m3u8);            
+                        fflush(file_m3u8);
                         fclose(file_m3u8);
+                        printf("after update m3u8 hls_sequence is %d, cur_file_num is %d\r\n", m_cur_hls_sequence, m_cur_file_num);
                     }                    
                     char szfilepath[256] = {0};
-                    sprintf(szfilepath, "D:\\github\\Desert-Eagle\\webserver\\static\\%d.ts", m_cur_file_num);
-                    m_file_ts = fopen(szfilepath, "wb");                                        
+                    sprintf(szfilepath, "%s%s-%d.ts", m_m3u8_ts_directory.c_str(), m_strname.c_str(), m_cur_file_num);
+                    m_file_ts = fopen(szfilepath, "wb");
+                    m_a_file_duration[(m_cur_file_num-1)%3] = m_u64timestamp;// start time
                 }
                 uint32_t dwtotallen = 0;
                 m_ts.get_ts_frame_totallen(pData+5, nLen-9, bkeyframe, dwtotallen);
@@ -317,7 +345,7 @@ public:
             for (auto session: ts_sessions_)
                 session->deliver(flvbuf);            
         }*/
-        m_u64timestamp += (40*90);
+        m_u64timestamp += (30*90);
 	}
     void setmetadata(const boost::asio::mutable_buffer& msg)
     {
@@ -341,13 +369,17 @@ private:
 	std::string m_strname;
     uint64_t m_u64timestamp;
     uint16_t m_dwsequence;
-    ts m_ts;
 
     bool m_bsupporthls;
+    ts m_ts;    
     uint32_t m_cur_hls_sequence;
     uint32_t m_cur_file_num;
     FILE* m_file_ts;
     std::shared_ptr<uint8_t> m_ts_stream_buff;	
+    uint32_t m_dw_ts_slice_num;
+    std::vector < uint64_t > m_a_file_duration;
+    std::string m_m3u8_ts_directory;
+    std::string m_m3u8_ts_prefix;
 };
 
 typedef std::shared_ptr<stream_hub> stream_hub_ptr;
