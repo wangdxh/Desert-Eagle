@@ -1,7 +1,6 @@
-﻿# Desert-Eagle
-boost asio flv video  http-flv http flv html5 flv.js
+# Desert-Eagle
 
-启动2个server，再启动client，chrome网页输入ip地址即可。
+启动2个server，再启动client。
 
 ### boost
 
@@ -59,8 +58,11 @@ m3u8文件的文件名称就是推流的时候，自定义的流名称。
 
 ### 待完成
 
-* hls+
 * 增加webrtc的服务器支持，进行单向码流转发
+* hls+
+
+
+先研究下janus，在搞hls+吧
 
 
 thisismaster
