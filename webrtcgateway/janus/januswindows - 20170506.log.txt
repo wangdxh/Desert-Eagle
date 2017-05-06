@@ -1,0 +1,1100 @@
+---------------------------------------------------
+  Starting Meetecho Janus (WebRTC Gateway) v0.2.0
+---------------------------------------------------
+
+Checking command line arguments...
+[janus.cfg]
+    [general]
+        configs_folder: ../etc/janus
+        plugins_folder: ../lib/janus/plugins
+        transports_folder: ../lib/janus/transports
+        log_to_file: ../januswindows.log
+        debug_level: 7
+        debug_timestamps: yes
+        admin_secret: janusoverlord
+    [certificates]
+        cert_pem: ../share/janus/certs/mycert.pem
+        cert_key: ../share/janus/certs/mycert.key
+    [media]
+    [nat]
+        nice_debug: false
+        ice_ignore_list: vmnet
+    [plugins]
+    [transports]
+Debug/log level is 7
+Debug/log timestamps are enabled
+Debug/log colors are enabled
+[Sat May 06 22:44:57 2017] Adding 'vmnet' to the ICE ignore list...
+[Sat May 06 22:44:57 2017] Selecting local IP address...
+[Sat May 06 22:44:57 2017] Autodetecting local IP...
+[Sat May 06 22:44:57 2017] Using 192.168.1.101 as local IP...
+[Sat May 06 22:44:57 2017] [33m[WARN][0m Token based authentication disabled
+[Sat May 06 22:44:57 2017] Initializing ICE stuff (Full mode, ICE-TCP candidates disabled, IPv6 support disabled)
+[Sat May 06 22:44:57 2017] TURN REST API backend: (disabled)
+[Sat May 06 22:44:57 2017] [33m[WARN][0m Janus is deployed on a private address (192.168.1.101) but you didn't specify any STUN server! Expect trouble if this is supposed to work over the internet and not just in a LAN...
+[Sat May 06 22:44:57 2017] BUNDLE is NOT going to be forced
+[Sat May 06 22:44:57 2017] rtcp-mux is NOT going to be forced
+[Sat May 06 22:44:57 2017]   -- RTCP component blackhole socket bound to port 59321
+[Sat May 06 22:44:57 2017] Using certificates:
+	../share/janus/certs/mycert.pem
+	../share/janus/certs/mycert.key
+[Sat May 06 22:44:57 2017] [33m[WARN][0m OpenSSL pre-1.1.0
+[Sat May 06 22:44:57 2017] ICE handles watchdog started
+[Sat May 06 22:44:57 2017] Fingerprint of our certificate: D2:B9:31:8F:DF:24:D8:0E:ED:D2:EF:25:9E:AF:6F:B8:34:AE:53:9C:E6:F3:8F:F2:64:15:FA:E8:7F:53:2D:38
+[Sat May 06 22:44:57 2017] Plugins folder: ../lib/janus/plugins
+[Sat May 06 22:44:57 2017] Loading plugin 'libjanus_streaming-0.dll'...
+[Sat May 06 22:44:57 2017] Sessions watchdog started
+[Sat May 06 22:44:57 2017] JANUS Streaming plugin created!
+[Sat May 06 22:44:57 2017] Configuration file: F:/msys64/opt/janus/etc/janus/janus.plugin.streaming.cfg
+[Sat May 06 22:44:57 2017] [janus.plugin.streaming.cfg]
+[Sat May 06 22:44:57 2017]     [general]
+[Sat May 06 22:44:57 2017]     [gstreamer-sample]
+[Sat May 06 22:44:57 2017]         type: rtp
+[Sat May 06 22:44:57 2017]         id: 1
+[Sat May 06 22:44:57 2017]         description: Opus/VP8 live stream coming from gstreamer
+[Sat May 06 22:44:57 2017]         audio: yes
+[Sat May 06 22:44:57 2017]         video: yes
+[Sat May 06 22:44:57 2017]         audioport: 5002
+[Sat May 06 22:44:57 2017]         audiopt: 111
+[Sat May 06 22:44:57 2017]         audiortpmap: opus/48000/2
+[Sat May 06 22:44:57 2017]         videoport: 5004
+[Sat May 06 22:44:57 2017]         videopt: 100
+[Sat May 06 22:44:57 2017]         videortpmap: VP8/90000
+[Sat May 06 22:44:57 2017]         secret: adminpwd
+[Sat May 06 22:44:57 2017]     [file-live-sample]
+[Sat May 06 22:44:57 2017]         type: live
+[Sat May 06 22:44:57 2017]         id: 2
+[Sat May 06 22:44:57 2017]         description: a-law file source (radio broadcast)
+[Sat May 06 22:44:57 2017]         filename: ../share/janus/streams/radio.alaw
+[Sat May 06 22:44:57 2017]         audio: yes
+[Sat May 06 22:44:57 2017]         video: no
+[Sat May 06 22:44:57 2017]         secret: adminpwd
+[Sat May 06 22:44:57 2017]     [file-ondemand-sample]
+[Sat May 06 22:44:57 2017]         type: ondemand
+[Sat May 06 22:44:57 2017]         id: 3
+[Sat May 06 22:44:57 2017]         description: mu-law file source (music)
+[Sat May 06 22:44:57 2017]         filename: ../share/janus/streams/music.mulaw
+[Sat May 06 22:44:57 2017]         audio: yes
+[Sat May 06 22:44:57 2017]         video: no
+[Sat May 06 22:44:57 2017]         secret: adminpwd
+[Sat May 06 22:44:57 2017] Adding stream 'gstreamer-sample'
+[Sat May 06 22:44:57 2017] Audio enabled, Video enabled
+[Sat May 06 22:44:57 2017] Audio enabled, Video enabled
+[Sat May 06 22:44:57 2017] Adding stream 'file-live-sample'
+[Sat May 06 22:44:57 2017] Adding stream 'file-ondemand-sample'
+[Sat May 06 22:44:57 2017]   ::: [1][gstreamer-sample] Opus/VP8 live stream coming from gstreamer (live, RTP source, public, pin: no pin)
+[Sat May 06 22:44:57 2017]   ::: [2][file-live-sample] a-law file source (radio broadcast) (live, file source, public, pin: no pin)
+[Sat May 06 22:44:57 2017]   ::: [3][file-ondemand-sample] mu-law file source (music) (on demand, file source, public, pin: no pin)
+[Sat May 06 22:44:57 2017] Filesource (live) thread starting...
+[Sat May 06 22:44:57 2017] [file-live-sample] Opening file source ../share/janus/streams/radio.alaw...
+[Sat May 06 22:44:57 2017] [file-live-sample] Streaming audio file: ../share/janus/streams/radio.alaw
+[Sat May 06 22:44:57 2017] JANUS Streaming plugin initialized!
+[Sat May 06 22:44:57 2017] 	Version: 6 (0.0.6)
+[Sat May 06 22:44:57 2017] 	   [janus.plugin.streaming] JANUS Streaming plugin
+[Sat May 06 22:44:57 2017] 	   This is a streaming plugin for Janus, allowing WebRTC peers to watch/listen to pre-recorded files or media generated by gstreamer.
+[Sat May 06 22:44:57 2017] 	   Plugin API version: 7
+[Sat May 06 22:44:57 2017] Transport plugins folder: ../lib/janus/transports
+[Sat May 06 22:44:57 2017] Starting streaming relay thread
+[Sat May 06 22:44:57 2017] Loading transport plugin 'libjanus_http-0.dll'...
+[Sat May 06 22:44:57 2017] Streaming watchdog started
+[Sat May 06 22:44:57 2017] Joining Streaming handler thread
+[Sat May 06 22:44:57 2017] JANUS REST (HTTP/HTTPS) transport plugin created!
+[Sat May 06 22:44:57 2017] Configuration file: F:/msys64/opt/janus/etc/janus/janus.transport.http.cfg
+[Sat May 06 22:44:57 2017] [janus.transport.http.cfg]
+[Sat May 06 22:44:57 2017]     [general]
+[Sat May 06 22:44:57 2017]         json: indented
+[Sat May 06 22:44:57 2017]         base_path: /janus
+[Sat May 06 22:44:57 2017]         threads: unlimited
+[Sat May 06 22:44:57 2017]         http: yes
+[Sat May 06 22:44:57 2017]         port: 8088
+[Sat May 06 22:44:57 2017]         https: no
+[Sat May 06 22:44:57 2017]     [admin]
+[Sat May 06 22:44:57 2017]         admin_base_path: /admin
+[Sat May 06 22:44:57 2017]         admin_threads: unlimited
+[Sat May 06 22:44:57 2017]         admin_http: no
+[Sat May 06 22:44:57 2017]         admin_port: 7088
+[Sat May 06 22:44:57 2017]         admin_https: no
+[Sat May 06 22:44:57 2017]     [certificates]
+[Sat May 06 22:44:57 2017]         cert_pem: ../../opt/janus/share/janus/certs/mycert.pem
+[Sat May 06 22:44:57 2017]         cert_key: ../../opt/janus/share/janus/certs/mycert.key
+[Sat May 06 22:44:57 2017] Using a thread per connection for the Janus API HTTP webserver
+[Sat May 06 22:44:57 2017] Binding to all interfaces for the Janus API HTTP webserver
+[Sat May 06 22:44:57 2017] HTTP webserver started (port 8088, /janus path listener)...
+[Sat May 06 22:44:57 2017] Using certificates:
+	../../opt/janus/share/janus/certs/mycert.pem
+	../../opt/janus/share/janus/certs/mycert.key
+[Sat May 06 22:44:57 2017] [33m[WARN][0m HTTPS webserver disabled
+[Sat May 06 22:44:57 2017] [33m[WARN][0m Admin/monitor HTTP webserver disabled
+[Sat May 06 22:44:57 2017] [33m[WARN][0m Admin/monitor HTTPS webserver disabled
+[Sat May 06 22:44:57 2017] JANUS REST (HTTP/HTTPS) transport plugin initialized!
+[Sat May 06 22:44:57 2017] 	Version: 2 (0.0.2)
+[Sat May 06 22:44:57 2017] 	   [janus.transport.http] JANUS REST (HTTP/HTTPS) transport plugin
+[Sat May 06 22:44:57 2017] 	   This transport plugin adds REST (HTTP/HTTPS) support to the Janus API via libmicrohttpd.
+[Sat May 06 22:44:57 2017] 	   Plugin API version: 5
+[Sat May 06 22:44:57 2017] 	   Janus API: enabled
+[Sat May 06 22:44:57 2017] 	   Admin API: disabled
+[Sat May 06 22:44:57 2017] HTTP/Janus sessions watchdog started
+[Sat May 06 22:45:17 2017] New connection on REST API: ::ffff:192.168.1.100
+[Sat May 06 22:45:20 2017] New connection on REST API: ::ffff:192.168.1.100
+[Sat May 06 22:45:20 2017] New connection on REST API: ::ffff:192.168.1.100
+[Sat May 06 22:45:29 2017] New connection on REST API: ::ffff:192.168.1.100
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1046] Got a HTTP OPTIONS request on /janus...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1047]  ... Just parsing headers for now...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Host: 192.168.1.101:8088
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Connection: keep-alive
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Access-Control-Request-Method: POST
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Origin: http://192.168.1.101
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-N9002 Build/LRX21V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Access-Control-Request-Headers: content-type
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Accept: */*
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Referer: http://192.168.1.101/streamingtest.html
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Encoding: gzip, deflate, sdch
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Language: zh-CN,zh;q=0.8
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_request_completed:1675] Request completed, freeing data
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1046] Got a HTTP POST request on /janus...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1047]  ... Just parsing headers for now...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Host: 192.168.1.101:8088
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Connection: keep-alive
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Content-Length: 47
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Accept: application/json, text/javascript, */*; q=0.01
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Origin: http://192.168.1.101
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-N9002 Build/LRX21V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Content-Type: application/json
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Referer: http://192.168.1.101/streamingtest.html
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Encoding: gzip, deflate
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Language: zh-CN,zh;q=0.8
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP POST request on /janus...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:29 2017] Processing POST data (application/json) (47 bytes)...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1179]   -- Data we have now (47 bytes)
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP POST request on /janus...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:29 2017] Processing POST data (application/json) (0 bytes)...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1184] Done getting payload, we can answer
+[Sat May 06 22:45:29 2017] {"janus":"create","transaction":"A5O7VrIbC67l"}
+[Sat May 06 22:45:29 2017] Forwarding request to the core (0000000000321530)
+[Sat May 06 22:45:29 2017] Got a Janus API request from janus.transport.http (0000000000321530)
+[Sat May 06 22:45:29 2017] Transport task pool, serving request
+[Sat May 06 22:45:29 2017] Creating new session: 3565470769699923
+[Sat May 06 22:45:29 2017] Session created (3565470769699923), create a queue for the long poll
+[Sat May 06 22:45:29 2017] Sending Janus API response to janus.transport.http (0000000000321530)
+[Sat May 06 22:45:29 2017] Got a Janus API response to send (0000000000321530)
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_request_completed:1675] Request completed, freeing data
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1046] Got a HTTP GET request on /janus/3565470769699923...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1047]  ... Just parsing headers for now...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Host: 192.168.1.101:8088
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Connection: keep-alive
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Accept: application/json, text/javascript, */*; q=0.01
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Origin: http://192.168.1.101
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-N9002 Build/LRX21V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Referer: http://192.168.1.101/streamingtest.html
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Encoding: gzip, deflate, sdch
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Language: zh-CN,zh;q=0.8
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP GET request on /janus/3565470769699923...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:29 2017] Session: 3565470769699923
+[Sat May 06 22:45:29 2017] Got a Janus API request from janus.transport.http (0000000000321530)
+[Sat May 06 22:45:29 2017] Session 3565470769699923 found... returning up to 1 messages
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_notifier:1701] ... handling long poll...
+[Sat May 06 22:45:29 2017] Transport task pool, serving request
+[Sat May 06 22:45:29 2017] Got a keep-alive on session 3565470769699923
+[Sat May 06 22:45:29 2017] Sending Janus API response to janus.transport.http (0000000000321530)
+[Sat May 06 22:45:29 2017] Got a Janus API response to send (0000000000321530)
+[Sat May 06 22:45:29 2017] New connection on REST API: ::ffff:192.168.1.100
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1046] Got a HTTP OPTIONS request on /janus/3565470769699923...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1047]  ... Just parsing headers for now...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Host: 192.168.1.101:8088
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Connection: keep-alive
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Access-Control-Request-Method: POST
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Origin: http://192.168.1.101
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-N9002 Build/LRX21V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Access-Control-Request-Headers: content-type
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Accept: */*
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Referer: http://192.168.1.101/streamingtest.html
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Encoding: gzip, deflate, sdch
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Language: zh-CN,zh;q=0.8
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_request_completed:1675] Request completed, freeing data
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1046] Got a HTTP POST request on /janus/3565470769699923...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1047]  ... Just parsing headers for now...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Host: 192.168.1.101:8088
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Connection: keep-alive
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Content-Length: 81
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Accept: application/json, text/javascript, */*; q=0.01
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Origin: http://192.168.1.101
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-N9002 Build/LRX21V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Content-Type: application/json
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Referer: http://192.168.1.101/streamingtest.html
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Encoding: gzip, deflate
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Language: zh-CN,zh;q=0.8
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP POST request on /janus/3565470769699923...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:29 2017] Session: 3565470769699923
+[Sat May 06 22:45:29 2017] Processing POST data (application/json) (81 bytes)...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1179]   -- Data we have now (81 bytes)
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP POST request on /janus/3565470769699923...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:29 2017] Session: 3565470769699923
+[Sat May 06 22:45:29 2017] Processing POST data (application/json) (0 bytes)...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1184] Done getting payload, we can answer
+[Sat May 06 22:45:29 2017] {"janus":"attach","plugin":"janus.plugin.streaming","transaction":"JvqzDlmBrk0V"}
+[Sat May 06 22:45:29 2017] Forwarding request to the core (0000000000321590)
+[Sat May 06 22:45:29 2017] Got a Janus API request from janus.transport.http (0000000000321590)
+[Sat May 06 22:45:29 2017] Transport task pool, serving request
+[Sat May 06 22:45:29 2017] Creating new handle in session 3565470769699923: 7697652077139890
+[Sat May 06 22:45:29 2017] Sending Janus API response to janus.transport.http (0000000000321590)
+[Sat May 06 22:45:29 2017] Got a Janus API response to send (0000000000321590)
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_request_completed:1675] Request completed, freeing data
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1046] Got a HTTP OPTIONS request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1047]  ... Just parsing headers for now...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Host: 192.168.1.101:8088
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Connection: keep-alive
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Access-Control-Request-Method: POST
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Origin: http://192.168.1.101
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-N9002 Build/LRX21V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Access-Control-Request-Headers: content-type
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Accept: */*
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Referer: http://192.168.1.101/streamingtest.html
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Encoding: gzip, deflate, sdch
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Language: zh-CN,zh;q=0.8
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_request_completed:1675] Request completed, freeing data
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1046] Got a HTTP POST request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1047]  ... Just parsing headers for now...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Host: 192.168.1.101:8088
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Connection: keep-alive
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Content-Length: 74
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Accept: application/json, text/javascript, */*; q=0.01
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Origin: http://192.168.1.101
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-N9002 Build/LRX21V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Content-Type: application/json
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Referer: http://192.168.1.101/streamingtest.html
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Encoding: gzip, deflate
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Language: zh-CN,zh;q=0.8
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP POST request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:29 2017] Session: 3565470769699923
+[Sat May 06 22:45:29 2017] Handle: 7697652077139890
+[Sat May 06 22:45:29 2017] Processing POST data (application/json) (74 bytes)...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1179]   -- Data we have now (74 bytes)
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP POST request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:29 2017] Session: 3565470769699923
+[Sat May 06 22:45:29 2017] Handle: 7697652077139890
+[Sat May 06 22:45:29 2017] Processing POST data (application/json) (0 bytes)...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_handler:1184] Done getting payload, we can answer
+[Sat May 06 22:45:29 2017] {"janus":"message","body":{"request":"list"},"transaction":"I3aONZfZAcs8"}
+[Sat May 06 22:45:29 2017] Forwarding request to the core (0000000000321590)
+[Sat May 06 22:45:29 2017] Got a Janus API request from janus.transport.http (0000000000321590)
+[Sat May 06 22:45:29 2017] Transport task pool, serving request
+[Sat May 06 22:45:29 2017] [7697652077139890] There's a message for JANUS Streaming plugin
+[Sat May 06 22:45:29 2017] Request for the list of mountpoints
+[Sat May 06 22:45:29 2017] Creating plugin result...
+[Sat May 06 22:45:29 2017] Sending Janus API response to janus.transport.http (0000000000321590)
+[Sat May 06 22:45:29 2017] Got a Janus API response to send (0000000000321590)
+[Sat May 06 22:45:29 2017] Destroying plugin result...
+[Sat May 06 22:45:29 2017] [transports/janus_http.c:janus_http_request_completed:1675] Request completed, freeing data
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_handler:1046] Got a HTTP OPTIONS request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_handler:1047]  ... Just parsing headers for now...
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Host: 192.168.1.101:8088
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Connection: keep-alive
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Access-Control-Request-Method: POST
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Origin: http://192.168.1.101
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-N9002 Build/LRX21V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Access-Control-Request-Headers: content-type
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Accept: */*
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Referer: http://192.168.1.101/streamingtest.html
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Encoding: gzip, deflate, sdch
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Language: zh-CN,zh;q=0.8
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_request_completed:1675] Request completed, freeing data
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_handler:1046] Got a HTTP POST request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_handler:1047]  ... Just parsing headers for now...
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Host: 192.168.1.101:8088
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Connection: keep-alive
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Content-Length: 82
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Accept: application/json, text/javascript, */*; q=0.01
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Origin: http://192.168.1.101
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-N9002 Build/LRX21V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Content-Type: application/json
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Referer: http://192.168.1.101/streamingtest.html
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Encoding: gzip, deflate
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Language: zh-CN,zh;q=0.8
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP POST request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:36 2017] Session: 3565470769699923
+[Sat May 06 22:45:36 2017] Handle: 7697652077139890
+[Sat May 06 22:45:36 2017] Processing POST data (application/json) (82 bytes)...
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_handler:1179]   -- Data we have now (82 bytes)
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP POST request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:36 2017] Session: 3565470769699923
+[Sat May 06 22:45:36 2017] Handle: 7697652077139890
+[Sat May 06 22:45:36 2017] Processing POST data (application/json) (0 bytes)...
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_handler:1184] Done getting payload, we can answer
+[Sat May 06 22:45:36 2017] {"janus":"message","body":{"request":"watch","id":3},"transaction":"yzfDOEFyJZQc"}
+[Sat May 06 22:45:36 2017] Forwarding request to the core (0000000000321590)
+[Sat May 06 22:45:36 2017] Got a Janus API request from janus.transport.http (0000000000321590)
+[Sat May 06 22:45:36 2017] Transport task pool, serving request
+[Sat May 06 22:45:36 2017] [7697652077139890] There's a message for JANUS Streaming plugin
+[Sat May 06 22:45:36 2017] Creating plugin result...
+[Sat May 06 22:45:36 2017] Sending Janus API response to janus.transport.http (0000000000321590)
+[Sat May 06 22:45:36 2017] Got a Janus API response to send (0000000000321590)
+[Sat May 06 22:45:36 2017] Destroying plugin result...
+[Sat May 06 22:45:36 2017] Request to watch mountpoint/stream 3
+[Sat May 06 22:45:36 2017] Going to offer this SDP:
+v=0
+o=- 1494081936886944 1494081936886944 IN IP4 127.0.0.1
+s=Streaming Test
+t=0 0
+m=audio 1 RTP/SAVPF 0
+c=IN IP4 1.1.1.1
+a=rtpmap:0 PCMU/8000
+a=sendonly
+
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_request_completed:1675] Request completed, freeing data
+[Sat May 06 22:45:36 2017] [7697652077139890] Audio has been negotiated
+[Sat May 06 22:45:36 2017] [7697652077139890] Video has NOT been negotiated
+[Sat May 06 22:45:36 2017] [7697652077139890] SCTP/DataChannels have NOT been negotiated
+[Sat May 06 22:45:36 2017] [7697652077139890] Setting ICE locally: got ANSWER (1 audios, 0 videos)
+[Sat May 06 22:45:36 2017] [7697652077139890] Creating ICE agent (ICE Full mode, controlling)
+[Sat May 06 22:45:36 2017] Filesource (on demand) RTP thread starting...
+[Sat May 06 22:45:36 2017] [file-ondemand-sample] Opening file source ../share/janus/streams/music.mulaw...
+[Sat May 06 22:45:36 2017] [7697652077139890] ICE thread started
+[Sat May 06 22:45:36 2017] [file-ondemand-sample] Streaming audio file: ../share/janus/streams/music.mulaw
+[Sat May 06 22:45:36 2017] [7697652077139890] Adding 192.168.1.101 to the addresses to gather candidates for
+[Sat May 06 22:45:36 2017] [7697652077139890] Gathering done for stream 1
+[Sat May 06 22:45:36 2017]  -------------------------------------------
+[Sat May 06 22:45:36 2017]   >> Anonymized (161 --> 161 bytes)
+[Sat May 06 22:45:36 2017]  -------------------------------------------
+[Sat May 06 22:45:36 2017] v=0
+o=- 1494081936886944 1494081936886944 IN IP4 127.0.0.1
+s=Streaming Test
+t=0 0
+m=audio 1 RTP/SAVPF 0
+c=IN IP4 1.1.1.1
+a=sendonly
+a=rtpmap:0 PCMU/8000
+
+[Sat May 06 22:45:36 2017] [7697652077139890] No RTP maps?? trying formats...
+[Sat May 06 22:45:36 2017] [7697652077139890] We have 1 candidates for Stream #1, Component #1
+[Sat May 06 22:45:36 2017] [7697652077139890] Stream #1, Component #1
+[Sat May 06 22:45:36 2017] [7697652077139890]   Address:    192.168.1.101:59324
+[Sat May 06 22:45:36 2017] [7697652077139890]   Priority:   2013266431
+[Sat May 06 22:45:36 2017] [7697652077139890]   Foundation: 1
+[Sat May 06 22:45:36 2017] [7697652077139890]     a=candidate:1 1 udp 2013266431 192.168.1.101 59324 typ host
+[Sat May 06 22:45:36 2017] [7697652077139890] We have 1 candidates for Stream #1, Component #2
+[Sat May 06 22:45:36 2017] [7697652077139890] Stream #1, Component #2
+[Sat May 06 22:45:36 2017] [7697652077139890]   Address:    192.168.1.101:59325
+[Sat May 06 22:45:36 2017] [7697652077139890]   Priority:   2013266430
+[Sat May 06 22:45:36 2017] [7697652077139890]   Foundation: 1
+[Sat May 06 22:45:36 2017] [7697652077139890]     a=candidate:1 2 udp 2013266430 192.168.1.101 59325 typ host
+[Sat May 06 22:45:36 2017]  -------------------------------------------
+[Sat May 06 22:45:36 2017]   >> Merged (161 --> 733 bytes)
+[Sat May 06 22:45:36 2017]  -------------------------------------------
+[Sat May 06 22:45:36 2017] v=0
+o=- 1494081936886944 1494081936886944 IN IP4 192.168.1.101
+s=Streaming Test
+t=0 0
+a=group:BUNDLE audio
+a=msid-semantic: WMS janus
+m=audio 1 RTP/SAVPF 0
+c=IN IP4 192.168.1.101
+a=mid:audio
+a=sendonly
+a=rtcp-mux
+a=ice-ufrag:Qgz1
+a=ice-pwd:3BLKr9N3h7et3MMR43XEr+
+a=ice-options:trickle
+a=fingerprint:sha-256 D2:B9:31:8F:DF:24:D8:0E:ED:D2:EF:25:9E:AF:6F:B8:34:AE:53:9C:E6:F3:8F:F2:64:15:FA:E8:7F:53:2D:38
+a=setup:actpass
+a=connection:new
+a=rtpmap:0 PCMU/8000
+a=ssrc:295218777 cname:janusaudio
+a=ssrc:295218777 msid:janus janusa0
+a=ssrc:295218777 mslabel:janus
+a=ssrc:295218777 label:janusa0
+a=candidate:1 1 udp 2013266431 192.168.1.101 59324 typ host
+a=candidate:1 2 udp 2013266430 192.168.1.101 59325 typ host
+
+[Sat May 06 22:45:36 2017] [7697652077139890] Sending event to transport...
+[Sat May 06 22:45:36 2017] Sending event to janus.transport.http (0000000000321530)
+[Sat May 06 22:45:36 2017] Got a Janus API event to send (0000000000321530)
+[Sat May 06 22:45:36 2017]   >> Pushing event: 0 (Success)
+[Sat May 06 22:45:36 2017] We have a message to serve...
+	{
+   "janus": "event",
+   "session_id": 3565470769699923,
+   "sender": 7697652077139890,
+   "transaction": "yzfDOEFyJZQc",
+   "plugindata": {
+      "plugin": "janus.plugin.streaming",
+      "data": {
+         "streaming": "event",
+         "result": {
+            "status": "preparing"
+         }
+      }
+   },
+   "jsep": {
+      "type": "offer",
+      "sdp": "v=0\r\no=- 1494081936886944 1494081936886944 IN IP4 192.168.1.101\r\ns=Streaming Test\r\nt=0 0\r\na=group:BUNDLE audio\r\na=msid-semantic: WMS janus\r\nm=audio 1 RTP/SAVPF 0\r\nc=IN IP4 192.168.1.101\r\na=mid:audio\r\na=sendonly\r\na=rtcp-mux\r\na=ice-ufrag:Qgz1\r\na=ice-pwd:3BLKr9N3h7et3MMR43XEr+\r\na=ice-options:trickle\r\na=fingerprint:sha-256 D2:B9:31:8F:DF:24:D8:0E:ED:D2:EF:25:9E:AF:6F:B8:34:AE:53:9C:E6:F3:8F:F2:64:15:FA:E8:7F:53:2D:38\r\na=setup:actpass\r\na=connection:new\r\na=rtpmap:0 PCMU/8000\r\na=ssrc:295218777 cname:janusaudio\r\na=ssrc:295218777 msid:janus janusa0\r\na=ssrc:295218777 mslabel:janus\r\na=ssrc:295218777 label:janusa0\r\na=candidate:1 1 udp 2013266431 192.168.1.101 59324 typ host\r\na=candidate:1 2 udp 2013266430 192.168.1.101 59325 typ host\r\n"
+   }
+}
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_request_completed:1675] Request completed, freeing data
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_handler:1046] Got a HTTP POST request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_handler:1047]  ... Just parsing headers for now...
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Host: 192.168.1.101:8088
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Connection: keep-alive
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Content-Length: 562
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Accept: application/json, text/javascript, */*; q=0.01
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Origin: http://192.168.1.101
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-N9002 Build/LRX21V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Content-Type: application/json
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Referer: http://192.168.1.101/streamingtest.html
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Encoding: gzip, deflate
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Language: zh-CN,zh;q=0.8
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP POST request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:36 2017] Session: 3565470769699923
+[Sat May 06 22:45:36 2017] Handle: 7697652077139890
+[Sat May 06 22:45:36 2017] Processing POST data (application/json) (562 bytes)...
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_handler:1179]   -- Data we have now (562 bytes)
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP POST request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:36 2017] Session: 3565470769699923
+[Sat May 06 22:45:36 2017] Handle: 7697652077139890
+[Sat May 06 22:45:36 2017] Processing POST data (application/json) (0 bytes)...
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_handler:1184] Done getting payload, we can answer
+[Sat May 06 22:45:36 2017] {"janus":"message","body":{"request":"start"},"transaction":"6SzS2LDTrFHQ","jsep":{"type":"answer","sdp":"v=0\r\no=- 6409189156505673456 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\na=group:BUNDLE audio\r\na=msid-semantic: WMS\r\nm=audio 9 RTP/SAVPF 0\r\nc=IN IP4 0.0.0.0\r\na=rtcp:9 IN IP4 0.0.0.0\r\na=ice-ufrag:XALC\r\na=ice-pwd:rttf6zBJn9ZPWebRcdECkQYw\r\na=fingerprint:sha-256 CC:59:7B:FD:BB:F5:DF:14:81:FC:85:78:35:9C:BA:40:6F:6D:EB:86:29:17:1D:2E:BB:39:53:B6:88:11:14:2B\r\na=setup:active\r\na=mid:audio\r\na=recvonly\r\na=rtcp-mux\r\na=rtpmap:0 PCMU/8000\r\n"}}
+[Sat May 06 22:45:36 2017] Forwarding request to the core (0000000000321530)
+[Sat May 06 22:45:36 2017] Got a Janus API request from janus.transport.http (0000000000321530)
+[Sat May 06 22:45:36 2017] Transport task pool, serving request
+[Sat May 06 22:45:36 2017] [7697652077139890] There's a message for JANUS Streaming plugin
+[Sat May 06 22:45:36 2017] [7697652077139890] Remote SDP:
+v=0
+o=- 6409189156505673456 2 IN IP4 127.0.0.1
+s=-
+t=0 0
+a=group:BUNDLE audio
+a=msid-semantic: WMS
+m=audio 9 RTP/SAVPF 0
+c=IN IP4 0.0.0.0
+a=rtcp:9 IN IP4 0.0.0.0
+a=ice-ufrag:XALC
+a=ice-pwd:rttf6zBJn9ZPWebRcdECkQYw
+a=fingerprint:sha-256 CC:59:7B:FD:BB:F5:DF:14:81:FC:85:78:35:9C:BA:40:6F:6D:EB:86:29:17:1D:2E:BB:39:53:B6:88:11:14:2B
+a=setup:active
+a=mid:audio
+a=recvonly
+a=rtcp-mux
+a=rtpmap:0 PCMU/8000
+[Sat May 06 22:45:36 2017] [7697652077139890] Audio has been negotiated, Video has NOT been negotiated, SCTP/DataChannels have NOT been negotiated
+[Sat May 06 22:45:36 2017] [7697652077139890] The browser: supports BUNDLE, supports rtcp-mux, is doing Trickle ICE
+[Sat May 06 22:45:36 2017] [7697652077139890] Parsing audio candidates (stream=1)...
+[Sat May 06 22:45:36 2017] [7697652077139890] ICE ufrag (local):   XALC
+[Sat May 06 22:45:36 2017] [7697652077139890] ICE pwd (local):     rttf6zBJn9ZPWebRcdECkQYw
+[Sat May 06 22:45:36 2017] [7697652077139890] Fingerprint (local) : sha-256 CC:59:7B:FD:BB:F5:DF:14:81:FC:85:78:35:9C:BA:40:6F:6D:EB:86:29:17:1D:2E:BB:39:53:B6:88:11:14:2B
+[Sat May 06 22:45:36 2017] [7697652077139890] DTLS setup (local):  active
+[Sat May 06 22:45:36 2017] [7697652077139890] Audio mid: audio
+[Sat May 06 22:45:36 2017] [7697652077139890]   -- bundle is supported by the browser, getting rid of one of the RTP/RTCP components, if any...
+[Sat May 06 22:45:36 2017] [7697652077139890]   -- rtcp-mux is supported by the browser, getting rid of RTCP components, if any...
+[Sat May 06 22:45:36 2017] [7697652077139890] Discovered new remote candidate for component 2 in stream 1: type=host
+[Sat May 06 22:45:36 2017] [7697652077139890]   -- ICE Trickling is supported by the browser, waiting for remote candidates...
+[Sat May 06 22:45:36 2017]  -------------------------------------------
+[Sat May 06 22:45:36 2017]   >> Anonymized (419 --> 136 bytes)
+[Sat May 06 22:45:36 2017]  -------------------------------------------
+[Sat May 06 22:45:36 2017] v=0
+o=- 6409189156505673456 2 IN IP4 127.0.0.1
+s=-
+t=0 0
+m=audio 1 RTP/SAVPF 0
+c=IN IP4 1.1.1.1
+a=recvonly
+a=rtpmap:0 PCMU/8000
+
+[Sat May 06 22:45:36 2017] Creating plugin result...
+[Sat May 06 22:45:36 2017] Sending Janus API response to janus.transport.http (0000000000321530)
+[Sat May 06 22:45:36 2017] Got a Janus API response to send (0000000000321530)
+[Sat May 06 22:45:36 2017] Destroying plugin result...
+[Sat May 06 22:45:36 2017] [transports/janus_http.c:janus_http_request_completed:1675] Request completed, freeing data
+[Sat May 06 22:45:36 2017] Starting the streaming
+[Sat May 06 22:45:36 2017] This is involving a negotiation (answer) as well (but we really don't care):
+v=0
+o=- 6409189156505673456 2 IN IP4 127.0.0.1
+s=-
+t=0 0
+m=audio 1 RTP/SAVPF 0
+c=IN IP4 1.1.1.1
+a=recvonly
+a=rtpmap:0 PCMU/8000
+
+[Sat May 06 22:45:36 2017] [7697652077139890] Sending event to transport...
+[Sat May 06 22:45:36 2017] Sending event to janus.transport.http (0000000000321530)
+[Sat May 06 22:45:36 2017] Got a Janus API event to send (0000000000321530)
+[Sat May 06 22:45:36 2017]   >> Pushing event: 0 (Success)
+[Sat May 06 22:45:36 2017] [ice.c:janus_ice_thread:2183] [7697652077139890] Looping (ICE)...
+[Sat May 06 22:45:37 2017] [33m[WARN][0m [7697652077139890] Still waiting for the DTLS stack for component 1 in stream 1...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1046] Got a HTTP POST request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1047]  ... Just parsing headers for now...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Host: 192.168.1.101:8088
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Connection: keep-alive
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Content-Length: 218
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Accept: application/json, text/javascript, */*; q=0.01
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Origin: http://192.168.1.101
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-N9002 Build/LRX21V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Content-Type: application/json
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Referer: http://192.168.1.101/streamingtest.html
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Encoding: gzip, deflate
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Language: zh-CN,zh;q=0.8
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP POST request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:37 2017] Session: 3565470769699923
+[Sat May 06 22:45:37 2017] Handle: 7697652077139890
+[Sat May 06 22:45:37 2017] Processing POST data (application/json) (218 bytes)...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1179]   -- Data we have now (218 bytes)
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP POST request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:37 2017] Session: 3565470769699923
+[Sat May 06 22:45:37 2017] Handle: 7697652077139890
+[Sat May 06 22:45:37 2017] Processing POST data (application/json) (0 bytes)...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1184] Done getting payload, we can answer
+[Sat May 06 22:45:37 2017] {"janus":"trickle","candidate":{"candidate":"candidate:3013953624 1 udp 2113937151 192.168.1.100 54437 typ host generation 0 ufrag XALC network-cost 50","sdpMid":"audio","sdpMLineIndex":0},"transaction":"fwPInAv3quIK"}
+[Sat May 06 22:45:37 2017] Forwarding request to the core (0000000000321530)
+[Sat May 06 22:45:37 2017] Got a Janus API request from janus.transport.http (0000000000321530)
+[Sat May 06 22:45:37 2017] Transport task pool, serving request
+[Sat May 06 22:45:37 2017] [7697652077139890] Trickle candidate (audio): candidate:3013953624 1 udp 2113937151 192.168.1.100 54437 typ host generation 0 ufrag XALC network-cost 50
+[Sat May 06 22:45:37 2017] [7697652077139890]  Adding remote candidate component:1 stream:1 type:host 192.168.1.100:54437
+[Sat May 06 22:45:37 2017] [7697652077139890]  Transport: UDP
+[Sat May 06 22:45:37 2017] [7697652077139890]    Candidate added to the list! (1 elements for 1/1)
+[Sat May 06 22:45:37 2017] [7697652077139890] ICE already started for this component, setting candidates we have up to now
+[Sat May 06 22:45:37 2017] [7697652077139890] ## Setting remote candidates: stream 1, component 1 (1 in the list)
+[Sat May 06 22:45:37 2017] [7697652077139890] >> Remote Stream #1, Component #1
+[Sat May 06 22:45:37 2017] [7697652077139890]   Address:    192.168.1.100:54437
+[Sat May 06 22:45:37 2017] [7697652077139890]   Priority:   2113937151
+[Sat May 06 22:45:37 2017] [7697652077139890]   Foundation: 3013953624
+[Sat May 06 22:45:37 2017] [7697652077139890]   Username:   XALC
+[Sat May 06 22:45:37 2017] [7697652077139890]   Password:   rttf6zBJn9ZPWebRcdECkQYw
+[Sat May 06 22:45:37 2017] [7697652077139890]  Setting remote credentials...
+[Sat May 06 22:45:37 2017] [7697652077139890] Component state changed for component 1 in stream 1: 2 (connecting)
+[Sat May 06 22:45:37 2017] [7697652077139890] Remote candidates set!
+[Sat May 06 22:45:37 2017] Sending Janus API response to janus.transport.http (0000000000321530)
+[Sat May 06 22:45:37 2017] Got a Janus API response to send (0000000000321530)
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_request_completed:1675] Request completed, freeing data
+[Sat May 06 22:45:37 2017] [7697652077139890] New selected pair for component 1 in stream 1: 1 <-> 3013953624
+[Sat May 06 22:45:37 2017] [7697652077139890]   Component is ready enough, starting DTLS handshake...
+[Sat May 06 22:45:37 2017] janus_dtls_bio_filter_ctrl: 6
+[Sat May 06 22:45:37 2017] [7697652077139890]   Setting accept state (DTLS server)
+[Sat May 06 22:45:37 2017] janus_dtls_bio_filter_ctrl: 6
+[Sat May 06 22:45:37 2017] [7697652077139890] Creating retransmission timer with ID 5
+[Sat May 06 22:45:37 2017] [7697652077139890] Component state changed for component 1 in stream 1: 3 (connected)
+[Sat May 06 22:45:37 2017] [7697652077139890] Component state changed for component 1 in stream 1: 4 (ready)
+[Sat May 06 22:45:37 2017] [7697652077139890] ICE send thread started...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1046] Got a HTTP POST request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1047]  ... Just parsing headers for now...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Host: 192.168.1.101:8088
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Connection: keep-alive
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Content-Length: 79
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Accept: application/json, text/javascript, */*; q=0.01
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Origin: http://192.168.1.101
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-N9002 Build/LRX21V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Content-Type: application/json
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Referer: http://192.168.1.101/streamingtest.html
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Encoding: gzip, deflate
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Language: zh-CN,zh;q=0.8
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP POST request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:37 2017] Session: 3565470769699923
+[Sat May 06 22:45:37 2017] Handle: 7697652077139890
+[Sat May 06 22:45:37 2017] Processing POST data (application/json) (79 bytes)...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1179]   -- Data we have now (79 bytes)
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP POST request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:37 2017] Session: 3565470769699923
+[Sat May 06 22:45:37 2017] Handle: 7697652077139890
+[Sat May 06 22:45:37 2017] Processing POST data (application/json) (0 bytes)...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1184] Done getting payload, we can answer
+[Sat May 06 22:45:37 2017] {"janus":"trickle","candidate":{"completed":true},"transaction":"sdRLO96DRnk7"}
+[Sat May 06 22:45:37 2017] Forwarding request to the core (0000000000321b30)
+[Sat May 06 22:45:37 2017] Got a Janus API request from janus.transport.http (0000000000321b30)
+[Sat May 06 22:45:37 2017] Transport task pool, serving request
+[Sat May 06 22:45:37 2017] No more remote candidates for handle 7697652077139890!
+[Sat May 06 22:45:37 2017] Sending Janus API response to janus.transport.http (0000000000321b30)
+[Sat May 06 22:45:37 2017] Got a Janus API response to send (0000000000321b30)
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_request_completed:1675] Request completed, freeing data
+[Sat May 06 22:45:37 2017] [7697652077139890] Looks like DTLS!
+[Sat May 06 22:45:37 2017] [7697652077139890]     Written 167 bytes on the read BIO...
+[Sat May 06 22:45:37 2017] janus_dtls_bio_filter_ctrl: 49
+[Sat May 06 22:45:37 2017] Advertizing MTU: 1472
+[Sat May 06 22:45:37 2017] janus_dtls_bio_filter_ctrl: 49
+[Sat May 06 22:45:37 2017] janus_dtls_bio_filter_ctrl: 49
+[Sat May 06 22:45:37 2017] janus_dtls_bio_filter_ctrl: 49
+[Sat May 06 22:45:37 2017] janus_dtls_bio_filter_ctrl: 49
+[Sat May 06 22:45:37 2017] janus_dtls_bio_filter_ctrl: 49
+[Sat May 06 22:45:37 2017] janus_dtls_bio_filter_ctrl: 49
+[Sat May 06 22:45:37 2017] janus_dtls_bio_filter_ctrl: 49
+[Sat May 06 22:45:37 2017] janus_dtls_bio_filter_ctrl: 49
+[Sat May 06 22:45:37 2017] janus_dtls_bio_filter_ctrl: 49
+[Sat May 06 22:45:37 2017] janus_dtls_bio_filter_ctrl: 49
+[Sat May 06 22:45:37 2017] janus_dtls_bio_filter_write: 00000000045d0520, 1116
+[Sat May 06 22:45:37 2017]   -- 1116
+[Sat May 06 22:45:37 2017] New list length: 1
+[Sat May 06 22:45:37 2017] [7697652077139890]     ... and read -1 of them from SSL...
+[Sat May 06 22:45:37 2017] [7697652077139890] >> Going to send DTLS data: 1116 bytes
+[Sat May 06 22:45:37 2017] [7697652077139890] >> >> Read 1116 bytes from the write_BIO...
+[Sat May 06 22:45:37 2017] [7697652077139890] >> >> ... and sent 1116 of those bytes on the socket
+[Sat May 06 22:45:37 2017] [7697652077139890] Initialization not finished yet...
+[Sat May 06 22:45:37 2017] [7697652077139890] Looks like DTLS!
+[Sat May 06 22:45:37 2017] [7697652077139890]     Written 595 bytes on the read BIO...
+[Sat May 06 22:45:37 2017] janus_dtls_bio_filter_ctrl: 49
+[Sat May 06 22:45:37 2017] janus_dtls_bio_filter_ctrl: 49
+[Sat May 06 22:45:37 2017] janus_dtls_bio_filter_ctrl: 49
+[Sat May 06 22:45:37 2017] janus_dtls_bio_filter_ctrl: 49
+[Sat May 06 22:45:37 2017] janus_dtls_bio_filter_ctrl: 49
+[Sat May 06 22:45:37 2017] janus_dtls_bio_filter_ctrl: 49
+[Sat May 06 22:45:37 2017] janus_dtls_bio_filter_write: 00000000045d0520, 570
+[Sat May 06 22:45:37 2017]   -- 570
+[Sat May 06 22:45:37 2017] New list length: 1
+[Sat May 06 22:45:37 2017] janus_dtls_bio_filter_ctrl: 7
+[Sat May 06 22:45:37 2017] [7697652077139890]     ... and read -1 of them from SSL...
+[Sat May 06 22:45:37 2017] [7697652077139890] >> Going to send DTLS data: 570 bytes
+[Sat May 06 22:45:37 2017] [7697652077139890] >> >> Read 570 bytes from the write_BIO...
+[Sat May 06 22:45:37 2017] [7697652077139890] >> >> ... and sent 570 of those bytes on the socket
+[Sat May 06 22:45:37 2017] [7697652077139890] DTLS established, yay!
+[Sat May 06 22:45:37 2017] [7697652077139890] Computing sha-256 fingerprint of remote certificate...
+[Sat May 06 22:45:37 2017] [7697652077139890] Remote fingerprint (sha-256) of the client is CC:59:7B:FD:BB:F5:DF:14:81:FC:85:78:35:9C:BA:40:6F:6D:EB:86:29:17:1D:2E:BB:39:53:B6:88:11:14:2B
+[Sat May 06 22:45:37 2017] [7697652077139890]  Fingerprint is a match!
+[Sat May 06 22:45:37 2017] [7697652077139890] Created inbound SRTP session for component 1 in stream 1
+[Sat May 06 22:45:37 2017] [7697652077139890] Created outbound SRTP session for component 1 in stream 1
+[Sat May 06 22:45:37 2017] [7697652077139890] The DTLS handshake for the component 1 in stream 1 has been completed
+[Sat May 06 22:45:37 2017] [7697652077139890] The DTLS handshake has been completed
+[Sat May 06 22:45:37 2017] [7697652077139890] Telling the plugin about it (JANUS Streaming plugin)
+[Sat May 06 22:45:37 2017] WebRTC media is now available
+[Sat May 06 22:45:37 2017] [7697652077139890] Sending event to transport...
+[Sat May 06 22:45:37 2017] Sending event to janus.transport.http (0000000000321530)
+[Sat May 06 22:45:37 2017] Got a Janus API event to send (0000000000321530)
+[Sat May 06 22:45:37 2017]   >> Pushing event: 0 (Success)
+[Sat May 06 22:45:37 2017] [7697652077139890] Sending event to transport...
+[Sat May 06 22:45:37 2017] Sending event to janus.transport.http (0000000000321530)
+[Sat May 06 22:45:37 2017] Got a Janus API event to send (0000000000321530)
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1046] Got a HTTP GET request on /janus/3565470769699923...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1047]  ... Just parsing headers for now...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Host: 192.168.1.101:8088
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Connection: keep-alive
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Accept: application/json, text/javascript, */*; q=0.01
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Origin: http://192.168.1.101
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-N9002 Build/LRX21V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Referer: http://192.168.1.101/streamingtest.html
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Encoding: gzip, deflate, sdch
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Language: zh-CN,zh;q=0.8
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP GET request on /janus/3565470769699923...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:37 2017] Session: 3565470769699923
+[Sat May 06 22:45:37 2017] Got a Janus API request from janus.transport.http (00000000045d1560)
+[Sat May 06 22:45:37 2017] Session 3565470769699923 found... returning up to 1 messages
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_request_completed:1675] Request completed, freeing data
+[Sat May 06 22:45:37 2017] Transport task pool, serving request
+[Sat May 06 22:45:37 2017] Got a keep-alive on session 3565470769699923
+[Sat May 06 22:45:37 2017] Sending Janus API response to janus.transport.http (00000000045d1560)
+[Sat May 06 22:45:37 2017] Got a Janus API response to send (00000000045d1560)
+[Sat May 06 22:45:37 2017] [7697652077139890]  DTLS already set up, disabling retransmission timer!
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1046] Got a HTTP GET request on /janus/3565470769699923...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1047]  ... Just parsing headers for now...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Host: 192.168.1.101:8088
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Connection: keep-alive
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Accept: application/json, text/javascript, */*; q=0.01
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Origin: http://192.168.1.101
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-N9002 Build/LRX21V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Referer: http://192.168.1.101/streamingtest.html
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Encoding: gzip, deflate, sdch
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Language: zh-CN,zh;q=0.8
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP GET request on /janus/3565470769699923...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:37 2017] Session: 3565470769699923
+[Sat May 06 22:45:37 2017] Got a Janus API request from janus.transport.http (00000000045d1560)
+[Sat May 06 22:45:37 2017] Session 3565470769699923 found... returning up to 1 messages
+[Sat May 06 22:45:37 2017] Transport task pool, serving request
+[Sat May 06 22:45:37 2017] Got a keep-alive on session 3565470769699923
+[Sat May 06 22:45:37 2017] Sending Janus API response to janus.transport.http (00000000045d1560)
+[Sat May 06 22:45:37 2017] Got a Janus API response to send (00000000045d1560)
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_request_completed:1675] Request completed, freeing data
+[Sat May 06 22:45:37 2017] [7697652077139890] Fixing SSRCs (local 295218777, peer 0)
+[Sat May 06 22:45:37 2017]    Parsing compound packet (total of 48 bytes)
+[Sat May 06 22:45:37 2017]      #1 SR (200)
+[Sat May 06 22:45:37 2017]        RTCP PT length: 28 bytes
+[Sat May 06 22:45:37 2017]      #2 SDES (202)
+[Sat May 06 22:45:37 2017]        RTCP PT length: 20 bytes
+[Sat May 06 22:45:37 2017]   End of compound packet
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1046] Got a HTTP GET request on /janus/3565470769699923...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1047]  ... Just parsing headers for now...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Host: 192.168.1.101:8088
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Connection: keep-alive
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Accept: application/json, text/javascript, */*; q=0.01
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Origin: http://192.168.1.101
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-N9002 Build/LRX21V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Referer: http://192.168.1.101/streamingtest.html
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Encoding: gzip, deflate, sdch
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Language: zh-CN,zh;q=0.8
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP GET request on /janus/3565470769699923...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:37 2017] Session: 3565470769699923
+[Sat May 06 22:45:37 2017] Got a Janus API request from janus.transport.http (00000000045d1560)
+[Sat May 06 22:45:37 2017] Session 3565470769699923 found... returning up to 1 messages
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_request_completed:1675] Request completed, freeing data
+[Sat May 06 22:45:37 2017] Transport task pool, serving request
+[Sat May 06 22:45:37 2017] Got a keep-alive on session 3565470769699923
+[Sat May 06 22:45:37 2017] Sending Janus API response to janus.transport.http (00000000045d1560)
+[Sat May 06 22:45:37 2017] Got a Janus API response to send (00000000045d1560)
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1046] Got a HTTP GET request on /janus/3565470769699923...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1047]  ... Just parsing headers for now...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Host: 192.168.1.101:8088
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Connection: keep-alive
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Accept: application/json, text/javascript, */*; q=0.01
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Origin: http://192.168.1.101
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-N9002 Build/LRX21V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Referer: http://192.168.1.101/streamingtest.html
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Encoding: gzip, deflate, sdch
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Language: zh-CN,zh;q=0.8
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP GET request on /janus/3565470769699923...
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:37 2017] Session: 3565470769699923
+[Sat May 06 22:45:37 2017] Got a Janus API request from janus.transport.http (00000000045d1560)
+[Sat May 06 22:45:37 2017] Session 3565470769699923 found... returning up to 1 messages
+[Sat May 06 22:45:37 2017] [transports/janus_http.c:janus_http_notifier:1701] ... handling long poll...
+[Sat May 06 22:45:37 2017] Transport task pool, serving request
+[Sat May 06 22:45:37 2017] Got a keep-alive on session 3565470769699923
+[Sat May 06 22:45:37 2017] Sending Janus API response to janus.transport.http (00000000045d1560)
+[Sat May 06 22:45:37 2017] Got a Janus API response to send (00000000045d1560)
+[Sat May 06 22:45:38 2017] [7697652077139890] Fixing SSRCs (local 295218777, peer 0)
+[Sat May 06 22:45:38 2017]    Parsing compound packet (total of 48 bytes)
+[Sat May 06 22:45:38 2017]      #1 SR (200)
+[Sat May 06 22:45:38 2017]        RTCP PT length: 28 bytes
+[Sat May 06 22:45:38 2017]      #2 SDES (202)
+[Sat May 06 22:45:38 2017]        RTCP PT length: 20 bytes
+[Sat May 06 22:45:38 2017]   End of compound packet
+[Sat May 06 22:45:38 2017] [7697652077139890] Fixing SSRCs (local 295218777, peer 0)
+[Sat May 06 22:45:38 2017]    Parsing compound packet (total of 48 bytes)
+[Sat May 06 22:45:38 2017]      #1 SR (200)
+[Sat May 06 22:45:38 2017]        RTCP PT length: 28 bytes
+[Sat May 06 22:45:38 2017]      #2 SDES (202)
+[Sat May 06 22:45:38 2017]        RTCP PT length: 20 bytes
+[Sat May 06 22:45:38 2017]   End of compound packet
+[Sat May 06 22:45:39 2017] [7697652077139890] Fixing SSRCs (local 295218777, peer 0)
+[Sat May 06 22:45:39 2017]    Parsing compound packet (total of 48 bytes)
+[Sat May 06 22:45:39 2017]      #1 SR (200)
+[Sat May 06 22:45:39 2017]        RTCP PT length: 28 bytes
+[Sat May 06 22:45:39 2017]      #2 SDES (202)
+[Sat May 06 22:45:39 2017]        RTCP PT length: 20 bytes
+[Sat May 06 22:45:39 2017]   End of compound packet
+[Sat May 06 22:45:39 2017] [7697652077139890] Fixing SSRCs (local 295218777, peer 0)
+[Sat May 06 22:45:39 2017]    Parsing compound packet (total of 48 bytes)
+[Sat May 06 22:45:39 2017]      #1 SR (200)
+[Sat May 06 22:45:39 2017]        RTCP PT length: 28 bytes
+[Sat May 06 22:45:39 2017]      #2 SDES (202)
+[Sat May 06 22:45:39 2017]        RTCP PT length: 20 bytes
+[Sat May 06 22:45:39 2017]   End of compound packet
+[Sat May 06 22:45:39 2017] [7697652077139890]  Got an RTCP packet (bundled stream)!
+[Sat May 06 22:45:39 2017] [7697652077139890] Incoming RTCP, bundling: this is audio (no video has been negotiated)
+[Sat May 06 22:45:39 2017]    Parsing compound packet (total of 32 bytes)
+[Sat May 06 22:45:39 2017]      #1 RR (201)
+[Sat May 06 22:45:39 2017] jitter=51.000000, fraction=0, loss=0
+[Sat May 06 22:45:39 2017]        RTCP PT length: 32 bytes
+[Sat May 06 22:45:39 2017]   End of compound packet
+[Sat May 06 22:45:40 2017] [7697652077139890] Fixing SSRCs (local 295218777, peer 0)
+[Sat May 06 22:45:40 2017]    Parsing compound packet (total of 48 bytes)
+[Sat May 06 22:45:40 2017]      #1 SR (200)
+[Sat May 06 22:45:40 2017]        RTCP PT length: 28 bytes
+[Sat May 06 22:45:40 2017]      #2 SDES (202)
+[Sat May 06 22:45:40 2017]        RTCP PT length: 20 bytes
+[Sat May 06 22:45:40 2017]   End of compound packet
+[Sat May 06 22:45:40 2017] [7697652077139890] Fixing SSRCs (local 295218777, peer 0)
+[Sat May 06 22:45:40 2017]    Parsing compound packet (total of 48 bytes)
+[Sat May 06 22:45:40 2017]      #1 SR (200)
+[Sat May 06 22:45:40 2017]        RTCP PT length: 28 bytes
+[Sat May 06 22:45:40 2017]      #2 SDES (202)
+[Sat May 06 22:45:40 2017]        RTCP PT length: 20 bytes
+[Sat May 06 22:45:40 2017]   End of compound packet
+[Sat May 06 22:45:41 2017] [7697652077139890] Fixing SSRCs (local 295218777, peer 0)
+[Sat May 06 22:45:41 2017]    Parsing compound packet (total of 48 bytes)
+[Sat May 06 22:45:41 2017]      #1 SR (200)
+[Sat May 06 22:45:41 2017]        RTCP PT length: 28 bytes
+[Sat May 06 22:45:41 2017]      #2 SDES (202)
+[Sat May 06 22:45:41 2017]        RTCP PT length: 20 bytes
+[Sat May 06 22:45:41 2017]   End of compound packet
+[Sat May 06 22:45:41 2017] [7697652077139890] Fixing SSRCs (local 295218777, peer 0)
+[Sat May 06 22:45:41 2017]    Parsing compound packet (total of 48 bytes)
+[Sat May 06 22:45:41 2017]      #1 SR (200)
+[Sat May 06 22:45:41 2017]        RTCP PT length: 28 bytes
+[Sat May 06 22:45:41 2017]      #2 SDES (202)
+[Sat May 06 22:45:41 2017]        RTCP PT length: 20 bytes
+[Sat May 06 22:45:41 2017]   End of compound packet
+[Sat May 06 22:45:42 2017] [7697652077139890] Fixing SSRCs (local 295218777, peer 0)
+[Sat May 06 22:45:42 2017]    Parsing compound packet (total of 48 bytes)
+[Sat May 06 22:45:42 2017]      #1 SR (200)
+[Sat May 06 22:45:42 2017]        RTCP PT length: 28 bytes
+[Sat May 06 22:45:42 2017]      #2 SDES (202)
+[Sat May 06 22:45:42 2017]        RTCP PT length: 20 bytes
+[Sat May 06 22:45:42 2017]   End of compound packet
+[Sat May 06 22:45:42 2017] [7697652077139890]  Got an RTCP packet (bundled stream)!
+[Sat May 06 22:45:42 2017] [7697652077139890] Incoming RTCP, bundling: this is audio (no video has been negotiated)
+[Sat May 06 22:45:42 2017]    Parsing compound packet (total of 32 bytes)
+[Sat May 06 22:45:42 2017]      #1 RR (201)
+[Sat May 06 22:45:42 2017] jitter=60.000000, fraction=0, loss=0
+[Sat May 06 22:45:42 2017]        RTCP PT length: 32 bytes
+[Sat May 06 22:45:42 2017]   End of compound packet
+[Sat May 06 22:45:42 2017] [7697652077139890] Fixing SSRCs (local 295218777, peer 0)
+[Sat May 06 22:45:42 2017]    Parsing compound packet (total of 48 bytes)
+[Sat May 06 22:45:42 2017]      #1 SR (200)
+[Sat May 06 22:45:42 2017]        RTCP PT length: 28 bytes
+[Sat May 06 22:45:42 2017]      #2 SDES (202)
+[Sat May 06 22:45:42 2017]        RTCP PT length: 20 bytes
+[Sat May 06 22:45:42 2017]   End of compound packet
+[Sat May 06 22:45:43 2017] [7697652077139890] Fixing SSRCs (local 295218777, peer 0)
+[Sat May 06 22:45:43 2017]    Parsing compound packet (total of 48 bytes)
+[Sat May 06 22:45:43 2017]      #1 SR (200)
+[Sat May 06 22:45:43 2017]        RTCP PT length: 28 bytes
+[Sat May 06 22:45:43 2017]      #2 SDES (202)
+[Sat May 06 22:45:43 2017]        RTCP PT length: 20 bytes
+[Sat May 06 22:45:43 2017]   End of compound packet
+[Sat May 06 22:45:43 2017] [7697652077139890] Fixing SSRCs (local 295218777, peer 0)
+[Sat May 06 22:45:43 2017]    Parsing compound packet (total of 48 bytes)
+[Sat May 06 22:45:43 2017]      #1 SR (200)
+[Sat May 06 22:45:43 2017]        RTCP PT length: 28 bytes
+[Sat May 06 22:45:43 2017]      #2 SDES (202)
+[Sat May 06 22:45:43 2017]        RTCP PT length: 20 bytes
+[Sat May 06 22:45:43 2017]   End of compound packet
+[Sat May 06 22:45:44 2017] [7697652077139890] Fixing SSRCs (local 295218777, peer 0)
+[Sat May 06 22:45:44 2017]    Parsing compound packet (total of 48 bytes)
+[Sat May 06 22:45:44 2017]      #1 SR (200)
+[Sat May 06 22:45:44 2017]        RTCP PT length: 28 bytes
+[Sat May 06 22:45:44 2017]      #2 SDES (202)
+[Sat May 06 22:45:44 2017]        RTCP PT length: 20 bytes
+[Sat May 06 22:45:44 2017]   End of compound packet
+[Sat May 06 22:45:44 2017] [7697652077139890] Fixing SSRCs (local 295218777, peer 0)
+[Sat May 06 22:45:44 2017]    Parsing compound packet (total of 48 bytes)
+[Sat May 06 22:45:44 2017]      #1 SR (200)
+[Sat May 06 22:45:44 2017]        RTCP PT length: 28 bytes
+[Sat May 06 22:45:44 2017]      #2 SDES (202)
+[Sat May 06 22:45:44 2017]        RTCP PT length: 20 bytes
+[Sat May 06 22:45:44 2017]   End of compound packet
+[Sat May 06 22:45:44 2017] [transports/janus_http.c:janus_http_handler:1046] Got a HTTP OPTIONS request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:44 2017] [transports/janus_http.c:janus_http_handler:1047]  ... Just parsing headers for now...
+[Sat May 06 22:45:44 2017] [transports/janus_http.c:janus_http_headers:1660] Host: 192.168.1.101:8088
+[Sat May 06 22:45:44 2017] [transports/janus_http.c:janus_http_headers:1660] Connection: keep-alive
+[Sat May 06 22:45:44 2017] [transports/janus_http.c:janus_http_headers:1660] Access-Control-Request-Method: POST
+[Sat May 06 22:45:44 2017] [transports/janus_http.c:janus_http_headers:1660] Origin: http://192.168.1.101
+[Sat May 06 22:45:44 2017] [transports/janus_http.c:janus_http_headers:1660] User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-N9002 Build/LRX21V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36
+[Sat May 06 22:45:44 2017] [transports/janus_http.c:janus_http_headers:1660] Access-Control-Request-Headers: content-type
+[Sat May 06 22:45:44 2017] [transports/janus_http.c:janus_http_headers:1660] Accept: */*
+[Sat May 06 22:45:44 2017] [transports/janus_http.c:janus_http_headers:1660] Referer: http://192.168.1.101/streamingtest.html
+[Sat May 06 22:45:44 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Encoding: gzip, deflate, sdch
+[Sat May 06 22:45:44 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Language: zh-CN,zh;q=0.8
+[Sat May 06 22:45:44 2017] [transports/janus_http.c:janus_http_request_completed:1675] Request completed, freeing data
+[Sat May 06 22:45:44 2017] [7697652077139890] Looks like DTLS!
+[Sat May 06 22:45:44 2017] [7697652077139890]     Written 61 bytes on the read BIO...
+[Sat May 06 22:45:44 2017] [7697652077139890] DTLS alert triggered on stream 1 (component 1), closing...
+[Sat May 06 22:45:44 2017] [7697652077139890] Telling the plugin about it (JANUS Streaming plugin)
+[Sat May 06 22:45:44 2017] No WebRTC media anymore
+[Sat May 06 22:45:44 2017] [7697652077139890] Notifying WebRTC hangup
+[Sat May 06 22:45:44 2017] [7697652077139890] Sending event to transport...
+[Sat May 06 22:45:44 2017] Sending event to janus.transport.http (0000000000321530)
+[Sat May 06 22:45:44 2017] Got a Janus API event to send (0000000000321530)
+[Sat May 06 22:45:44 2017] [7697652077139890]     ... and read 0 of them from SSL...
+[Sat May 06 22:45:44 2017] [7697652077139890] Any data available?
+[Sat May 06 22:45:44 2017] [7697652077139890] ICE thread ended!
+[Sat May 06 22:45:44 2017] Stopping the streaming
+[Sat May 06 22:45:44 2017]   -- Removing the session from the mountpoint listeners
+[Sat May 06 22:45:44 2017]   -- -- Found!
+[Sat May 06 22:45:44 2017] [7697652077139890] Sending event to transport...
+[Sat May 06 22:45:44 2017] Sending event to janus.transport.http (0000000000321530)
+[Sat May 06 22:45:44 2017] Got a Janus API event to send (0000000000321530)
+[Sat May 06 22:45:44 2017]   >> Pushing event: 0 (Success)
+[Sat May 06 22:45:44 2017] [file-ondemand-sample] Leaving filesource (ondemand) thread
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_handler:1046] Got a HTTP POST request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_handler:1047]  ... Just parsing headers for now...
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] Host: 192.168.1.101:8088
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] Connection: keep-alive
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] Content-Length: 74
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] Accept: application/json, text/javascript, */*; q=0.01
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] Origin: http://192.168.1.101
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-N9002 Build/LRX21V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] Content-Type: application/json
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] Referer: http://192.168.1.101/streamingtest.html
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Encoding: gzip, deflate
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Language: zh-CN,zh;q=0.8
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP POST request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:45 2017] Session: 3565470769699923
+[Sat May 06 22:45:45 2017] Handle: 7697652077139890
+[Sat May 06 22:45:45 2017] Processing POST data (application/json) (74 bytes)...
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_handler:1179]   -- Data we have now (74 bytes)
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP POST request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:45 2017] Session: 3565470769699923
+[Sat May 06 22:45:45 2017] Handle: 7697652077139890
+[Sat May 06 22:45:45 2017] Processing POST data (application/json) (0 bytes)...
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_handler:1184] Done getting payload, we can answer
+[Sat May 06 22:45:45 2017] {"janus":"message","body":{"request":"stop"},"transaction":"SkOIudrYIwWe"}
+[Sat May 06 22:45:45 2017] Forwarding request to the core (00000000045d1620)
+[Sat May 06 22:45:45 2017] Got a Janus API request from janus.transport.http (00000000045d1620)
+[Sat May 06 22:45:45 2017] Transport task pool, serving request
+[Sat May 06 22:45:45 2017] [7697652077139890] There's a message for JANUS Streaming plugin
+[Sat May 06 22:45:45 2017] Creating plugin result...
+[Sat May 06 22:45:45 2017] Sending Janus API response to janus.transport.http (00000000045d1620)
+[Sat May 06 22:45:45 2017] Got a Janus API response to send (00000000045d1620)
+[Sat May 06 22:45:45 2017] Destroying plugin result...
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_request_completed:1675] Request completed, freeing data
+[Sat May 06 22:45:45 2017] We have a message to serve...
+	{
+   "janus": "hangup",
+   "session_id": 3565470769699923,
+   "sender": 7697652077139890,
+   "reason": "DTLS alert"
+}
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_request_completed:1675] Request completed, freeing data
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_handler:1046] Got a HTTP GET request on /janus/3565470769699923...
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_handler:1047]  ... Just parsing headers for now...
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] Host: 192.168.1.101:8088
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] Connection: keep-alive
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] Accept: application/json, text/javascript, */*; q=0.01
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] Origin: http://192.168.1.101
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-N9002 Build/LRX21V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] Referer: http://192.168.1.101/streamingtest.html
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Encoding: gzip, deflate, sdch
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Language: zh-CN,zh;q=0.8
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP GET request on /janus/3565470769699923...
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:45 2017] Session: 3565470769699923
+[Sat May 06 22:45:45 2017] Got a Janus API request from janus.transport.http (00000000045d1560)
+[Sat May 06 22:45:45 2017] Session 3565470769699923 found... returning up to 1 messages
+[Sat May 06 22:45:45 2017] Transport task pool, serving request
+[Sat May 06 22:45:45 2017] Got a keep-alive on session 3565470769699923
+[Sat May 06 22:45:45 2017] Sending Janus API response to janus.transport.http (00000000045d1560)
+[Sat May 06 22:45:45 2017] Got a Janus API response to send (00000000045d1560)
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_request_completed:1675] Request completed, freeing data
+[Sat May 06 22:45:45 2017] [7697652077139890] ICE send thread leaving...
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_handler:1046] Got a HTTP GET request on /janus/3565470769699923...
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_handler:1047]  ... Just parsing headers for now...
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] Host: 192.168.1.101:8088
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] Connection: keep-alive
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] Accept: application/json, text/javascript, */*; q=0.01
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] Origin: http://192.168.1.101
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-N9002 Build/LRX21V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] Referer: http://192.168.1.101/streamingtest.html
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Encoding: gzip, deflate, sdch
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Language: zh-CN,zh;q=0.8
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP GET request on /janus/3565470769699923...
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:45 2017] Session: 3565470769699923
+[Sat May 06 22:45:45 2017] Got a Janus API request from janus.transport.http (00000000045d1560)
+[Sat May 06 22:45:45 2017] Session 3565470769699923 found... returning up to 1 messages
+[Sat May 06 22:45:45 2017] [transports/janus_http.c:janus_http_notifier:1701] ... handling long poll...
+[Sat May 06 22:45:45 2017] Transport task pool, serving request
+[Sat May 06 22:45:45 2017] Got a keep-alive on session 3565470769699923
+[Sat May 06 22:45:45 2017] Sending Janus API response to janus.transport.http (00000000045d1560)
+[Sat May 06 22:45:45 2017] Got a Janus API response to send (00000000045d1560)
+[Sat May 06 22:45:45 2017] [7697652077139890] WebRTC resources freed
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_handler:1046] Got a HTTP POST request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_handler:1047]  ... Just parsing headers for now...
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Host: 192.168.1.101:8088
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Connection: keep-alive
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Content-Length: 47
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Accept: application/json, text/javascript, */*; q=0.01
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Origin: http://192.168.1.101
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-N9002 Build/LRX21V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Content-Type: application/json
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Referer: http://192.168.1.101/streamingtest.html
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Encoding: gzip, deflate
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Language: zh-CN,zh;q=0.8
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP POST request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:47 2017] Session: 3565470769699923
+[Sat May 06 22:45:47 2017] Handle: 7697652077139890
+[Sat May 06 22:45:47 2017] Processing POST data (application/json) (47 bytes)...
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_handler:1179]   -- Data we have now (47 bytes)
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP POST request on /janus/3565470769699923/7697652077139890...
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:47 2017] Session: 3565470769699923
+[Sat May 06 22:45:47 2017] Handle: 7697652077139890
+[Sat May 06 22:45:47 2017] Processing POST data (application/json) (0 bytes)...
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_handler:1184] Done getting payload, we can answer
+[Sat May 06 22:45:47 2017] {"janus":"detach","transaction":"RKm5X2C74kz1"}
+[Sat May 06 22:45:47 2017] Forwarding request to the core (00000000045d15c0)
+[Sat May 06 22:45:47 2017] Got a Janus API request from janus.transport.http (00000000045d15c0)
+[Sat May 06 22:45:47 2017] Transport task pool, serving request
+[Sat May 06 22:45:47 2017] Detaching handle from JANUS Streaming plugin
+[Sat May 06 22:45:47 2017] Removing streaming session...
+[Sat May 06 22:45:47 2017] [7697652077139890] Sending event to transport...
+[Sat May 06 22:45:47 2017] Sending event to janus.transport.http (0000000000321530)
+[Sat May 06 22:45:47 2017] Got a Janus API event to send (0000000000321530)
+[Sat May 06 22:45:47 2017] [7697652077139890] Handle detached (error=0), scheduling destruction
+[Sat May 06 22:45:47 2017] Sending Janus API response to janus.transport.http (00000000045d15c0)
+[Sat May 06 22:45:47 2017] Got a Janus API response to send (00000000045d15c0)
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_request_completed:1675] Request completed, freeing data
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_handler:1046] Got a HTTP OPTIONS request on /janus/3565470769699923...
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_handler:1047]  ... Just parsing headers for now...
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Host: 192.168.1.101:8088
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Connection: keep-alive
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Access-Control-Request-Method: POST
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Origin: http://192.168.1.101
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-N9002 Build/LRX21V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Access-Control-Request-Headers: content-type
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Accept: */*
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Referer: http://192.168.1.101/streamingtest.html
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Encoding: gzip, deflate, sdch
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Language: zh-CN,zh;q=0.8
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_request_completed:1675] Request completed, freeing data
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_handler:1046] Got a HTTP POST request on /janus/3565470769699923...
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_handler:1047]  ... Just parsing headers for now...
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Host: 192.168.1.101:8088
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Connection: keep-alive
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Content-Length: 48
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Accept: application/json, text/javascript, */*; q=0.01
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Origin: http://192.168.1.101
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-N9002 Build/LRX21V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Content-Type: application/json
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Referer: http://192.168.1.101/streamingtest.html
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Encoding: gzip, deflate
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_headers:1660] Accept-Language: zh-CN,zh;q=0.8
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP POST request on /janus/3565470769699923...
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:47 2017] Session: 3565470769699923
+[Sat May 06 22:45:47 2017] Processing POST data (application/json) (48 bytes)...
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_handler:1179]   -- Data we have now (48 bytes)
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_handler:1072] Processing HTTP POST request on /janus/3565470769699923...
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_handler:1129]  ... parsing request...
+[Sat May 06 22:45:47 2017] Session: 3565470769699923
+[Sat May 06 22:45:47 2017] Processing POST data (application/json) (0 bytes)...
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_handler:1184] Done getting payload, we can answer
+[Sat May 06 22:45:47 2017] {"janus":"destroy","transaction":"qc9YrsQuFxHD"}
+[Sat May 06 22:45:47 2017] Forwarding request to the core (00000000045d15c0)
+[Sat May 06 22:45:47 2017] Got a Janus API request from janus.transport.http (00000000045d15c0)
+[Sat May 06 22:45:47 2017] Transport task pool, serving request
+[Sat May 06 22:45:47 2017] Session is over (3565470769699923), getting rid of the queue for the long poll
+[Sat May 06 22:45:47 2017] Sending Janus API response to janus.transport.http (00000000045d15c0)
+[Sat May 06 22:45:47 2017] Got a Janus API response to send (00000000045d15c0)
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_request_completed:1675] Request completed, freeing data
+[Sat May 06 22:45:47 2017] Long poll time out for session 3565470769699923...
+[Sat May 06 22:45:47 2017] We have a message to serve...
+	{
+   "janus": "keepalive"
+}
+[Sat May 06 22:45:47 2017] [transports/janus_http.c:janus_http_request_completed:1675] Request completed, freeing data
+[Sat May 06 22:45:47 2017] Checking 1 old Streaming sessions...
+[Sat May 06 22:45:47 2017] Checking 1 old HTTP/Janus sessions sessions...
+[Sat May 06 22:45:48 2017] Checking 1 old Streaming sessions...
+[Sat May 06 22:45:48 2017] Checking 1 old HTTP/Janus sessions sessions...
+[Sat May 06 22:45:48 2017] Checking 1 old HTTP/Janus sessions sessions...
+[Sat May 06 22:45:48 2017] Freeing old HTTP/Janus session
+[Sat May 06 22:45:48 2017] Checking 1 old Streaming sessions...
+[Sat May 06 22:45:49 2017] Checking 1 old Streaming sessions...
+[Sat May 06 22:45:49 2017] Checking 1 old Streaming sessions...
+[Sat May 06 22:45:50 2017] [janus.c:janus_cleanup_session:361] Cleaning up session 3565470769699923...
+[Sat May 06 22:45:50 2017] Destroying session 3565470769699923
+[Sat May 06 22:45:50 2017] Checking 1 old Streaming sessions...
+[Sat May 06 22:45:50 2017] Checking 1 old Streaming sessions...
+[Sat May 06 22:45:51 2017] Cleaning up handle 7697652077139890...
+[Sat May 06 22:45:51 2017] [7697652077139890] WebRTC resources freed
+[Sat May 06 22:45:51 2017] [7697652077139890] Handle and related resources freed
+[Sat May 06 22:45:51 2017] Checking 1 old Streaming sessions...
+[Sat May 06 22:45:51 2017] Checking 1 old Streaming sessions...
+[Sat May 06 22:45:52 2017] Checking 1 old Streaming sessions...
+[Sat May 06 22:45:52 2017] Checking 1 old Streaming sessions...
+[Sat May 06 22:45:52 2017] Freeing old Streaming session
