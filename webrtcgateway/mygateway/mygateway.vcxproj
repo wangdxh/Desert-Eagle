@@ -52,7 +52,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\getopt\include;..\jansson;..\pthread;..\glib\lib\glib-2.0\include;..\glib\include\glib-2.0;..\libnice\nice;..\openssl;..\srtp;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;..\getopt\include;..\jansson;..\pthread;..\glib\lib\glib-2.0\include;..\glib\include\glib-2.0;..\libnice\nice;..\openssl;..\srtp;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

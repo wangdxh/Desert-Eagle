@@ -1,6 +1,7 @@
 #ifndef MACH_GETTIME_H
 #define MACH_GETTIME_H
 
+#include <stdint.h>
 #include <sys/types.h>
 #include <sys/_types/_timespec.h>
 #include <mach/mach.h>
