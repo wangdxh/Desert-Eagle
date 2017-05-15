@@ -117,7 +117,7 @@ url = RTSP stream URL (only if type=rtsp)
  * \ref plugins
  */
 
-#include "./plugins/plugin.h"
+#include "plugin.h"
 
 #include <jansson.h>
 #include <errno.h>
