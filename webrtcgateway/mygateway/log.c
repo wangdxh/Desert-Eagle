@@ -168,7 +168,7 @@ void janus_vprintf(const char *format, ...) {
 	va_end(ap);
 	if (len >= (int) b->allocated) {
 		/* buffer wasn't big enough */
-		b = g_realloc(b, len + 1 + sizeof(*b));
+		b = (janus_log_buffer *)g_realloc(b, len + 1 + sizeof(*b));
 		b->allocated = len + 1;
 		vsnprintf(b->str, b->allocated, format, ap2);
 	}

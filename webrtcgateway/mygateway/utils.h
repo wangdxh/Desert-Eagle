@@ -23,6 +23,11 @@
 
 #include "os.h"
 
+#ifdef _MSC_VER
+#define strcasecmp stricmp
+#define strncasecmp  strnicmp 
+#endif
+
 /* Use JANUS_JSON_BOOL instead of the non-existing JSON_BOOLEAN */
 #define JANUS_JSON_BOOL JSON_TRUE
 #define JANUS_JSON_PARAM_REQUIRED 1

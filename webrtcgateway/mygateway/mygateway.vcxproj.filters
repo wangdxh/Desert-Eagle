@@ -140,5 +140,11 @@
     <ClCompile Include="utils.c">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="janus_http.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="janus_streaming.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

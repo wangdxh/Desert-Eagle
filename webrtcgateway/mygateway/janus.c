@@ -15,13 +15,13 @@
  * \ref core
  */
 
-#include <dlfcn.h>
-#include <dirent.h>
 #ifdef _WIN32
 #include <winsock2.h>
 #include <windows.h>
 #include <glib/gstdio.h>
 #include <gio/gnetworking.h>
+#include <io.h>
+#include <direct.h>
 #else
 #include <net/if.h>
 #include <netdb.h>
@@ -194,12 +194,12 @@ json_t *janus_info(const char *transaction) {
 	json_object_set_new(info, "ice-tcp", janus_ice_is_ice_tcp_enabled() ? json_true() : json_false());
 	if(janus_ice_get_stun_server() != NULL) {
 		char server[255];
-		g_snprintf(server, 255, "%s:%"SCNu16, janus_ice_get_stun_server(), janus_ice_get_stun_port());
+		g_snprintf(server, 255, "%s:%d", janus_ice_get_stun_server(), janus_ice_get_stun_port());
 		json_object_set_new(info, "stun-server", json_string(server));
 	}
 	if(janus_ice_get_turn_server() != NULL) {
 		char server[255];
-		g_snprintf(server, 255, "%s:%"SCNu16, janus_ice_get_turn_server(), janus_ice_get_turn_port());
+		g_snprintf(server, 255, "%s:%d", janus_ice_get_turn_server(), janus_ice_get_turn_port());
 		json_object_set_new(info, "turn-server", json_string(server));
 	}
 	json_object_set_new(info, "api_secret", api_secret ? json_true() : json_false());
@@ -211,7 +211,7 @@ json_t *janus_info(const char *transaction) {
 		gpointer value;
 		g_hash_table_iter_init(&iter, transports);
 		while (g_hash_table_iter_next(&iter, NULL, &value)) {
-			janus_transport *t = value;
+			janus_transport *t = (janus_transport *)value;
 			if(t == NULL) {
 				continue;
 			}
@@ -232,7 +232,7 @@ json_t *janus_info(const char *transaction) {
 		gpointer value;
 		g_hash_table_iter_init(&iter, plugins);
 		while (g_hash_table_iter_next(&iter, NULL, &value)) {
-			janus_plugin *p = value;
+			janus_plugin *p = (janus_plugin *)value;
 			if(p == NULL) {
 				continue;
 			}
@@ -287,7 +287,7 @@ static void janus_termination_handler(void) {
 	/* If we're daemonizing, we send an error code to the parent */
 	if(daemonize) {
 		int code = 1;
-		ssize_t res = 0;
+		int res = 0;
 		do {
 			res = write(pipefd[1], &code, sizeof(int));
 		} while(res == -1 && errno == EINTR);
@@ -3421,7 +3421,7 @@ static void janus_main(int argc, char *argv[]) {
 	item = janus_config_get_item_drilldown(config, "media", "rtp_port_range");
 	if(item && item->value) {
 		/* Split in min and max port */
-		char *maxport = strrchr(item->value, '-');
+		char *maxport = (char*)strrchr(item->value, '-');
 		if(maxport != NULL) {
 			*maxport = '\0';
 			maxport++;
@@ -3617,30 +3617,39 @@ static void janus_main(int argc, char *argv[]) {
 	}
 
 	/* Load plugins */
-	const char *path = PLUGINDIR;
+	const char *path = "./";
 	item = janus_config_get_item_drilldown(config, "general", "plugins_folder");
 	if(item && item->value)
 		path = (char *)item->value;
 	JANUS_LOG(LOG_INFO, "Plugins folder: %s\n", path);
-	DIR *dir = opendir(path);
+
+    struct _finddata_t c_file; 
+    intptr_t   hFile; 
+
+	int dir = _chdir(path);
 	if(!dir) {
 		JANUS_LOG(LOG_FATAL, "\tCouldn't access plugins folder...\n");
 		exit(1);
 	}
+    else
+    {
+        hFile = _findfirst("*.*", &c_file); 
+    }
+    int hFindPlugRet = hFile;
 	/* Any plugin to ignore? */
 	gchar **disabled_plugins = NULL;
 	item = janus_config_get_item_drilldown(config, "plugins", "disable");
 	if(item && item->value)
 		disabled_plugins = g_strsplit(item->value, ",", -1);
-	/* Open the shared objects */
-	struct dirent *pluginent = NULL;
+	/* Open the shared objects */	
 	char pluginpath[1024];
-	while((pluginent = readdir(dir))) {
-		int len = strlen(pluginent->d_name);
+	while(hFile != -1) 
+    {
+		int len = strlen(c_file.name);
 		if (len < 4) {
 			continue;
 		}
-		if (strcasecmp(pluginent->d_name+len-strlen(SHLIB_EXT), SHLIB_EXT)) {
+		if (strcasecmp(c_file.name+len-strlen(SHLIB_EXT), SHLIB_EXT)) {
 			continue;
 		}
 		/* Check if this plugins has been disabled in the configuration file */
@@ -3652,8 +3661,8 @@ static void janus_main(int argc, char *argv[]) {
 				while(index != NULL) {
 					while(isspace(*index))
 						index++;
-					if(strlen(index) && !strcmp(index, pluginent->d_name)) {
-						JANUS_LOG(LOG_WARN, "Plugin '%s' has been disabled, skipping...\n", pluginent->d_name);
+					if(strlen(index) && !strcmp(index, c_file.name)) {
+						JANUS_LOG(LOG_WARN, "Plugin '%s' has been disabled, skipping...\n", c_file.name);
 						skip = TRUE;
 						break;
 					}
@@ -3664,17 +3673,20 @@ static void janus_main(int argc, char *argv[]) {
 					continue;
 			}
 		}
-		JANUS_LOG(LOG_INFO, "Loading plugin '%s'...\n", pluginent->d_name);
+		JANUS_LOG(LOG_INFO, "Loading plugin '%s'...\n", c_file.name);
 		memset(pluginpath, 0, 1024);
-		g_snprintf(pluginpath, 1024, "%s/%s", path, pluginent->d_name);
-		void *plugin = dlopen(pluginpath, RTLD_LOCAL | RTLD_LAZY);
+		g_snprintf(pluginpath, 1024, "%s/%s", path, c_file.name);
+
+		//void *plugin = dlopen(pluginpath, RTLD_LOCAL | RTLD_LAZY);
+        void* plugin = LoadLibrary(pluginpath);
 		if (!plugin) {
-			JANUS_LOG(LOG_ERR, "\tCouldn't load plugin '%s': %s\n", pluginent->d_name, dlerror());
+			JANUS_LOG(LOG_ERR, "\tCouldn't load plugin '%s': %d\n", c_file.name, GetLastError());
 		} else {
-			create_p *create = (create_p*) dlsym(plugin, "create");
-			const char *dlsym_error = dlerror();
-			if (dlsym_error) {
-				JANUS_LOG(LOG_ERR, "\tCouldn't load symbol 'create': %s\n", dlsym_error);
+			//create_p *create = (create_p*) dlsym(plugin, "create");
+            create_p *create = (create_p*)GetProcAddress((HMODULE)plugin, "create");
+			//const char *dlsym_error = dlerror();
+			if (NULL == create) {
+				JANUS_LOG(LOG_ERR, "\tCouldn't load symbol 'create': %d\n", GetLastError());
 				continue;
 			}
 			janus_plugin *janus_plugin = create();
@@ -3705,8 +3717,7 @@ static void janus_main(int argc, char *argv[]) {
 				continue;
 			}
 			if(janus_plugin->init(&janus_handler_plugin, configs_folder) < 0) {
-				JANUS_LOG(LOG_WARN, "The '%s' plugin could not be initialized\n", janus_plugin->get_package());
-				dlclose(plugin);
+				JANUS_LOG(LOG_WARN, "The '%s' plugin could not be initialized\n", janus_plugin->get_package());				
 				continue;
 			}
 			JANUS_LOG(LOG_VERB, "\tVersion: %d (%s)\n", janus_plugin->get_version(), janus_plugin->get_version_string());
@@ -3728,8 +3739,10 @@ static void janus_main(int argc, char *argv[]) {
 				plugins_so = g_hash_table_new(g_str_hash, g_str_equal);
 			g_hash_table_insert(plugins_so, (gpointer)janus_plugin->get_package(), plugin);
 		}
+        hFindPlugRet = _findnext(hFile, &c_file);
 	}
-	closedir(dir);
+	_findclose(hFile);
+
 	if(disabled_plugins != NULL)
 		g_strfreev(disabled_plugins);
 	disabled_plugins = NULL;
@@ -3745,16 +3758,22 @@ static void janus_main(int argc, char *argv[]) {
 
 	/* Load transports */
 	gboolean janus_api_enabled = FALSE, admin_api_enabled = FALSE;
-	path = TRANSPORTDIR;
+	path = "./";
 	item = janus_config_get_item_drilldown(config, "general", "transports_folder");
 	if(item && item->value)
 		path = (char *)item->value;
 	JANUS_LOG(LOG_INFO, "Transport plugins folder: %s\n", path);
-	dir = opendir(path);
+
+
+	dir = _chdir(path);
 	if(!dir) {
 		JANUS_LOG(LOG_FATAL, "\tCouldn't access transport plugins folder...\n");
 		exit(1);
 	}
+    else
+    {
+        hFile = _findfirst("*.*", &c_file); 
+    }
 	/* Any transport to ignore? */
 	gchar **disabled_transports = NULL;
 	item = janus_config_get_item_drilldown(config, "transports", "disable");
@@ -3763,12 +3782,13 @@ static void janus_main(int argc, char *argv[]) {
 	/* Open the shared objects */
 	struct dirent *transportent = NULL;
 	char transportpath[1024];
-	while((transportent = readdir(dir))) {
-		int len = strlen(transportent->d_name);
+	while(hFile != -1)
+    {
+		int len = strlen(c_file.name);
 		if (len < 4) {
 			continue;
 		}
-		if (strcasecmp(transportent->d_name+len-strlen(SHLIB_EXT), SHLIB_EXT)) {
+		if (strcasecmp(c_file.name+len-strlen(SHLIB_EXT), SHLIB_EXT)) {
 			continue;
 		}
 		/* Check if this transports has been disabled in the configuration file */
@@ -3780,8 +3800,8 @@ static void janus_main(int argc, char *argv[]) {
 				while(index != NULL) {
 					while(isspace(*index))
 						index++;
-					if(strlen(index) && !strcmp(index, transportent->d_name)) {
-						JANUS_LOG(LOG_WARN, "Transport plugin '%s' has been disabled, skipping...\n", transportent->d_name);
+					if(strlen(index) && !strcmp(index, c_file.name)) {
+						JANUS_LOG(LOG_WARN, "Transport plugin '%s' has been disabled, skipping...\n", c_file.name);
 						skip = TRUE;
 						break;
 					}
@@ -3792,17 +3812,20 @@ static void janus_main(int argc, char *argv[]) {
 					continue;
 			}
 		}
-		JANUS_LOG(LOG_INFO, "Loading transport plugin '%s'...\n", transportent->d_name);
+		JANUS_LOG(LOG_INFO, "Loading transport plugin '%s'...\n", c_file.name);
 		memset(transportpath, 0, 1024);
-		g_snprintf(transportpath, 1024, "%s/%s", path, transportent->d_name);
-		void *transport = dlopen(transportpath, RTLD_LOCAL | RTLD_LAZY);
+		g_snprintf(transportpath, 1024, "%s/%s", path, c_file.name);
+
+		//void *transport = dlopen(transportpath, RTLD_LOCAL | RTLD_LAZY);
+        void *transport = LoadLibrary(transportpath);
 		if (!transport) {
-			JANUS_LOG(LOG_ERR, "\tCouldn't load transport plugin '%s': %s\n", transportent->d_name, dlerror());
+			JANUS_LOG(LOG_ERR, "\tCouldn't load transport plugin '%s': %d\n", c_file.name, GetLastError());
 		} else {
-			create_t *create = (create_t*) dlsym(transport, "create");
-			const char *dlsym_error = dlerror();
-			if (dlsym_error) {
-				JANUS_LOG(LOG_ERR, "\tCouldn't load symbol 'create': %s\n", dlsym_error);
+			//create_t *create = (create_t*) dlsym(transport, "create");
+            create_t *create = (create_t*) GetProcAddress((HMODULE)transport, "create");
+			//const char *dlsym_error = dlerror();
+			if (create == NULL) {
+				JANUS_LOG(LOG_ERR, "\tCouldn't load symbol 'create': %s\n", GetLastError());
 				continue;
 			}
 			janus_transport *janus_transport = create();
@@ -3832,8 +3855,7 @@ static void janus_main(int argc, char *argv[]) {
 				continue;
 			}
 			if(janus_transport->init(&janus_handler_transport, configs_folder) < 0) {
-				JANUS_LOG(LOG_WARN, "The '%s' plugin could not be initialized\n", janus_transport->get_package());
-				dlclose(transport);
+				JANUS_LOG(LOG_WARN, "The '%s' plugin could not be initialized\n", janus_transport->get_package());				
 				continue;
 			}
 			JANUS_LOG(LOG_VERB, "\tVersion: %d (%s)\n", janus_transport->get_version(), janus_transport->get_version_string());
@@ -3851,8 +3873,10 @@ static void janus_main(int argc, char *argv[]) {
 				transports_so = g_hash_table_new(g_str_hash, g_str_equal);
 			g_hash_table_insert(transports_so, (gpointer)janus_transport->get_package(), transport);
 		}
-	}
-	closedir(dir);
+        hFindPlugRet = _findnext(hFile, &c_file);
+    }
+    _findclose(hFile);
+	
 	if(disabled_transports != NULL)
 		g_strfreev(disabled_transports);
 	disabled_transports = NULL;
@@ -3870,7 +3894,8 @@ static void janus_main(int argc, char *argv[]) {
 	/* Ok, Janus has started! Let the parent now about this if we're daemonizing */
 	if(daemonize) {
 		int code = 0;
-		ssize_t res = 0;
+		//ssize_t res = 0;
+        int res = 0;
 		do {
 			res = write(pipefd[1], &code, sizeof(int));
 		} while(res == -1 && errno == EINTR);
@@ -3878,7 +3903,8 @@ static void janus_main(int argc, char *argv[]) {
 
 	while(!g_atomic_int_get(&stop)) {
 		/* Loop until we have to stop */
-		usleep(250000); /* A signal will cancel usleep() but not g_usleep() */
+		Sleep(250); /* A signal will cancel usleep() but not g_usleep() */
+
 	}
 
 	/* Done */
@@ -3936,78 +3962,15 @@ static void janus_main(int argc, char *argv[]) {
 #endif
 }
 
-#ifdef _WIN32
-
-SERVICE_STATUS service_status = {0};
-SERVICE_STATUS_HANDLE service_status_handle = NULL;
-
-static void service_ctrl_handler(DWORD ctrl_code) {
-	switch (ctrl_code) {
-		case SERVICE_CONTROL_STOP :
-
-			if (service_status.dwCurrentState != SERVICE_RUNNING)
-				break;
- 
-			service_status.dwCurrentState = SERVICE_STOP_PENDING;
-			service_status.dwControlsAccepted = 0;
-			service_status.dwWin32ExitCode = 0;
-			service_status.dwCheckPoint = 4;
- 
-			SetServiceStatus(service_status_handle, &service_status);
- 
-			janus_handle_signal(0);
-
-			break;
-
-		default:
-			break;
-	}
-}
-
-static void janus_service_main(DWORD argc, LPTSTR *argv) {
-
-	service_status_handle = RegisterServiceCtrlHandler(JANUS_NAME,
-									(LPHANDLER_FUNCTION)service_ctrl_handler);
- 
-	if (!service_status_handle)
-		return;
- 
-	ZeroMemory(&service_status, sizeof(service_status));
-	service_status.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
-	service_status.dwCurrentState = SERVICE_START_PENDING;
-	service_status.dwControlsAccepted = 0;
-	service_status.dwWin32ExitCode = 0;
-	service_status.dwCheckPoint = 0;
-
-	SetServiceStatus(service_status_handle, &service_status);
-
-	service_status.dwCurrentState = SERVICE_RUNNING;
-	service_status.dwControlsAccepted = SERVICE_ACCEPT_STOP;
-	service_status.dwWin32ExitCode = 0;
-	service_status.dwCheckPoint = 0;
-
-	SetServiceStatus(service_status_handle, &service_status);
-
-	janus_main(argc, argv);
-
-	service_status.dwCurrentState = SERVICE_STOPPED;
-	service_status.dwControlsAccepted = 0;
-	service_status.dwWin32ExitCode = 0;
-	service_status.dwCheckPoint = 3;
-
-	SetServiceStatus(service_status_handle, &service_status);
-
-}
-#endif
-
 /* Main */
-gint main(int argc, char *argv[])
+/*gint main(int argc, char *argv[])
 {
-#ifdef _WIN32
-	SERVICE_TABLE_ENTRY service_table[] = {{(LPTSTR)JANUS_NAME,
-					(LPSERVICE_MAIN_FUNCTION)janus_service_main}, {NULL, NULL}};
-	StartServiceCtrlDispatcher(service_table);
-#endif
-	janus_main(argc, argv);
-	exit(0);
+	
+}*/
+#include <stdafx.h>
+int _tmain(int argc, _TCHAR* argv[])
+{
+    janus_main(argc, argv);
+    exit(0);
+    return 0;
 }

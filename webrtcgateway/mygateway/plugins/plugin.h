@@ -151,7 +151,6 @@ janus_plugin *create(void) {
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include <unistd.h>
 #include <inttypes.h>
 #include <jansson.h>
 #include "os.h"

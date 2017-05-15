@@ -17,12 +17,12 @@
 #ifndef _WIN32
 #include <arpa/inet.h>
 #endif
-#include <sys/file.h>
+
 #include <sys/types.h>
 #ifndef _WIN32
 #include <sys/socket.h>
 #endif
-#include <unistd.h>
+
 #include <glib/gstdio.h>
 
 #include "utils.h"
@@ -33,15 +33,17 @@
 #endif
 
 gint64 janus_get_monotonic_time(void) {
-	struct timespec ts;
+	/*struct timespec ts;
 	clock_gettime (CLOCK_MONOTONIC, &ts);
-	return (ts.tv_sec*G_GINT64_CONSTANT(1000000)) + (ts.tv_nsec/G_GINT64_CONSTANT(1000));
+	return (ts.tv_sec*G_GINT64_CONSTANT(1000000)) + (ts.tv_nsec/G_GINT64_CONSTANT(1000));*/
+    return g_get_monotonic_time();
 }
 
 gint64 janus_get_real_time(void) {
-	struct timespec ts;
+	/*struct timespec ts;
 	clock_gettime (CLOCK_REALTIME, &ts);
-	return (ts.tv_sec*G_GINT64_CONSTANT(1000000)) + (ts.tv_nsec/G_GINT64_CONSTANT(1000));
+	return (ts.tv_sec*G_GINT64_CONSTANT(1000000)) + (ts.tv_nsec/G_GINT64_CONSTANT(1000));*/
+    return g_get_real_time();
 }
 
 gboolean janus_is_true(const char *value) {
@@ -56,12 +58,12 @@ gboolean janus_strcmp_const_time(const void *str1, const void *str2) {
 	size_t maxlen = strlen((char *)string1);
 	if(strlen((char *)string2) > maxlen)
 		maxlen = strlen((char *)string2);
-	unsigned char *buf1 = g_malloc0(maxlen+1);
+	unsigned char *buf1 = (unsigned char *)g_malloc0(maxlen+1);
 	memset(buf1, 0, maxlen);
-	memcpy(buf1, string1, strlen(str1));
-	unsigned char *buf2 = g_malloc0(maxlen+1);
+	memcpy(buf1, string1, strlen((const char*)str1));
+	unsigned char *buf2 = (unsigned char *)g_malloc0(maxlen+1);
 	memset(buf2, 0, maxlen);
-	memcpy(buf2, string2, strlen(str2));
+	memcpy(buf2, string2, strlen((const char*)str2));
 	unsigned char result = 0;
 	size_t i = 0;
 	for (i = 0; i < maxlen; i++) {
@@ -95,7 +97,7 @@ guint64 janus_random_uint64(void) {
 }
 
 guint64 *janus_uint64_dup(guint64 num) {
-	guint64 *numdup = g_malloc0(sizeof(guint64));
+	guint64 *numdup = (guint64 *)g_malloc0(sizeof(guint64));
 	memcpy(numdup, &num, sizeof(num));
 	return numdup;
 }
@@ -167,7 +169,7 @@ char *janus_string_replace(char *message, const char *old_string, const char *ne
 		}
 		uint16_t old_stringlen = strlen(outgoing)+1, new_stringlen = old_stringlen + diff*counter;
 		if(diff > 0) {	/* Resize now */
-			tmp = g_realloc(outgoing, new_stringlen);
+			tmp = (char*)g_realloc(outgoing, new_stringlen);
 			if(!tmp) {
 				g_free(outgoing);
 				return NULL;
@@ -193,7 +195,7 @@ char *janus_string_replace(char *message, const char *old_string, const char *ne
 			pos = tmp;
 		}
 		if(diff < 0) {	/* We skipped the resize previously (shrinking memory) */
-			tmp = g_realloc(outgoing, new_stringlen);
+			tmp = (char*)g_realloc(outgoing, new_stringlen);
 			if(!tmp) {
 				g_free(outgoing);
 				return NULL;
@@ -289,13 +291,13 @@ int janus_get_codec_pt(const char *sdp, const char *codec) {
 	/* Look for the mapping */
 	const char *line = strstr(sdp, video ? "m=video" : "m=audio");
 	while(line) {
-		char *next = strchr(line, '\n');
+		char *next = (char*)strchr(line, '\n');
 		if(next) {
 			*next = '\0';
 			if(strstr(line, "a=rtpmap") && strstr(line, format)) {
 				/* Gotcha! */
 				int pt = 0;
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+//#pragma GCC diagnostic ignored "-Wformat-nonliteral"
 				if(sscanf(line, rtpmap, &pt) == 1) {
 					*next = '\n';
 					return pt;
@@ -304,7 +306,7 @@ int janus_get_codec_pt(const char *sdp, const char *codec) {
 				/* Gotcha! */
 				int pt = 0;
 				if(sscanf(line, rtpmap2, &pt) == 1) {
-#pragma GCC diagnostic warning "-Wformat-nonliteral"
+//#pragma GCC diagnostic warning "-Wformat-nonliteral"
 					*next = '\n';
 					return pt;
 				}
@@ -328,7 +330,7 @@ const char *janus_get_codec_from_pt(const char *sdp, int pt) {
 	g_snprintf(rtpmap, 50, "a=rtpmap:%d ", pt);
 	const char *line = strstr(sdp, "m=");
 	while(line) {
-		char *next = strchr(line, '\n');
+		char *next = (char*)strchr(line, '\n');
 		if(next) {
 			*next = '\0';
 			if(strstr(line, rtpmap)) {
