@@ -76,7 +76,7 @@ typedef unsigned long long   uint64_t;
 #if defined(_WIN64)
 typedef unsigned __int64 size_t;
 #else
-typedef unsigned long size_t;
+//typedef unsigned long size_t;
 #endif
 #endif  /* !HAVE_SSIZE_T */
 #ifndef HAVE_SSIZE_T
@@ -87,7 +87,7 @@ typedef signed long ssize_t;
 #endif
 #endif  /* !HAVE_SSIZE_T */
 
-typedef uint8_t bool;
+//typedef uint8_t bool;
 #define true 1
 #define false 0
 

@@ -437,7 +437,7 @@ janus_dtls_srtp *janus_dtls_srtp_create(void *ice_component, janus_dtls_role rol
 		JANUS_LOG(LOG_ERR, "No handle/agent, no DTLS...\n");
 		return NULL;
 	}
-	janus_dtls_srtp *dtls = g_malloc0(sizeof(janus_dtls_srtp));
+	janus_dtls_srtp *dtls = (janus_dtls_srtp*)g_malloc0(sizeof(janus_dtls_srtp));
 	if(dtls == NULL) {
 		JANUS_LOG(LOG_FATAL, "Memory error!\n");
 		return NULL;
@@ -798,12 +798,12 @@ void janus_dtls_callback(const SSL *ssl, int where, int ret) {
 	if (!(where & SSL_CB_ALERT)) {
 		return;
 	}
-	janus_dtls_srtp *dtls = SSL_get_ex_data(ssl, 0);
+	janus_dtls_srtp *dtls = (janus_dtls_srtp*)SSL_get_ex_data(ssl, 0);
 	if(!dtls) {
 		JANUS_LOG(LOG_ERR, "No DTLS session related to this alert...\n");
 		return;
 	}
-	janus_ice_component *component = dtls->component;
+	janus_ice_component *component = (janus_ice_component*)dtls->component;
 	if(component == NULL) {
 		JANUS_LOG(LOG_ERR, "No ICE component related to this alert...\n");
 		return;
@@ -864,7 +864,7 @@ void janus_dtls_fd_bridge(janus_dtls_srtp *dtls) {
 	int pending = BIO_ctrl_pending(dtls->filter_bio);
 	while(pending > 0) {
 		JANUS_LOG(LOG_HUGE, "[%I64u] >> Going to send DTLS data: %d bytes\n", handle->handle_id, pending);
-		char outgoing[pending];
+		char* outgoing = new char[pending];
 		int out = BIO_read(dtls->write_bio, outgoing, sizeof(outgoing));
 		JANUS_LOG(LOG_HUGE, "[%I64u] >> >> Read %d bytes from the write_BIO...\n", handle->handle_id, out);
 		if(out > 1500) {
@@ -883,6 +883,7 @@ void janus_dtls_fd_bridge(janus_dtls_srtp *dtls) {
 			component->out_stats.data_packets++;
 			component->out_stats.data_bytes += bytes;
 		}
+		delete [] outgoing;
 		/* Check if there's anything left to send (e.g., fragmented packets) */
 		pending = BIO_ctrl_pending(dtls->filter_bio);
 	}

@@ -77,30 +77,28 @@ void janus_http_session_over(void *transport, guint64 session_id, gboolean timeo
 
 
 /* Transport setup */
-static janus_transport janus_http_transport =
-	JANUS_TRANSPORT_INIT (
-		.init = janus_http_init,
-		.destroy = janus_http_destroy,
-
-		.get_api_compatibility = janus_http_get_api_compatibility,
-		.get_version = janus_http_get_version,
-		.get_version_string = janus_http_get_version_string,
-		.get_description = janus_http_get_description,
-		.get_name = janus_http_get_name,
-		.get_author = janus_http_get_author,
-		.get_package = janus_http_get_package,
-
-		.is_janus_api_enabled = janus_http_is_janus_api_enabled,
-		.is_admin_api_enabled = janus_http_is_admin_api_enabled,
-
-		.send_message = janus_http_send_message,
-		.session_created = janus_http_session_created,
-		.session_over = janus_http_session_over,
-	);
+static janus_transport janus_http_transport = {0};
 
 /* Transport creator */
 janus_transport *create(void) {
 	JANUS_LOG(LOG_VERB, "%s created!\n", JANUS_REST_NAME);
+	janus_http_transport.init = janus_http_init;
+		janus_http_transport.destroy = janus_http_destroy;
+
+		janus_http_transport.get_api_compatibility = janus_http_get_api_compatibility;
+		janus_http_transport.get_version = janus_http_get_version;
+		janus_http_transport.get_version_string = janus_http_get_version_string;
+		janus_http_transport.get_description = janus_http_get_description;
+		janus_http_transport.get_name = janus_http_get_name;
+		janus_http_transport.get_author = janus_http_get_author;
+		janus_http_transport.get_package = janus_http_get_package;
+
+		janus_http_transport.is_janus_api_enabled = janus_http_is_janus_api_enabled;
+		janus_http_transport.is_admin_api_enabled = janus_http_is_admin_api_enabled;
+
+		janus_http_transport.send_message = janus_http_send_message;
+		janus_http_transport.session_created = janus_http_session_created;
+		janus_http_transport.session_over = janus_http_session_over;
 	return &janus_http_transport;
 }
 
@@ -392,7 +390,7 @@ static struct MHD_Daemon *janus_http_create_daemon(gboolean admin, char *path,
 			fseek(pem, 0L, SEEK_END);
 			size_t size = ftell(pem);
 			fseek(pem, 0L, SEEK_SET);
-			cert_pem_bytes = g_malloc0(size);
+			cert_pem_bytes = (char*)g_malloc0(size);
 			char *index = cert_pem_bytes;
 			int read = 0, tot = size;
 			while((read = fread(index, sizeof(char), tot, pem)) > 0) {
@@ -406,7 +404,7 @@ static struct MHD_Daemon *janus_http_create_daemon(gboolean admin, char *path,
 			fseek(key, 0L, SEEK_END);
 			size_t size = ftell(key);
 			fseek(key, 0L, SEEK_SET);
-			cert_key_bytes = g_malloc0(size);
+			cert_key_bytes = (char*)g_malloc0(size);
 			char *index = cert_key_bytes;
 			int read = 0, tot = size;
 			while((read = fread(index, sizeof(char), tot, key)) > 0) {
@@ -915,7 +913,7 @@ int janus_http_send_message(void *transport, void *request_id, gboolean admin, j
 		}
 		guint64 session_id = json_integer_value(s);
 		janus_mutex_lock(&sessions_mutex);
-		janus_http_session *session = g_hash_table_lookup(sessions, &session_id);
+		janus_http_session *session = (janus_http_session *)g_hash_table_lookup(sessions, &session_id);
 		if(session == NULL || session->destroyed) {
 			JANUS_LOG(LOG_ERR, "Can't notify event, no session object...\n");
 			janus_mutex_unlock(&sessions_mutex);
@@ -971,7 +969,7 @@ void janus_http_session_created(void *transport, guint64 session_id) {
 		janus_mutex_unlock(&sessions_mutex);
 		return;
 	}
-	janus_http_session *session = g_malloc0(sizeof(janus_http_session));
+	janus_http_session *session = (janus_http_session *)g_malloc0(sizeof(janus_http_session));
 	session->events = g_async_queue_new();
 	session->destroyed = 0;
 	g_hash_table_insert(sessions, janus_uint64_dup(session_id), session);
@@ -1044,7 +1042,7 @@ int janus_http_handler(void *cls, struct MHD_Connection *connection, const char 
 		firstround = 1;
 		JANUS_LOG(LOG_DBG, "Got a HTTP %s request on %s...\n", method, url);
 		JANUS_LOG(LOG_DBG, " ... Just parsing headers for now...\n");
-		msg = g_malloc0(sizeof(janus_http_msg));
+		msg = (janus_http_msg*)g_malloc0(sizeof(janus_http_msg));
 		if(msg == NULL) {
 			JANUS_LOG(LOG_FATAL, "Memory error!\n");
 			ret = MHD_queue_response(connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
@@ -1091,7 +1089,7 @@ int janus_http_handler(void *cls, struct MHD_Connection *connection, const char 
 			basepath = g_strsplit(url, ws_path, -1);
 		} else {
 			/* The base path is the web server too itself, we process the url itself */
-			basepath = g_malloc0(3);
+			basepath = (gchar**)g_malloc0(3);
 			basepath[0] = g_strdup("/");
 			basepath[1] = g_strdup(url);
 		}
@@ -1163,9 +1161,9 @@ int janus_http_handler(void *cls, struct MHD_Connection *connection, const char 
 		JANUS_LOG(LOG_HUGE, "Processing POST data (%s) (%zu bytes)...\n", msg->contenttype, *upload_data_size);
 		if(*upload_data_size != 0) {
 			if(msg->payload == NULL)
-				msg->payload = g_malloc0(*upload_data_size+1);
+				msg->payload = (gchar*)g_malloc0(*upload_data_size+1);
 			else
-				msg->payload = g_realloc(msg->payload, msg->len+*upload_data_size+1);
+				msg->payload = (gchar*)g_realloc(msg->payload, msg->len+*upload_data_size+1);
 			if(msg->payload == NULL) {
 				JANUS_LOG(LOG_FATAL, "Memory error!\n");
 				ret = MHD_queue_response(connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
@@ -1295,7 +1293,7 @@ int janus_http_handler(void *cls, struct MHD_Connection *connection, const char 
 			goto done;
 		}
 		janus_mutex_lock(&sessions_mutex);
-		janus_http_session *session = g_hash_table_lookup(sessions, &session_id);
+		janus_http_session *session = (janus_http_session*)g_hash_table_lookup(sessions, &session_id);
 		janus_mutex_unlock(&sessions_mutex);
 		if(!session || session->destroyed) {
 			JANUS_LOG(LOG_ERR, "Couldn't find any session %I64u...\n", session_id);
@@ -1321,7 +1319,7 @@ int janus_http_handler(void *cls, struct MHD_Connection *connection, const char 
 		}
 		JANUS_LOG(LOG_VERB, "Session %I64u found... returning up to %d messages\n", session_id, max_events);
 		/* Handle GET, taking the first message from the list */
-		json_t *event = g_async_queue_try_pop(session->events);
+		json_t *event = (json_t*)g_async_queue_try_pop(session->events);
 		if(event != NULL) {
 			if(max_events == 1) {
 				/* Return just this message and leave */
@@ -1334,7 +1332,7 @@ int janus_http_handler(void *cls, struct MHD_Connection *connection, const char 
 				json_array_append_new(list, event);
 				int events = 1;
 				while(events < max_events) {
-					event = g_async_queue_try_pop(session->events);
+					event = (json_t *)g_async_queue_try_pop(session->events);
 					if(event == NULL)
 						break;
 					json_array_append_new(list, event);
@@ -1425,7 +1423,7 @@ int janus_http_admin_handler(void *cls, struct MHD_Connection *connection, const
 		firstround = 1;
 		JANUS_LOG(LOG_VERB, "Got an admin/monitor HTTP %s request on %s...\n", method, url);
 		JANUS_LOG(LOG_DBG, " ... Just parsing headers for now...\n");
-		msg = g_malloc0(sizeof(janus_http_msg));
+		msg = (janus_http_msg *)g_malloc0(sizeof(janus_http_msg));
 		if(msg == NULL) {
 			JANUS_LOG(LOG_FATAL, "Memory error!\n");
 			ret = MHD_queue_response(connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
@@ -1478,7 +1476,7 @@ int janus_http_admin_handler(void *cls, struct MHD_Connection *connection, const
 			basepath = g_strsplit(url, admin_ws_path, -1);
 		} else {
 			/* The base path is the web server too itself, we process the url itself */
-			basepath = g_malloc0(3);
+			basepath = (gchar**)g_malloc0(3);
 			basepath[0] = g_strdup("/");
 			basepath[1] = g_strdup(url);
 		}
@@ -1550,9 +1548,9 @@ int janus_http_admin_handler(void *cls, struct MHD_Connection *connection, const
 		JANUS_LOG(LOG_HUGE, "Processing POST data (%s) (%zu bytes)...\n", msg->contenttype, *upload_data_size);
 		if(*upload_data_size != 0) {
 			if(msg->payload == NULL)
-				msg->payload = g_malloc0(*upload_data_size+1);
+				msg->payload = (gchar*)g_malloc0(*upload_data_size+1);
 			else
-				msg->payload = g_realloc(msg->payload, msg->len+*upload_data_size+1);
+				msg->payload = (gchar*)g_realloc(msg->payload, msg->len+*upload_data_size+1);
 			if(msg->payload == NULL) {
 				JANUS_LOG(LOG_FATAL, "Memory error!\n");
 				ret = MHD_queue_response(connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
@@ -1655,7 +1653,7 @@ done:
 }
 
 int janus_http_headers(void *cls, enum MHD_ValueKind kind, const char *key, const char *value) {
-	janus_http_msg *request = cls;
+	janus_http_msg *request = (janus_http_msg*)cls;
 	JANUS_LOG(LOG_DBG, "%s: %s\n", key, value);
 	if(!strcasecmp(key, MHD_HTTP_HEADER_CONTENT_TYPE)) {
 		if(request)
@@ -1672,7 +1670,7 @@ int janus_http_headers(void *cls, enum MHD_ValueKind kind, const char *key, cons
 
 void janus_http_request_completed(void *cls, struct MHD_Connection *connection, void **con_cls, enum MHD_RequestTerminationCode toe) {
 	JANUS_LOG(LOG_DBG, "Request completed, freeing data\n");
-	janus_http_msg *request = *con_cls;
+	janus_http_msg *request = (janus_http_msg *)(*con_cls);
 	if(!request)
 		return;
 	janus_mutex_lock(&messages_mutex);
@@ -1702,7 +1700,7 @@ int janus_http_notifier(janus_http_msg *msg, int max_events) {
 	int ret = MHD_NO;
 	guint64 session_id = msg->session_id;
 	janus_mutex_lock(&sessions_mutex);
-	janus_http_session *session = g_hash_table_lookup(sessions, &session_id);
+	janus_http_session *session = (janus_http_session*)g_hash_table_lookup(sessions, &session_id);
 	janus_mutex_unlock(&sessions_mutex);
 	if(!session || session->destroyed) {
 		JANUS_LOG(LOG_ERR, "Couldn't find any session %I64u...\n", session_id);
@@ -1724,7 +1722,7 @@ int janus_http_notifier(janus_http_msg *msg, int max_events) {
 	while(end-start < 30*G_USEC_PER_SEC) {
 		if(session->destroyed)
 			break;
-		event = g_async_queue_try_pop(session->events);
+		event = (json_t *)g_async_queue_try_pop(session->events);
 		if(session->destroyed || g_atomic_int_get(&stopping) || event != NULL) {
 			if(event == NULL)
 				break;
@@ -1738,7 +1736,7 @@ int janus_http_notifier(janus_http_msg *msg, int max_events) {
 				json_array_append_new(list, event);
 				int events = 1;
 				while(events < max_events) {
-					event = g_async_queue_try_pop(session->events);
+					event = (json_t *)g_async_queue_try_pop(session->events);
 					if(event == NULL)
 						break;
 					json_array_append_new(list, event);

@@ -65,7 +65,7 @@ janus_recorder *janus_recorder_create(const char *dir, const char *codec, const 
 		return NULL;
 	}
 	/* Create the recorder */
-	janus_recorder *rc = g_malloc0(sizeof(janus_recorder));
+	janus_recorder *rc = (janus_recorder*)g_malloc0(sizeof(janus_recorder));
 	if(rc == NULL) {
 		JANUS_LOG(LOG_FATAL, "Memory error!\n");
 		return NULL;
@@ -91,7 +91,9 @@ janus_recorder *janus_recorder_create(const char *dir, const char *codec, const 
 				return NULL;
 			}
 		} else {
-			if(S_ISDIR(s.st_mode)) {
+			//if(S_ISDIR(s.st_mode)) {
+			if (0)
+			{
 				/* Directory exists */
 				JANUS_LOG(LOG_VERB, "Directory exists: %s\n", dir);
 			} else {

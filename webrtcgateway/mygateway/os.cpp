@@ -198,7 +198,7 @@ unsigned long inet_aton(register const char *cp, struct in_addr *addr) {
 
 static struct sockaddr *dupaddr(const sockaddr_gen * src)
 {
-	sockaddr_gen * d = malloc(sizeof(*d));
+	sockaddr_gen * d = (sockaddr_gen*)malloc(sizeof(*d));
 
 	if (d) {
 		memcpy(d, src, sizeof(*d));
@@ -223,7 +223,7 @@ int getifaddrs(struct ifaddrs **ifpp)
 	for (;;) {
 		DWORD cbret = 0;
 
-		il = malloc(il_len);
+		il = (INTERFACE_INFO*)malloc(il_len);
 		if (!il)
 			break;
 
@@ -260,7 +260,7 @@ int getifaddrs(struct ifaddrs **ifpp)
 		for (i = 0; i < n; i++ ) {
 			struct ifaddrs *ifp;
 
-			ifp = malloc(sizeof(*ifp));
+			ifp = (ifaddrs*)malloc(sizeof(*ifp));
 			if (ifp == NULL)
 				break;
 

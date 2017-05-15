@@ -121,7 +121,7 @@ JANUS_API unsigned long inet_aton(register const char *cp, struct in_addr *addr)
 /*! \brief getifaddrs - get interface addresses
 * @param ifpp list of interface addresses
 * @returns zero in case of success, -1 otherwise */
-JANUS_API int getifaddrs(struct ifaddrs **ifpp);
+ int getifaddrs(struct ifaddrs **ifpp);
 
 #endif
 
@@ -129,7 +129,7 @@ JANUS_API int getifaddrs(struct ifaddrs **ifpp);
 
 /*! \brief freeifaddrs - frees interface addresses
 * @param ifp list of interface addresses */
-JANUS_API void freeifaddrs(struct ifaddrs *ifp);
+ void freeifaddrs(struct ifaddrs *ifp);
 
 #endif
 

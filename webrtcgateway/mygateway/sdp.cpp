@@ -27,7 +27,7 @@ static su_home_t *home = NULL;
 
 /* SDP Initialization */
 int janus_sdp_init(void) {
-	home = su_home_new(sizeof(su_home_t));
+	home = (su_home_t*)su_home_new(sizeof(su_home_t));
 	if(su_home_init(home) < 0) {
 		JANUS_LOG(LOG_FATAL, "Ops, error setting up sofia-sdp?\n");
 		return -1;
@@ -44,9 +44,9 @@ void janus_sdp_deinit(void) {
 
 /* Fake attribute we use for the sendrecv hack */
 static sdp_attribute_t fakedir = {
-	.a_size = sizeof(sdp_attribute_t),
-	.a_name = "jfmod",
-	.a_value = "sr"
+	 sizeof(sdp_attribute_t),NULL,
+	"jfmod",
+	 "sr"
 };
 
 
@@ -161,7 +161,7 @@ int janus_sdp_parse(janus_ice_handle *handle, janus_sdp *sdp) {
 					continue;
 				}
 				JANUS_LOG(LOG_VERB, "[%I64u] Parsing audio candidates (stream=%d)...\n", handle->handle_id, handle->audio_id);
-				stream = g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(handle->audio_id));
+				stream = (janus_ice_stream *)g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(handle->audio_id));
 			} else {
 				/* Audio rejected? */
 				janus_flags_clear(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_HAS_AUDIO);
@@ -178,10 +178,10 @@ int janus_sdp_parse(janus_ice_handle *handle, janus_sdp *sdp) {
 				}
 				JANUS_LOG(LOG_VERB, "[%I64u] Parsing video candidates (stream=%d)...\n", handle->handle_id, handle->video_id);
 				if(!janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE)) {
-					stream = g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(handle->video_id));
+					stream = (janus_ice_stream *)g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(handle->video_id));
 				} else {
 					gint id = handle->audio_id > 0 ? handle->audio_id : handle->video_id;
-					stream = g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(id));
+					stream = (janus_ice_stream *)g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(id));
 				}
 			} else {
 				/* Video rejected? */
@@ -394,7 +394,7 @@ int janus_sdp_parse_candidate(janus_ice_stream *stream, const char *candidate, i
 	}
 	if(res >= 7) {
 		/* Add remote candidate */
-		component = g_hash_table_lookup(stream->components, GUINT_TO_POINTER(rcomponent));
+		component = (janus_ice_component *)g_hash_table_lookup(stream->components, GUINT_TO_POINTER(rcomponent));
 		if(component == NULL) {
 			if(rcomponent == 2 && janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_RTCPMUX)) {
 				JANUS_LOG(LOG_VERB, "[%I64u]   -- Skipping component %d in stream %d (rtcp-muxing)\n", handle->handle_id, rcomponent, stream->stream_id);
@@ -834,7 +834,7 @@ char *janus_sdp_merge(janus_ice_handle *handle, const char *origsdp) {
 		gint64 sessid = janus_get_real_time();
 		gint64 version = sessid;	/* FIXME This needs to be increased when it changes, so time should be ok */
 		g_snprintf(buffer, 512,
-			"o=%s %"SCNi64" %"SCNi64" IN IP4 %s\r\n",
+			"o=%s %I64d %I64d IN IP4 %s\r\n",
 				"-", sessid, version, janus_get_public_ip());
 		g_strlcat(sdp, buffer, JANUS_BUFSIZE);
 	}
@@ -928,7 +928,7 @@ char *janus_sdp_merge(janus_ice_handle *handle, const char *origsdp) {
 					continue;
 				}
 				/* Audio */
-				stream = g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(handle->audio_id));
+				stream = (janus_ice_stream *)g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(handle->audio_id));
 				if(stream == NULL) {
 					JANUS_LOG(LOG_WARN, "[%I64u] Skipping audio line (invalid stream %d)\n", handle->handle_id, handle->audio_id);
 					g_snprintf(buffer, 512,
@@ -965,7 +965,7 @@ char *janus_sdp_merge(janus_ice_handle *handle, const char *origsdp) {
 					continue;
 				}
 				/* Video */
-				stream = g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(id));
+				stream = (janus_ice_stream *)g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(id));
 				if(stream == NULL) {
 					JANUS_LOG(LOG_WARN, "[%I64u] Skipping video line (invalid stream %d)\n", handle->handle_id, id);
 					g_snprintf(buffer, 512,

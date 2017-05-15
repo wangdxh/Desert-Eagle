@@ -410,7 +410,7 @@ char *janus_rtcp_filter(char *packet, int len, int *newlen) {
 		if(keep) {
 			/* Keep this packet */
 			if(filtered == NULL)
-				filtered = g_malloc0(total);
+				filtered = (char*)g_malloc0(total);
 			memcpy(filtered+*newlen, (char *)rtcp, bytes);
 			*newlen += bytes;
 		}
@@ -457,7 +457,8 @@ int janus_rtcp_process_incoming_rtp(rtcp_context *ctx, char *packet, int len) {
 
 	uint64_t arrival = (janus_get_monotonic_time() * ctx->tb) / 1000000;
 	uint64_t transit = arrival - ntohl(rtp->timestamp);
-	uint64_t d = abs(transit - ctx->transit);
+
+	uint64_t d = abs(LONGLONG(transit - ctx->transit));
 	ctx->transit = transit;
 	ctx->jitter += (1./16.) * ((double)d  - ctx->jitter);
 
@@ -769,7 +770,7 @@ int janus_rtcp_cap_remb(char *packet, int len, uint64_t bitrate) {
 							}
 						}
 						newbrmantissa = bitrate >> b;
-						JANUS_LOG(LOG_HUGE, "new brexp:      %"SCNu8"\n", newbrexp);
+						JANUS_LOG(LOG_HUGE, "new brexp:      %d\n", newbrexp);
 						JANUS_LOG(LOG_HUGE, "new brmantissa: %d\n", newbrmantissa);
 						/* FIXME From rtcp_sender.cc */
 						_ptrRTCPData[1] = (uint8_t)((newbrexp << 2) + ((newbrmantissa >> 16) & 0x03));

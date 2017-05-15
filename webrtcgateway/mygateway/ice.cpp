@@ -22,7 +22,9 @@
 #endif
 #include <time.h>
 #include <fcntl.h>
-#include <stun/usages/bind.h>
+
+
+
 #include <nice/debug.h>
 
 #include "janus.h"
@@ -35,6 +37,11 @@
 #include "rtcp.h"
 #include "apierror.h"
 #include "utils.h"
+
+
+extern "C" {
+#include <stun/usages/bind.h>
+}
 
 /* STUN server/port, if any */
 static char *janus_stun_server = NULL;
@@ -382,7 +389,7 @@ static janus_mutex old_plugin_sessions_mutex;
 gboolean janus_plugin_session_is_alive(janus_plugin_session *plugin_session) {
 	/* Make sure this plugin session is still alive */
 	janus_mutex_lock(&old_plugin_sessions_mutex);
-	janus_plugin_session *result = g_hash_table_lookup(old_plugin_sessions, plugin_session);
+	janus_plugin_session *result = (janus_plugin_session*)g_hash_table_lookup(old_plugin_sessions, plugin_session);
 	janus_mutex_unlock(&old_plugin_sessions_mutex);
 	if(result != NULL) {
 		JANUS_LOG(LOG_ERR, "Invalid plugin session (%p)\n", plugin_session);
@@ -505,7 +512,7 @@ void janus_ice_notify_hangup(janus_ice_handle *handle, const char *reason) {
 janus_ice_trickle *janus_ice_trickle_new(janus_ice_handle *handle, const char *transaction, json_t *candidate) {
 	if(transaction == NULL || candidate == NULL)
 		return NULL;
-	janus_ice_trickle *trickle = g_malloc0(sizeof(janus_ice_trickle));
+	janus_ice_trickle *trickle = (janus_ice_trickle*)g_malloc0(sizeof(janus_ice_trickle));
 	trickle->handle = handle;
 	trickle->received = janus_get_monotonic_time();
 	trickle->transaction = g_strdup(transaction);
@@ -724,7 +731,7 @@ int janus_ice_set_stun_server(gchar *stun_server, uint16_t stun_port) {
 	JANUS_LOG(LOG_VERB, "  >> %s:%u\n", janus_stun_server, janus_stun_port);
 	/* Test the STUN server */
 	StunAgent stun;
-	stun_agent_init (&stun, STUN_ALL_KNOWN_ATTRIBUTES, STUN_COMPATIBILITY_RFC5389, 0);
+	stun_agent_init (&stun, STUN_ALL_KNOWN_ATTRIBUTES, STUN_COMPATIBILITY_RFC5389, (StunAgentUsageFlags )0);
 	StunMessage msg;
 	uint8_t buf[1500];
 	size_t len = stun_usage_bind_create(&stun, &msg, buf, 1500);
@@ -742,7 +749,7 @@ int janus_ice_set_stun_server(gchar *stun_server, uint16_t stun_port) {
 		close(fd);
 		return -1;
 	}
-	int bytes = sendto(fd, (void *)buf, len, 0, (struct sockaddr*)&remote, sizeof(remote));
+	int bytes = sendto(fd, (const char*)buf, len, 0, (struct sockaddr*)&remote, sizeof(remote));
 	if(bytes < 0) {
 		JANUS_LOG(LOG_FATAL, "Error sending STUN BINDING test\n");
 		close(fd);
@@ -762,17 +769,17 @@ int janus_ice_set_stun_server(gchar *stun_server, uint16_t stun_port) {
 		return -1;
 	}
 	socklen_t addrlen = sizeof(remote);
-	bytes = recvfrom(fd, (void *)buf, 1500, 0, (struct sockaddr*)&remote, &addrlen);
+	bytes = recvfrom(fd, (char *)buf, 1500, 0, (struct sockaddr*)&remote, &addrlen);
 	JANUS_LOG(LOG_VERB, "  >> Got %d bytes...\n", bytes);
 	if(stun_agent_validate (&stun, &msg, buf, bytes, NULL, NULL) != STUN_VALIDATION_SUCCESS) {
 		JANUS_LOG(LOG_FATAL, "Failed to validate STUN BINDING response\n");
 		close(fd);
 		return -1;
 	}
-	StunClass class = stun_message_get_class(&msg);
+	StunClass classstun = stun_message_get_class(&msg);
 	StunMethod method = stun_message_get_method(&msg);
-	if(class != STUN_RESPONSE || method != STUN_BINDING) {
-		JANUS_LOG(LOG_FATAL, "Unexpected STUN response: %d/%d\n", class, method);
+	if(classstun != STUN_RESPONSE || method != STUN_BINDING) {
+		JANUS_LOG(LOG_FATAL, "Unexpected STUN response: %d/%d\n", classstun, method);
 		close(fd);
 		return -1;
 	}
@@ -954,7 +961,7 @@ janus_ice_handle *janus_ice_handle_find(void *gateway_session, guint64 handle_id
 		return NULL;
 	janus_session *session = (janus_session *)gateway_session;
 	janus_mutex_lock(&session->mutex);
-	janus_ice_handle *handle = session->ice_handles ? g_hash_table_lookup(session->ice_handles, &handle_id) : NULL;
+	janus_ice_handle *handle = session->ice_handles ? (janus_ice_handle *)g_hash_table_lookup(session->ice_handles, &handle_id) : NULL;
 	janus_mutex_unlock(&session->mutex);
 	return handle;
 }
@@ -975,7 +982,7 @@ gint janus_ice_handle_attach_plugin(void *gateway_session, guint64 handle_id, ja
 		return JANUS_ERROR_PLUGIN_ATTACH;
 	}
 	int error = 0;
-	janus_plugin_session *session_handle = g_malloc0(sizeof(janus_plugin_session));
+	janus_plugin_session *session_handle = (janus_plugin_session*)g_malloc0(sizeof(janus_plugin_session));
 	if(session_handle == NULL) {
 		JANUS_LOG(LOG_FATAL, "Memory error!\n");
 		janus_mutex_unlock(&session->mutex);
@@ -1192,7 +1199,7 @@ void janus_ice_webrtc_free(janus_ice_handle *handle) {
 	if(handle->queued_packets != NULL) {
 		janus_ice_queued_packet *pkt = NULL;
 		while(g_async_queue_length(handle->queued_packets) > 0) {
-			pkt = g_async_queue_try_pop(handle->queued_packets);
+			pkt = (janus_ice_queued_packet *)g_async_queue_try_pop(handle->queued_packets);
 			if(pkt != NULL && pkt != &janus_ice_dtls_alert) {
 				g_free(pkt->data);
 				pkt->data = NULL;
@@ -1416,7 +1423,7 @@ void janus_ice_cb_candidate_gathering_done(NiceAgent *agent, guint stream_id, gp
 		return;
 	JANUS_LOG(LOG_VERB, "[%I64u] Gathering done for stream %d\n", handle->handle_id, stream_id);
 	handle->cdone++;
-	janus_ice_stream *stream = g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(stream_id));
+	janus_ice_stream *stream = (janus_ice_stream*)g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(stream_id));
 	if(!stream) {
 		JANUS_LOG(LOG_ERR, "[%I64u]  No stream %d??\n", handle->handle_id, stream_id);
 		return;
@@ -1434,12 +1441,12 @@ void janus_ice_cb_component_state_changed(NiceAgent *agent, guint stream_id, gui
 	}
 	JANUS_LOG(LOG_VERB, "[%I64u] Component state changed for component %d in stream %d: %d (%s)\n",
 		handle->handle_id, component_id, stream_id, state, janus_get_ice_state_name(state));
-	janus_ice_stream *stream = g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(stream_id));
+	janus_ice_stream *stream = (janus_ice_stream*)g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(stream_id));
 	if(!stream) {
 		JANUS_LOG(LOG_ERR, "[%I64u]     No stream %d??\n", handle->handle_id, stream_id);
 		return;
 	}
-	janus_ice_component *component = g_hash_table_lookup(stream->components, GUINT_TO_POINTER(component_id));
+	janus_ice_component *component = (janus_ice_component*)g_hash_table_lookup(stream->components, GUINT_TO_POINTER(component_id));
 	if(!component) {
 		JANUS_LOG(LOG_ERR, "[%I64u]     No component %d in stream %d??\n", handle->handle_id, component_id, stream_id);
 		return;
@@ -1454,7 +1461,7 @@ void janus_ice_cb_component_state_changed(NiceAgent *agent, guint stream_id, gui
 		/* Start the outgoing data thread */
 		GError *error = NULL;
 		char tname[16];
-		g_snprintf(tname, sizeof(tname), "icesend %"SCNu64, handle->handle_id);
+		g_snprintf(tname, sizeof(tname), "icesend %I64d", handle->handle_id);
 		handle->send_thread = g_thread_try_new(tname, &janus_ice_send_thread, handle, &error);
 		if(error != NULL) {
 			/* FIXME We should clear some resources... */
@@ -1510,12 +1517,12 @@ void janus_ice_cb_new_selected_pair (NiceAgent *agent, guint stream_id, guint co
 #else
 	JANUS_LOG(LOG_VERB, "[%I64u] New selected pair for component %d in stream %d: %s <-> %s\n", handle ? handle->handle_id : 0, component_id, stream_id, local->foundation, remote->foundation);
 #endif
-	janus_ice_stream *stream = g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(stream_id));
+	janus_ice_stream *stream = (janus_ice_stream*)g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(stream_id));
 	if(!stream) {
 		JANUS_LOG(LOG_ERR, "[%I64u]     No stream %d??\n", handle->handle_id, stream_id);
 		return;
 	}
-	janus_ice_component *component = g_hash_table_lookup(stream->components, GUINT_TO_POINTER(component_id));
+	janus_ice_component *component = (janus_ice_component*)g_hash_table_lookup(stream->components, GUINT_TO_POINTER(component_id));
 	if(!component) {
 		JANUS_LOG(LOG_ERR, "[%I64u]     No component %d in stream %d??\n", handle->handle_id, component_id, stream_id);
 		return;
@@ -1626,12 +1633,12 @@ void janus_ice_cb_new_remote_candidate (NiceAgent *agent, NiceCandidate *candida
 		/* New remote candidate for a component we don't need anymore (rtcp-mux) */
 		return;
 	}
-	janus_ice_stream *stream = g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(stream_id));
+	janus_ice_stream *stream = (janus_ice_stream *)g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(stream_id));
 	if(!stream) {
 		JANUS_LOG(LOG_ERR, "[%I64u]     No stream %d??\n", handle->handle_id, stream_id);
 		return;
 	}
-	janus_ice_component *component = g_hash_table_lookup(stream->components, GUINT_TO_POINTER(component_id));
+	janus_ice_component *component = (janus_ice_component *)g_hash_table_lookup(stream->components, GUINT_TO_POINTER(component_id));
 	if(!component) {
 		JANUS_LOG(LOG_ERR, "[%I64u]     No component %d in stream %d??\n", handle->handle_id, component_id, stream_id);
 		return;
@@ -1870,7 +1877,7 @@ void janus_ice_cb_nice_recv(NiceAgent *agent, guint stream_id, guint component_i
 				/* Update stats (TODO Do the same for the last second window as well) */
 				if(buflen > 0) {
 					/* Update the last sec queue as well */
-					janus_ice_stats_item *s = g_malloc0(sizeof(janus_ice_stats_item));
+					janus_ice_stats_item *s = (janus_ice_stats_item*)g_malloc0(sizeof(janus_ice_stats_item));
 					s->bytes = buflen;
 					s->when = janus_get_monotonic_time();
 					janus_mutex_lock(&component->mutex);
@@ -1946,7 +1953,7 @@ void janus_ice_cb_nice_recv(NiceAgent *agent, guint stream_id, guint component_i
 					/* Add new seq objs forward */
 					while(cur_seqn != new_seqn) {
 						cur_seqn += (guint16)1; /* can wrap */
-						seq_info_t *seq_obj = g_malloc0(sizeof(seq_info_t));
+						seq_info_t *seq_obj = (seq_info_t*)g_malloc0(sizeof(seq_info_t));
 						seq_obj->seq = cur_seqn;
 						seq_obj->ts = now;
 						seq_obj->state = (cur_seqn == new_seqn) ? SEQ_RECVED : SEQ_MISSING;
@@ -2094,7 +2101,7 @@ void janus_ice_cb_nice_recv(NiceAgent *agent, guint stream_id, guint component_i
 								if(ntohs(rh->seq_number) == seqnr) {
 									/* Should we retransmit this packet? */
 									if((p->last_retransmit > 0) && (now-p->last_retransmit < MAX_NACK_IGNORE)) {
-										JANUS_LOG(LOG_HUGE, "[%I64u]   >> >> Packet %u was retransmitted just %"SCNi64"ms ago, skipping\n", handle->handle_id, seqnr, now-p->last_retransmit);
+										JANUS_LOG(LOG_HUGE, "[%I64u]   >> >> Packet %u was retransmitted just %I64dms ago, skipping\n", handle->handle_id, seqnr, now-p->last_retransmit);
 										break;
 									}
 									JANUS_LOG(LOG_HUGE, "[%I64u]   >> >> Scheduling %u for retransmission due to NACK\n", handle->handle_id, seqnr);
@@ -2102,7 +2109,7 @@ void janus_ice_cb_nice_recv(NiceAgent *agent, guint stream_id, guint component_i
 									retransmits_cnt++;
 									/* Enqueue it */
 									janus_ice_queued_packet *pkt = (janus_ice_queued_packet *)g_malloc0(sizeof(janus_ice_queued_packet));
-									pkt->data = g_malloc0(p->length);
+									pkt->data = (char*)g_malloc0(p->length);
 									memcpy(pkt->data, p->data, p->length);
 									pkt->length = p->length;
 									pkt->type = video ? JANUS_ICE_PACKET_VIDEO : JANUS_ICE_PACKET_AUDIO;
@@ -2171,7 +2178,7 @@ void janus_ice_incoming_data(janus_ice_handle *handle, char *buffer, int length)
 
 /* Thread to create agent */
 void *janus_ice_thread(void *data) {
-	janus_ice_handle *handle = data;
+	janus_ice_handle *handle = (janus_ice_handle*)data;
 	JANUS_LOG(LOG_VERB, "[%I64u] ICE thread started\n", handle->handle_id);
 	GMainLoop *loop = handle->iceloop;
 	if(loop == NULL) {
@@ -2202,12 +2209,12 @@ void janus_ice_candidates_to_sdp(janus_ice_handle *handle, char *sdp, guint stre
 {
 	if(!handle || !handle->agent || !sdp)
 		return;
-	janus_ice_stream *stream = g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(stream_id));
+	janus_ice_stream *stream = (janus_ice_stream*)g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(stream_id));
 	if(!stream) {
 		JANUS_LOG(LOG_ERR, "[%I64u]     No stream %d??\n", handle->handle_id, stream_id);
 		return;
 	}
-	janus_ice_component *component = g_hash_table_lookup(stream->components, GUINT_TO_POINTER(component_id));
+	janus_ice_component *component = (janus_ice_component*)g_hash_table_lookup(stream->components, GUINT_TO_POINTER(component_id));
 	if(!component) {
 		JANUS_LOG(LOG_ERR, "[%I64u]     No component %d in stream %d??\n", handle->handle_id, component_id, stream_id);
 		return;
@@ -2436,7 +2443,7 @@ void janus_ice_candidates_to_sdp(janus_ice_handle *handle, char *sdp, guint stre
 void janus_ice_setup_remote_candidates(janus_ice_handle *handle, guint stream_id, guint component_id) {
 	if(!handle || !handle->agent || !handle->streams)
 		return;
-	janus_ice_stream *stream = g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(stream_id));
+	janus_ice_stream *stream = (janus_ice_stream *)g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(stream_id));
 	if(!stream || !stream->components) {
 		JANUS_LOG(LOG_ERR, "[%I64u] No such stream %d: cannot setup remote candidates for component %d\n", handle->handle_id, stream_id, component_id);
 		return;
@@ -2445,7 +2452,7 @@ void janus_ice_setup_remote_candidates(janus_ice_handle *handle, guint stream_id
 		JANUS_LOG(LOG_VERB, "[%I64u] Stream %d is disabled, skipping remote candidates for component %d\n", handle->handle_id, stream_id, component_id);
 		return;
 	}
-	janus_ice_component *component = g_hash_table_lookup(stream->components, GUINT_TO_POINTER(component_id));
+	janus_ice_component *component = (janus_ice_component *)g_hash_table_lookup(stream->components, GUINT_TO_POINTER(component_id));
 	if(!component) {
 		JANUS_LOG(LOG_ERR, "[%I64u] No such component %d in stream %d: cannot setup remote candidates\n", handle->handle_id, component_id, stream_id);
 		return;
@@ -2555,7 +2562,7 @@ int janus_ice_setup_local(janus_ice_handle *handle, int offer, int audio, int vi
 	handle->iceloop = g_main_loop_new(handle->icectx, FALSE);
 	GError *error = NULL;
 	char tname[16];
-	g_snprintf(tname, sizeof(tname), "iceloop %"SCNu64, handle->handle_id);
+	g_snprintf(tname, sizeof(tname), "iceloop %I64d", handle->handle_id);
 	handle->icethread = g_thread_try_new(tname, &janus_ice_thread, handle, &error);
 	if(error != NULL) {
 		/* FIXME We should clear some resources... */
@@ -2570,7 +2577,7 @@ int janus_ice_setup_local(janus_ice_handle *handle, int offer, int audio, int vi
 	JANUS_LOG(LOG_INFO, "[%I64u] Creating ICE agent (ICE %s mode, %s)\n", handle->handle_id,
 		janus_ice_lite_enabled ? "Lite" : "Full", handle->controlling ? "controlling" : "controlled");
 	g_atomic_int_set(&handle->send_thread_created, 0);
-	handle->agent = g_object_new(NICE_TYPE_AGENT,
+	handle->agent = (NiceAgent *)g_object_new(NICE_TYPE_AGENT,
 		"compatibility", NICE_COMPATIBILITY_DRAFT19,
 		"main-context", handle->icectx,
 		"reliable", FALSE,
@@ -2614,17 +2621,17 @@ int janus_ice_setup_local(janus_ice_handle *handle, int offer, int audio, int vi
 	g_signal_connect (G_OBJECT (handle->agent), "component-state-changed",
 		G_CALLBACK (janus_ice_cb_component_state_changed), handle);
 #ifndef HAVE_LIBNICE_TCP
-	g_signal_connect (G_OBJECT (handle->agent), "new-selected-pair",
+	g_signal_connect (G_OBJECT (handle->agent), "new-selected-pair",G_CALLBACK (janus_ice_cb_new_selected_pair), handle);
 #else
-	g_signal_connect (G_OBJECT (handle->agent), "new-selected-pair-full",
+	g_signal_connect (G_OBJECT (handle->agent), "new-selected-pair-full",G_CALLBACK (janus_ice_cb_new_selected_pair), handle);
 #endif
-		G_CALLBACK (janus_ice_cb_new_selected_pair), handle);
+		
 #ifndef HAVE_LIBNICE_TCP
-	g_signal_connect (G_OBJECT (handle->agent), "new-remote-candidate",
+	g_signal_connect (G_OBJECT (handle->agent), "new-remote-candidate",G_CALLBACK (janus_ice_cb_new_remote_candidate), handle);
 #else
-	g_signal_connect (G_OBJECT (handle->agent), "new-remote-candidate-full",
+	g_signal_connect (G_OBJECT (handle->agent), "new-remote-candidate-full",G_CALLBACK (janus_ice_cb_new_remote_candidate), handle);
 #endif
-		G_CALLBACK (janus_ice_cb_new_remote_candidate), handle);
+		
 
 	/* Add all local addresses, except those in the ignore list */
 	struct ifaddrs *ifaddr, *ifa;
@@ -2711,9 +2718,9 @@ int janus_ice_setup_local(janus_ice_handle *handle, int offer, int audio, int vi
 		}
 		audio_stream->video_ssrc_peer = 0;	/* FIXME Right now we don't know what this will be */
 		audio_stream->video_ssrc_peer_rtx = 0;	/* FIXME Right now we don't know what this will be */
-		audio_stream->audio_rtcp_ctx = g_malloc0(sizeof(rtcp_context));
+		audio_stream->audio_rtcp_ctx = (rtcp_context *)g_malloc0(sizeof(rtcp_context));
 		audio_stream->audio_rtcp_ctx->tb = 48000;	/* May change later */
-		audio_stream->video_rtcp_ctx = g_malloc0(sizeof(rtcp_context));
+		audio_stream->video_rtcp_ctx = (rtcp_context *)g_malloc0(sizeof(rtcp_context));
 		audio_stream->video_rtcp_ctx->tb = 90000;
 		janus_mutex_init(&audio_stream->mutex);
 		audio_stream->components = g_hash_table_new(NULL, NULL);
@@ -2865,7 +2872,7 @@ int janus_ice_setup_local(janus_ice_handle *handle, int offer, int audio, int vi
 		video_stream->video_ssrc_peer_rtx = 0;	/* FIXME Right now we don't know what this will be */
 		video_stream->audio_ssrc = 0;
 		video_stream->audio_ssrc_peer = 0;
-		video_stream->video_rtcp_ctx = g_malloc0(sizeof(rtcp_context));
+		video_stream->video_rtcp_ctx = (rtcp_context *)g_malloc0(sizeof(rtcp_context));
 		video_stream->video_rtcp_ctx->tb = 90000;
 		video_stream->components = g_hash_table_new(NULL, NULL);
 		janus_mutex_init(&video_stream->mutex);
@@ -3099,7 +3106,7 @@ void *janus_ice_send_thread(void *data) {
 		last_nack_cleanup = before;
 	while(!janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_ALERT)) {
 		if(handle->queued_packets != NULL) {
-			pkt = g_async_queue_timeout_pop(handle->queued_packets, 500000);
+			pkt = (janus_ice_queued_packet *)g_async_queue_timeout_pop(handle->queued_packets, 500000);
 		} else {
 			g_usleep(100000);
 		}
@@ -3184,7 +3191,7 @@ void *janus_ice_send_thread(void *data) {
 				/* Create a SR/SDES compound */
 				int srlen = 28;
 				int sdeslen = 20;
-				char rtcpbuf[srlen+sdeslen];
+				char* rtcpbuf = new char [srlen+sdeslen];
 				rtcp_sr *sr = (rtcp_sr *)&rtcpbuf;
 				sr->header.version = 2;
 				sr->header.type = RTCP_SR;
@@ -3214,6 +3221,7 @@ void *janus_ice_send_thread(void *data) {
 				janus_rtcp_sdes((char *)sdes, sdeslen, "janusaudio", 10);
 				/* Enqueue it, we'll send it later */
 				janus_ice_relay_rtcp_internal(handle, 0, rtcpbuf, srlen+sdeslen, FALSE);
+				delete [] rtcpbuf;
 			}
 			audio_rtcp_last_sr = now;
 		}
@@ -3223,7 +3231,7 @@ void *janus_ice_send_thread(void *data) {
 				/* Create a SR/SDES compound */
 				int srlen = 28;
 				int sdeslen = 20;
-				char rtcpbuf[srlen+sdeslen];
+				char* rtcpbuf= new char[srlen+sdeslen];
 				rtcp_sr *sr = (rtcp_sr *)&rtcpbuf;
 				sr->header.version = 2;
 				sr->header.type = RTCP_SR;
@@ -3253,6 +3261,7 @@ void *janus_ice_send_thread(void *data) {
 				janus_rtcp_sdes((char *)sdes, sdeslen, "janusvideo", 10);
 				/* Enqueue it, we'll send it later */
 				janus_ice_relay_rtcp_internal(handle, 1, rtcpbuf, srlen+sdeslen, FALSE);
+				delete [] rtcpbuf;
 			}
 			video_rtcp_last_sr = now;
 		}
@@ -3355,7 +3364,7 @@ void *janus_ice_send_thread(void *data) {
 				if(bitrate > 0) {
 					/* There's a REMB, prepend a RR as it won't work otherwise */
 					int rrlen = 32;
-					char *rtcpbuf = g_malloc0(rrlen+pkt->length);
+					char *rtcpbuf = (char*)g_malloc0(rrlen+pkt->length);
 					rtcp_rr *rr = (rtcp_rr *)rtcpbuf;
 					rr->header.version = 2;
 					rr->header.type = RTCP_RR;
@@ -3391,26 +3400,26 @@ void *janus_ice_send_thread(void *data) {
 						video ? stream->video_ssrc_peer : stream->audio_ssrc_peer);
 				}
 
-				int protected = pkt->length;
+				int protectedlen = pkt->length;
 				int res = 0;
 				if(!janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_PLAN_B)) {
-					res = srtp_protect_rtcp(component->dtls->srtp_out, sbuf, &protected);
+					res = srtp_protect_rtcp(component->dtls->srtp_out, sbuf, &protectedlen);
 				} else {
 					/* We need to make sure different sources don't use the SRTP context at the same time */
 					janus_mutex_lock(&component->dtls->srtp_mutex);
-					res = srtp_protect_rtcp(component->dtls->srtp_out, sbuf, &protected);
+					res = srtp_protect_rtcp(component->dtls->srtp_out, sbuf, &protectedlen);
 					janus_mutex_unlock(&component->dtls->srtp_mutex);
 				}
-				//~ JANUS_LOG(LOG_VERB, "[%I64u] ... SRTCP protect %s (len=%d-->%d)...\n", handle->handle_id, janus_get_srtp_error(res), pkt->length, protected);
+				//~ JANUS_LOG(LOG_VERB, "[%I64u] ... SRTCP protect %s (len=%d-->%d)...\n", handle->handle_id, janus_get_srtp_error(res), pkt->length, protectedlen);
 				if(res != err_status_ok) {
-					JANUS_LOG(LOG_ERR, "[%I64u] ... SRTCP protect error... %s (len=%d-->%d)...\n", handle->handle_id, janus_get_srtp_error(res), pkt->length, protected);
+					JANUS_LOG(LOG_ERR, "[%I64u] ... SRTCP protect error... %s (len=%d-->%d)...\n", handle->handle_id, janus_get_srtp_error(res), pkt->length, protectedlen);
 				} else {
 					/* Shoot! */
 					//~ JANUS_LOG(LOG_VERB, "[%I64u] ... Sending SRTCP packet (pt=%u, seq=%u, ts=%u)...\n", handle->handle_id,
 						//~ header->paytype, ntohs(header->seq_number), ntohl(header->timestamp));
-					int sent = nice_agent_send(handle->agent, stream->stream_id, component->component_id, protected, sbuf);
-					if(sent < protected) {
-						JANUS_LOG(LOG_ERR, "[%I64u] ... only sent %d bytes? (was %d)\n", handle->handle_id, sent, protected);
+					int sent = nice_agent_send(handle->agent, stream->stream_id, component->component_id, protectedlen, sbuf);
+					if(sent < protectedlen) {
+						JANUS_LOG(LOG_ERR, "[%I64u] ... only sent %d bytes? (was %d)\n", handle->handle_id, sent, protectedlen);
 					}
 				}
 			}
@@ -3479,21 +3488,21 @@ void *janus_ice_send_thread(void *data) {
 						rtp_header *header = (rtp_header *)sbuf;
 						header->ssrc = htonl(video ? stream->video_ssrc : stream->audio_ssrc);
 					}
-					int protected = pkt->length;
-					int res = srtp_protect(component->dtls->srtp_out, sbuf, &protected);
-					//~ JANUS_LOG(LOG_VERB, "[%I64u] ... SRTP protect %s (len=%d-->%d)...\n", handle->handle_id, janus_get_srtp_error(res), pkt->length, protected);
+					int protectedlen = pkt->length;
+					int res = srtp_protect(component->dtls->srtp_out, sbuf, &protectedlen);
+					//~ JANUS_LOG(LOG_VERB, "[%I64u] ... SRTP protect %s (len=%d-->%d)...\n", handle->handle_id, janus_get_srtp_error(res), pkt->length, protectedlen);
 					if(res != err_status_ok) {
 						rtp_header *header = (rtp_header *)sbuf;
 						guint32 timestamp = ntohl(header->timestamp);
 						guint16 seq = ntohs(header->seq_number);
-						JANUS_LOG(LOG_ERR, "[%I64u] ... SRTP protect error... %s (len=%d-->%d, ts=%d, seq=%d)...\n", handle->handle_id, janus_get_srtp_error(res), pkt->length, protected, timestamp, seq);
+						JANUS_LOG(LOG_ERR, "[%I64u] ... SRTP protect error... %s (len=%d-->%d, ts=%d, seq=%d)...\n", handle->handle_id, janus_get_srtp_error(res), pkt->length, protectedlen, timestamp, seq);
 					} else {
 						/* Shoot! */
 						//~ JANUS_LOG(LOG_VERB, "[%I64u] ... Sending SRTP packet (pt=%u, ssrc=%u, seq=%u, ts=%u)...\n", handle->handle_id,
 							//~ header->type, ntohl(header->ssrc), ntohs(header->seq_number), ntohl(header->timestamp));
-						int sent = nice_agent_send(handle->agent, stream->stream_id, component->component_id, protected, sbuf);
-						if(sent < protected) {
-							JANUS_LOG(LOG_ERR, "[%I64u] ... only sent %d bytes? (was %d)\n", handle->handle_id, sent, protected);
+						int sent = nice_agent_send(handle->agent, stream->stream_id, component->component_id, protectedlen, sbuf);
+						if(sent < protectedlen) {
+							JANUS_LOG(LOG_ERR, "[%I64u] ... only sent %d bytes? (was %d)\n", handle->handle_id, sent, protectedlen);
 						}
 						/* Update stats */
 						if(sent > 0) {
@@ -3518,9 +3527,9 @@ void *janus_ice_send_thread(void *data) {
 						if(max_nack_queue > 0) {
 							/* Save the packet for retransmissions that may be needed later */
 							janus_rtp_packet *p = (janus_rtp_packet *)g_malloc0(sizeof(janus_rtp_packet));
-							p->data = (char *)g_malloc0(protected);
-							memcpy(p->data, sbuf, protected);
-							p->length = protected;
+							p->data = (char *)g_malloc0(protectedlen);
+							memcpy(p->data, sbuf, protectedlen);
+							p->length = protectedlen;
 							p->created = janus_get_monotonic_time();
 							p->last_retransmit = 0;
 							janus_mutex_lock(&component->mutex);
@@ -3602,7 +3611,7 @@ void janus_ice_relay_rtp(janus_ice_handle *handle, int video, char *buf, int len
 		return;
 	/* Queue this packet */
 	janus_ice_queued_packet *pkt = (janus_ice_queued_packet *)g_malloc0(sizeof(janus_ice_queued_packet));
-	pkt->data = g_malloc0(len);
+	pkt->data = (char*)g_malloc0(len);
 	memcpy(pkt->data, buf, len);
 	pkt->length = len;
 	pkt->type = video ? JANUS_ICE_PACKET_VIDEO : JANUS_ICE_PACKET_AUDIO;
@@ -3630,7 +3639,7 @@ void janus_ice_relay_rtcp_internal(janus_ice_handle *handle, int video, char *bu
 		return;
 	/* Queue this packet */
 	janus_ice_queued_packet *pkt = (janus_ice_queued_packet *)g_malloc0(sizeof(janus_ice_queued_packet));
-	pkt->data = g_malloc0(len);
+	pkt->data = (char*)g_malloc0(len);
 	memcpy(pkt->data, rtcp_buf, rtcp_len);
 	pkt->length = rtcp_len;
 	pkt->type = video ? JANUS_ICE_PACKET_VIDEO : JANUS_ICE_PACKET_AUDIO;

@@ -64,6 +64,25 @@
 #endif
 #endif
 
+#pragma comment(lib, "..\\getopt\\lib\\getopt.lib")
+#pragma comment(lib, "..\\glib\\lib\\glib-2.0.lib")
+#pragma comment(lib, "..\\glib\\lib\\gio-2.0.lib")
+#pragma comment(lib, "..\\glib\\lib\\gmodule-2.0.lib")
+#pragma comment(lib, "..\\glib\\lib\\gobject-2.0.lib")
+
+#pragma comment(lib, "..\\glib\\lib\\gthread-2.0.lib")
+
+#pragma comment(lib, "..\\microhttpd\\libmicrohttpd.dll.a")
+
+
+#pragma comment(lib, "..\\libnice\\nice\\nice.lib")
+#pragma comment(lib, "..\\openssl\\libcrypto.dll.a")
+#pragma comment(lib, "..\\openssl\\libssl.dll.a")
+#pragma comment(lib, "..\\srtp\\srtp.lib")
+#pragma comment(lib, "..\\pthread\\libwinpthread.dll.a")
+#pragma comment(lib, "..\\sofia-sip-1.12\\libsofia-sip-ua.dll.a")
+#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "..\\jansson\\libjansson.dll.a")
 
 JANUS_LOCAL janus_config *config;
 JANUS_LOCAL char *config_file;
@@ -262,13 +281,13 @@ JANUS_API int lock_debug;
 static void janus_handle_signal(int signum) {
 	switch(g_atomic_int_get(&stop)) {
 		case 0:
-			JANUS_PRINT("Stopping gateway, please wait...\n");
+			JANUS_PRINT(4, "Stopping gateway, please wait...\n");
 			break;
 		case 1:
-			JANUS_PRINT("In a hurry? I'm trying to free resources cleanly, here!\n");
+			JANUS_PRINT(4, "In a hurry? I'm trying to free resources cleanly, here!\n");
 			break;
 		default:
-			JANUS_PRINT("Ok, leaving immediately...\n");
+			JANUS_PRINT(4, "Ok, leaving immediately...\n");
 			break;
 	}
 	g_atomic_int_inc(&stop);
@@ -310,12 +329,12 @@ gboolean janus_transport_is_auth_token_valid(janus_transport *plugin, const char
 
 static janus_transport_callbacks janus_handler_transport =
 	{
-		.incoming_request = janus_transport_incoming_request,
-		.transport_gone = janus_transport_gone,
-		.is_api_secret_needed = janus_transport_is_api_secret_needed,
-		.is_api_secret_valid = janus_transport_is_api_secret_valid,
-		.is_auth_token_needed = janus_transport_is_auth_token_needed,
-		.is_auth_token_valid = janus_transport_is_auth_token_valid,
+		 janus_transport_incoming_request,
+		  janus_transport_gone,
+	 janus_transport_is_api_secret_needed,
+		  janus_transport_is_api_secret_valid,
+		  janus_transport_is_auth_token_needed,
+		  janus_transport_is_auth_token_valid,
 	};
 JANUS_API GThreadPool *tasks;
 void janus_transport_task(gpointer data, gpointer user_data);
@@ -337,12 +356,12 @@ void janus_plugin_close_pc(janus_plugin_session *plugin_session);
 void janus_plugin_end_session(janus_plugin_session *plugin_session);
 static janus_callbacks janus_handler_plugin =
 	{
-		.push_event = janus_plugin_push_event,
-		.relay_rtp = janus_plugin_relay_rtp,
-		.relay_rtcp = janus_plugin_relay_rtcp,
-		.relay_data = janus_plugin_relay_data,
-		.close_pc = janus_plugin_close_pc,
-		.end_session = janus_plugin_end_session,
+	  janus_plugin_push_event,
+		 janus_plugin_relay_rtp,
+		 janus_plugin_relay_rtcp,
+		  janus_plugin_relay_data,
+		 janus_plugin_close_pc,
+		  janus_plugin_end_session,
 	};
 ///@}
 
@@ -457,21 +476,21 @@ janus_session *janus_session_create(guint64 session_id) {
 
 janus_session *janus_session_find(guint64 session_id) {
 	janus_mutex_lock(&sessions_mutex);
-	janus_session *session = g_hash_table_lookup(sessions, &session_id);
+	janus_session *session = (janus_session*)g_hash_table_lookup(sessions, &session_id);
 	janus_mutex_unlock(&sessions_mutex);
 	return session;
 }
 
 janus_session *janus_session_find_destroyed(guint64 session_id) {
 	janus_mutex_lock(&sessions_mutex);
-	janus_session *session = g_hash_table_lookup(old_sessions, &session_id);
+	janus_session *session = (janus_session*)g_hash_table_lookup(old_sessions, &session_id);
 	janus_mutex_unlock(&sessions_mutex);
 	return session;
 }
 
 void janus_session_notify_event(guint64 session_id, json_t *event) {
 	janus_mutex_lock(&sessions_mutex);
-	janus_session *session = sessions ? g_hash_table_lookup(sessions, &session_id) : NULL;
+	janus_session *session = sessions ? (janus_session*)g_hash_table_lookup(sessions, &session_id) : NULL;
 	if(session != NULL && !session->destroy && session->source != NULL && session->source->transport != NULL) {
 		janus_mutex_unlock(&sessions_mutex);
 		/* Send this to the transport client */
@@ -500,7 +519,7 @@ gint janus_session_destroy(guint64 session_id) {
 		/* Remove all handles */
 		g_hash_table_iter_init(&iter, session->ice_handles);
 		while (g_hash_table_iter_next(&iter, NULL, &value)) {
-			janus_ice_handle *handle = value;
+			janus_ice_handle *handle =(janus_ice_handle*) value;
 			if(!handle || g_atomic_int_get(&stop)) {
 				continue;
 			}
@@ -1120,7 +1139,7 @@ int janus_process_incoming_request(janus_request *request) {
 						if(!janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE)
 								|| (!video && !data)) {
 							JANUS_LOG(LOG_HUGE, "  -- Marking audio stream as disabled\n");
-							janus_ice_stream *stream = g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(handle->audio_id));
+							janus_ice_stream *stream = (janus_ice_stream*)g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(handle->audio_id));
 							if(stream)
 								stream->disabled = TRUE;
 						}
@@ -1132,10 +1151,10 @@ int janus_process_incoming_request(janus_request *request) {
 							JANUS_LOG(LOG_HUGE, "  -- Marking video stream as disabled\n");
 							janus_ice_stream *stream = NULL;
 							if(!janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE)) {
-								stream = g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(handle->video_id));
+								stream = (janus_ice_stream *)g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(handle->video_id));
 							} else {
 								gint id = handle->audio_id > 0 ? handle->audio_id : handle->video_id;
-								stream = g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(id));
+								stream = (janus_ice_stream *)g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(id));
 							}
 							if(stream)
 								stream->disabled = TRUE;
@@ -1148,10 +1167,10 @@ int janus_process_incoming_request(janus_request *request) {
 							JANUS_LOG(LOG_HUGE, "  -- Marking data channel stream as disabled\n");
 							janus_ice_stream *stream = NULL;
 							if(!janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE)) {
-								stream = g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(handle->data_id));
+								stream = (janus_ice_stream*)g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(handle->data_id));
 							} else {
 								gint id = handle->audio_id > 0 ? handle->audio_id : (handle->video_id > 0 ? handle->video_id : handle->data_id);
-								stream = g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(id));
+								stream = (janus_ice_stream*)g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(id));
 							}
 							if(stream)
 								stream->disabled = TRUE;
@@ -1620,7 +1639,7 @@ int janus_process_incoming_admin_request(janus_request *request) {
 				gpointer value;
 				g_hash_table_iter_init(&iter, sessions);
 				while (g_hash_table_iter_next(&iter, NULL, &value)) {
-					janus_session *session = value;
+					janus_session *session = (janus_session*)value;
 					if(session == NULL) {
 						continue;
 					}
@@ -1687,7 +1706,7 @@ int janus_process_incoming_admin_request(janus_request *request) {
 					gpointer value;
 					g_hash_table_iter_init(&iter, plugins);
 					while (g_hash_table_iter_next(&iter, NULL, &value)) {
-						janus_plugin *plugin_t = value;
+						janus_plugin *plugin_t = (janus_plugin *)value;
 						if(plugin_t == NULL)
 							continue;
 						if(!janus_auth_allow_plugin(token_value, plugin_t)) {
@@ -2014,7 +2033,7 @@ int janus_process_incoming_admin_request(janus_request *request) {
 			janus_mutex_lock(&session->mutex);
 			g_hash_table_iter_init(&iter, session->ice_handles);
 			while (g_hash_table_iter_next(&iter, NULL, &value)) {
-				janus_ice_handle *handle = value;
+				janus_ice_handle *handle = (janus_ice_handle *)value;
 				if(handle == NULL) {
 					continue;
 				}
@@ -2464,7 +2483,7 @@ void janus_pluginso_close(gpointer key, gpointer value, gpointer user_data) {
 
 janus_plugin *janus_plugin_find(const gchar *package) {
 	if(package != NULL && plugins != NULL)	/* FIXME Do we need to fix the key pointer? */
-		return g_hash_table_lookup(plugins, package);
+		return (janus_plugin *)g_hash_table_lookup(plugins, package);
 	return NULL;
 }
 
@@ -2479,7 +2498,7 @@ int janus_plugin_push_event(janus_plugin_session *plugin_session, janus_plugin *
 	janus_ice_handle *ice_handle = (janus_ice_handle *)plugin_session->gateway_handle;
 	if(!ice_handle || janus_flags_is_set(&ice_handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_STOP))
 		return JANUS_ERROR_SESSION_NOT_FOUND;
-	janus_session *session = ice_handle->session;
+	janus_session *session = (janus_session *)ice_handle->session;
 	if(!session || session->destroy)
 		return JANUS_ERROR_SESSION_NOT_FOUND;
 	/* Make sure this is a JSON object */
@@ -2643,7 +2662,7 @@ json_t *janus_plugin_handle_sdp(janus_plugin_session *plugin_session, janus_plug
 		if(!janus_flags_is_set(&ice_handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE)
 				|| (!video && !data)) {
 			JANUS_LOG(LOG_VERB, "[%I64u]   -- Marking audio stream as disabled\n", ice_handle->handle_id);
-			janus_ice_stream *stream = g_hash_table_lookup(ice_handle->streams, GUINT_TO_POINTER(ice_handle->audio_id));
+			janus_ice_stream *stream = (janus_ice_stream *)g_hash_table_lookup(ice_handle->streams, GUINT_TO_POINTER(ice_handle->audio_id));
 			if(stream)
 				stream->disabled = TRUE;
 		}
@@ -2655,10 +2674,10 @@ json_t *janus_plugin_handle_sdp(janus_plugin_session *plugin_session, janus_plug
 			JANUS_LOG(LOG_VERB, "[%I64u]   -- Marking video stream as disabled\n", ice_handle->handle_id);
 			janus_ice_stream *stream = NULL;
 			if(!janus_flags_is_set(&ice_handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE)) {
-				stream = g_hash_table_lookup(ice_handle->streams, GUINT_TO_POINTER(ice_handle->video_id));
+				stream = (janus_ice_stream *)g_hash_table_lookup(ice_handle->streams, GUINT_TO_POINTER(ice_handle->video_id));
 			} else {
 				gint id = ice_handle->audio_id > 0 ? ice_handle->audio_id : ice_handle->video_id;
-				stream = g_hash_table_lookup(ice_handle->streams, GUINT_TO_POINTER(id));
+				stream = (janus_ice_stream *)g_hash_table_lookup(ice_handle->streams, GUINT_TO_POINTER(id));
 			}
 			if(stream)
 				stream->disabled = TRUE;
@@ -2671,10 +2690,10 @@ json_t *janus_plugin_handle_sdp(janus_plugin_session *plugin_session, janus_plug
 			JANUS_LOG(LOG_VERB, "[%I64u]   -- Marking data channel stream as disabled\n", ice_handle->handle_id);
 			janus_ice_stream *stream = NULL;
 			if(!janus_flags_is_set(&ice_handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE)) {
-				stream = g_hash_table_lookup(ice_handle->streams, GUINT_TO_POINTER(ice_handle->data_id));
+				stream = (janus_ice_stream *)g_hash_table_lookup(ice_handle->streams, GUINT_TO_POINTER(ice_handle->data_id));
 			} else {
 				gint id = ice_handle->audio_id > 0 ? ice_handle->audio_id : (ice_handle->video_id > 0 ? ice_handle->video_id : ice_handle->data_id);
-				stream = g_hash_table_lookup(ice_handle->streams, GUINT_TO_POINTER(id));
+				stream = (janus_ice_stream *)g_hash_table_lookup(ice_handle->streams, GUINT_TO_POINTER(id));
 			}
 			if(stream)
 				stream->disabled = TRUE;
@@ -2983,18 +3002,11 @@ static void janus_main(int argc, char *argv[]) {
 	old_sessions = NULL;
 	sessions_watchdog_context = NULL;
 #ifdef _WIN32
-	guint16 path_utf16[MAX_PATH];
-	GetModuleFileNameW(NULL, path_utf16, MAX_PATH);
-	int num = WideCharToMultiByte(CP_UTF8, 0, path_utf16, -1, 0, 0, 0, 0);
-	if (!num)
-		exit(1);
-	gchar *path_utf8 = (gchar *)g_new0(gchar, num);
-	if (!WideCharToMultiByte(CP_UTF8, 0, path_utf16, -1, path_utf8, num, 0, 0)) {
-		g_free(path_utf8);
-		exit(1);
-	}
-	int ret = g_chdir(g_path_get_dirname(path_utf8));
-	g_free(path_utf8);
+	gchar path_utf16[MAX_PATH];
+	GetModuleFileName(NULL, path_utf16, MAX_PATH);
+
+	int ret = g_chdir(g_path_get_dirname(path_utf16));
+	
 	if (ret)
 		exit(1);
 	g_networking_init();
@@ -3017,7 +3029,7 @@ static void janus_main(int argc, char *argv[]) {
 	if(args_info.configs_folder_given) {
 		configs_folder = g_strdup(args_info.configs_folder_arg);
 	} else {
-		configs_folder = g_strdup (CONFDIR);
+		configs_folder = g_strdup ("./");
 	}
 	if(config_file == NULL) {
 		char file[255];
@@ -3146,9 +3158,9 @@ static void janus_main(int argc, char *argv[]) {
 	if(janus_log_init(daemonize, use_stdout, logfile) < 0)
 		exit(1);
 
-	JANUS_PRINT("---------------------------------------------------\n");
-	JANUS_PRINT("  Starting Meetecho Janus (WebRTC Gateway) v%s\n", JANUS_VERSION_STRING);
-	JANUS_PRINT("---------------------------------------------------\n\n");
+	JANUS_PRINT(4, "---------------------------------------------------\n");
+	JANUS_PRINT(4, "  Starting Meetecho Janus (WebRTC Gateway) v%s\n", JANUS_VERSION_STRING);
+	JANUS_PRINT(4, "---------------------------------------------------\n\n");
 
 	/* Handle SIGINT (CTRL-C), SIGTERM (from service managers) */
 	signal(SIGINT, janus_handle_signal);
@@ -3198,7 +3210,7 @@ static void janus_main(int argc, char *argv[]) {
 		if(item && item->value) {
 			int temp_level = atoi(item->value);
 			if(temp_level == 0 && strcmp(item->value, "0")) {
-				JANUS_PRINT("Invalid debug level %s (configuration), using default (info=4)\n", item->value);
+				JANUS_PRINT(4, "Invalid debug level %s (configuration), using default (info=4)\n", item->value);
 			} else {
 				janus_log_level = temp_level;
 				if(janus_log_level < LOG_NONE)
@@ -3209,7 +3221,7 @@ static void janus_main(int argc, char *argv[]) {
 		}
 	}
 	/* Any command line argument that should overwrite the configuration? */
-	JANUS_PRINT("Checking command line arguments...\n");
+	JANUS_PRINT(4, "Checking command line arguments...\n");
 	if(args_info.debug_timestamps_given) {
 		janus_config_add_item(config, "general", "debug_timestamps", "yes");
 	}
@@ -3291,15 +3303,15 @@ static void janus_main(int argc, char *argv[]) {
 	janus_config_print(config);
 
 	/* Logging/debugging */
-	JANUS_PRINT("Debug/log level is %d\n", janus_log_level);
+	JANUS_PRINT(4, "Debug/log level is %d\n", janus_log_level);
 	janus_config_item *item = janus_config_get_item_drilldown(config, "general", "debug_timestamps");
 	if(item && item->value)
 		janus_log_timestamps = janus_is_true(item->value);
-	JANUS_PRINT("Debug/log timestamps are %s\n", janus_log_timestamps ? "enabled" : "disabled");
+	JANUS_PRINT(4, "Debug/log timestamps are %s\n", janus_log_timestamps ? "enabled" : "disabled");
 	item = janus_config_get_item_drilldown(config, "general", "debug_colors");
 	if(item && item->value)
 		janus_log_colors = janus_is_true(item->value);
-	JANUS_PRINT("Debug/log colors are %s\n", janus_log_colors ? "enabled" : "disabled");
+	JANUS_PRINT(4, "Debug/log colors are %s\n", janus_log_colors ? "enabled" : "disabled");
 
 	/* Any IP/interface to enforce/ignore? */
 	item = janus_config_get_item_drilldown(config, "nat", "ice_enforce_list");
@@ -3955,7 +3967,7 @@ static void janus_main(int argc, char *argv[]) {
 		g_hash_table_destroy(plugins_so);
 	}
 
-	JANUS_PRINT("Bye!\n");
+	JANUS_PRINT(4, "Bye!\n");
 
 #ifdef _WIN32
 	WSACleanup();

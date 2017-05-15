@@ -139,31 +139,31 @@ struct janus_transport {
 	 * @param[in] callback The callback instance the transport plugin can use to contact the gateway
 	 * @param[in] config_path Path of the folder where the configuration for this transport plugin can be found
 	 * @returns 0 in case of success, a negative integer in case of error */
-	int (* const init)(janus_transport_callbacks *callback, const char *config_path);
+	int (*   init)(janus_transport_callbacks *callback, const char *config_path);
 	/*! \brief Transport plugin deinitialization/destructor */
-	void (* const destroy)(void);
+	void (*   destroy)(void);
 
 	/*! \brief Informative method to request the API version this transport plugin was compiled against
 	 *  \note All transport plugins MUST implement this method and return JANUS_TRANSPORT_API_VERSION
 	 * to make this work, or they will be rejected by the core. */
-	int (* const get_api_compatibility)(void);
+	int (*   get_api_compatibility)(void);
 	/*! \brief Informative method to request the numeric version of the transport plugin */
-	int (* const get_version)(void);
+	int (*   get_version)(void);
 	/*! \brief Informative method to request the string version of the transport plugin */
-	const char *(* const get_version_string)(void);
+	const char *(*   get_version_string)(void);
 	/*! \brief Informative method to request a description of the transport plugin */
-	const char *(* const get_description)(void);
+	const char *(*   get_description)(void);
 	/*! \brief Informative method to request the name of the transport plugin */
-	const char *(* const get_name)(void);
+	const char *(*   get_name)(void);
 	/*! \brief Informative method to request the author of the transport plugin */
-	const char *(* const get_author)(void);
+	const char *(*   get_author)(void);
 	/*! \brief Informative method to request the package name of the transport plugin (what will be used in web applications to refer to it) */
-	const char *(* const get_package)(void);
+	const char *(*   get_package)(void);
 
 	/*! \brief Informative method to check whether any Janus API support is currently enabled in this transport */
-	gboolean (* const is_janus_api_enabled)(void);
+	gboolean (*   is_janus_api_enabled)(void);
 	/*! \brief Informative method to check whether any Admin API support is currently enabled in this transport */
-	gboolean (* const is_admin_api_enabled)(void);
+	gboolean (*   is_admin_api_enabled)(void);
 
 	/*! \brief Method to send a message to a client over a transport session
 	 * \note It's the transport plugin's responsibility to free the message.
@@ -174,18 +174,18 @@ struct janus_transport {
 	 * @param[in] admin Whether this is an admin API or a Janus API message
 	 * @param[in] message The message data as a Jansson json_t object
 	 * @returns 0 on success, a negative integer otherwise */
-	int (* const send_message)(void *transport, void *request_id, gboolean admin, json_t *message);
+	int (*   send_message)(void *transport, void *request_id, gboolean admin, json_t *message);
 	/*! \brief Method to notify the transport plugin that a new session has been created from this transport
 	 * \note A transport plugin may decide to close the connection as a result of such an event
 	 * @param[in] transport Opaque pointer to the transport session instance
 	 * @param[in] session_id The session ID that was created (if the transport cares) */
-	void (* const session_created)(void *transport, guint64 session_id);
+	void (*   session_created)(void *transport, guint64 session_id);
 	/*! \brief Method to notify the transport plugin that a session it originated timed out
 	 * \note A transport plugin may decide to close the connection as a result of such an event
 	 * @param[in] transport Opaque pointer to the transport session instance
 	 * @param[in] session_id The session ID that was closed (if the transport cares)
 	 * @param[in] timeout Whether the cause for the session closure is a timeout (this may interest transport plugins more) */
-	void (* const session_over)(void *transport, guint64 session_id, gboolean timeout);
+	void (*   session_over)(void *transport, guint64 session_id, gboolean timeout);
 
 };
 
@@ -197,7 +197,7 @@ struct janus_transport_callbacks {
 	 * @param[in] request_id Opaque pointer to a transport plugin specific value that identifies this request, so that an incoming response coming later can be matched
 	 * @param[in] admin Whether this is an admin API or a Janus API request
 	 * @param[in] message The message data as a Jansson json_t object */
-	void (* const incoming_request)(janus_transport *plugin, void *transport, void *request_id, gboolean admin, json_t *message, json_error_t *error);
+	void (*   incoming_request)(janus_transport *plugin, void *transport, void *request_id, gboolean admin, json_t *message, json_error_t *error);
 	/*! \brief Callback to notify an existing transport instance went away
 	 * \note Be careful in calling this method, as the core will assume this
 	 * client is gone for good, and will tear down all sessions it originated.
@@ -207,11 +207,11 @@ struct janus_transport_callbacks {
 	 * will come and go).
 	 * @param[in] handle The transport session that went away
 	 * @param[in] transport Opaque pointer to the transport session instance that went away */
-	void (* const transport_gone)(janus_transport *plugin, void *transport);
+	void (*   transport_gone)(janus_transport *plugin, void *transport);
 	/*! \brief Callback to check with the core if an API secret must be provided
 	 * @param[in] apisecret The API secret to validate
 	 * @returns TRUE if an API secret is needed, FALSE otherwise */
-	gboolean (* const is_api_secret_needed)(janus_transport *plugin);
+	gboolean (*   is_api_secret_needed)(janus_transport *plugin);
 	/*! \brief Callback to check with the core if a provided API secret is valid
 	 * \note This callback should only be needed when, for any reason, the transport needs to
 	 * validate requests directly, as in general requests will be validated by the core itself.
@@ -219,10 +219,10 @@ struct janus_transport_callbacks {
 	 * pass through the core and so need to be validated by the transport plugin on its behalf.
 	 * @param[in] apisecret The API secret to validate
 	 * @returns TRUE if the API secret is correct, FALSE otherwise */
-	gboolean (* const is_api_secret_valid)(janus_transport *plugin, const char *apisecret);
+	gboolean (*   is_api_secret_valid)(janus_transport *plugin, const char *apisecret);
 	/*! \brief Callback to check with the core if an authentication token is needed
 	 * @returns TRUE if an auth token is needed, FALSE otherwise */
-	gboolean (* const is_auth_token_needed)(janus_transport *plugin);
+	gboolean (*   is_auth_token_needed)(janus_transport *plugin);
 	/*! \brief Callback to check with the core if a provided authentication token is valid
 	 * \note This callback should only be needed when, for any reason, the transport needs to
 	 * validate requests directly, as in general requests will be validated by the core itself.
@@ -230,7 +230,7 @@ struct janus_transport_callbacks {
 	 * pass through the core and so need to be validated by the transport plugin on its behalf.
 	 * @param[in] token The auth token to validate
 	 * @returns TRUE if the auth token is valid, FALSE otherwise */
-	gboolean (* const is_auth_token_valid)(janus_transport *plugin, const char *token);
+	gboolean (*   is_auth_token_valid)(janus_transport *plugin, const char *token);
 
 };
 

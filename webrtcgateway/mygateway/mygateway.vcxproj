@@ -41,6 +41,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>..\bin</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -52,7 +53,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\microhttpd;.\;..\getopt\include;..\jansson;..\pthread;..\glib\lib\glib-2.0\include;..\glib\include\glib-2.0;..\libnice\nice;..\openssl;..\srtp;..\libnice;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\microhttpd;.\;..\getopt\include;..\jansson;..\pthread;..\glib\lib\glib-2.0\include;..\glib\include\glib-2.0;..\libnice\nice;..\openssl;..\srtp;..\libnice;..\sofia-sip-1.12;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

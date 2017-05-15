@@ -182,27 +182,7 @@ static janus_plugin janus_echotest_plugin =
 		[..]
 \endverbatim
  * */
-#define JANUS_PLUGIN_INIT(...) {		\
-		.init = NULL,					\
-		.destroy = NULL,				\
-		.get_api_compatibility = NULL,	\
-		.get_version = NULL,			\
-		.get_version_string = NULL,		\
-		.get_description = NULL,		\
-		.get_name = NULL,				\
-		.get_author = NULL,				\
-		.get_package = NULL,			\
-		.create_session = NULL,			\
-		.handle_message = NULL,			\
-		.setup_media = NULL,			\
-		.incoming_rtp = NULL,			\
-		.incoming_rtcp = NULL,			\
-		.incoming_data = NULL,			\
-		.slow_link = NULL,				\
-		.hangup_media = NULL,			\
-		.destroy_session = NULL,		\
-		.query_session = NULL, 			\
-		## __VA_ARGS__ }
+
 
 
 /*! \brief Callbacks to contact the gateway */
@@ -231,9 +211,11 @@ struct janus_plugin {
 	 * @param[in] callback The callback instance the plugin can use to contact the gateway
 	 * @param[in] config_path Path of the folder where the configuration for this plugin can be found
 	 * @returns 0 in case of success, a negative integer in case of error */
-	int (* const init)(janus_callbacks *callback, const char *config_path);
+	 int (*  init)(janus_callbacks *callback, const char *config_path);
+
 	/*! \brief Plugin deinitialization/destructor */
-	void (* const destroy)(void);
+	 void (*  destroy)(void);
+
 
 	/*! \brief Informative method to request the API version this plugin was compiled against
 	 *  \note This was added in version 0.0.7 of the gateway, to address changes
@@ -241,24 +223,24 @@ struct janus_plugin {
 	 * plugins MUST implement this method and return JANUS_PLUGIN_API_VERSION
 	 * to make this work, or they will be rejected by the core. Do NOT try
 	 * to launch a <= 0.0.7 plugin on a >= 0.0.7 gateway or it will crash. */
-	int (* const get_api_compatibility)(void);
+	int (*   get_api_compatibility)(void);
 	/*! \brief Informative method to request the numeric version of the plugin */
-	int (* const get_version)(void);
+	int (*   get_version)(void);
 	/*! \brief Informative method to request the string version of the plugin */
-	const char *(* const get_version_string)(void);
+	const char *(*   get_version_string)(void);
 	/*! \brief Informative method to request a description of the plugin */
-	const char *(* const get_description)(void);
+	const char *(*   get_description)(void);
 	/*! \brief Informative method to request the name of the plugin */
-	const char *(* const get_name)(void);
+	const char *(*   get_name)(void);
 	/*! \brief Informative method to request the author of the plugin */
-	const char *(* const get_author)(void);
+	const char *(*   get_author)(void);
 	/*! \brief Informative method to request the package name of the plugin (what will be used in web applications to refer to it) */
-	const char *(* const get_package)(void);
+	const char *(*   get_package)(void);
 
 	/*! \brief Method to create a new session/handle for a peer
 	 * @param[in] handle The plugin/gateway session that will be used for this peer
 	 * @param[out] error An integer that may contain information about any error */
-	void (* const create_session)(janus_plugin_session *handle, int *error);
+	void (*   create_session)(janus_plugin_session *handle, int *error);
 	/*! \brief Method to handle an incoming message/request from a peer
 	 * @param[in] handle The plugin/gateway session used for this peer
 	 * @param[in] transaction The transaction identifier for this message/request
@@ -266,22 +248,22 @@ struct janus_plugin {
 	 * @param[in] jsep The json_t object containing the JSEP type/SDP, if available
 	 * @returns A janus_plugin_result instance that may contain a response (for immediate/synchronous replies), an ack
 	 * (for asynchronously managed requests) or an error */
-	struct janus_plugin_result * (* const handle_message)(janus_plugin_session *handle, char *transaction, json_t *message, json_t *jsep);
+	struct janus_plugin_result * (*   handle_message)(janus_plugin_session *handle, char *transaction, json_t *message, json_t *jsep);
 	/*! \brief Callback to be notified when the associated PeerConnection is up and ready to be used
 	 * @param[in] handle The plugin/gateway session used for this peer */
-	void (* const setup_media)(janus_plugin_session *handle);
+	void (*   setup_media)(janus_plugin_session *handle);
 	/*! \brief Method to handle an incoming RTP packet from a peer
 	 * @param[in] handle The plugin/gateway session used for this peer
 	 * @param[in] video Whether this is an audio or a video frame
 	 * @param[in] buf The packet data (buffer)
 	 * @param[in] len The buffer lenght */
-	void (* const incoming_rtp)(janus_plugin_session *handle, int video, char *buf, int len);
+	void (*   incoming_rtp)(janus_plugin_session *handle, int video, char *buf, int len);
 	/*! \brief Method to handle an incoming RTCP packet from a peer
 	 * @param[in] handle The plugin/gateway session used for this peer
 	 * @param[in] video Whether this is related to an audio or a video stream
 	 * @param[in] buf The message data (buffer)
 	 * @param[in] len The buffer lenght */
-	void (* const incoming_rtcp)(janus_plugin_session *handle, int video, char *buf, int len);
+	void (*   incoming_rtcp)(janus_plugin_session *handle, int video, char *buf, int len);
 	/*! \brief Method to handle incoming SCTP/DataChannel data from a peer (text only, for the moment)
 	 * \note We currently only support text data, binary data will follow... please also notice that
 	 * DataChannels send unterminated strings, so you'll have to terminate them with a \0 yourself to
@@ -289,7 +271,7 @@ struct janus_plugin {
 	 * @param[in] handle The plugin/gateway session used for this peer
 	 * @param[in] buf The message data (buffer)
 	 * @param[in] len The buffer lenght */
-	void (* const incoming_data)(janus_plugin_session *handle, char *buf, int len);
+	void (*   incoming_data)(janus_plugin_session *handle, char *buf, int len);
 	/*! \brief Method to be notified by the core when too many NACKs have
 	 * been received or sent by Janus, and so a slow or potentially
 	 * unreliable network is to be expected for this peer
@@ -306,20 +288,20 @@ struct janus_plugin {
 	 * @param[in] uplink Whether this is related to the uplink (Janus to peer)
 	 * or downlink (peer to Janus)
 	 * @param[in] video Whether this is related to an audio or a video stream */
-	void (* const slow_link)(janus_plugin_session *handle, int uplink, int video);
+	void (*   slow_link)(janus_plugin_session *handle, int uplink, int video);
 	/*! \brief Callback to be notified about DTLS alerts from a peer (i.e., the PeerConnection is not valid any more)
 	 * @param[in] handle The plugin/gateway session used for this peer */
-	void (* const hangup_media)(janus_plugin_session *handle);
+	void (*   hangup_media)(janus_plugin_session *handle);
 	/*! \brief Method to destroy a session/handle for a peer
 	 * @param[in] handle The plugin/gateway session used for this peer
 	 * @param[out] error An integer that may contain information about any error */
-	void (* const destroy_session)(janus_plugin_session *handle, int *error);
+	void (*   destroy_session)(janus_plugin_session *handle, int *error);
 	/*! \brief Method to get plugin-specific info of a session/handle
 	 *  \note This was added in version 0.0.7 of the gateway. Janus assumes
 	 * the string is always allocated, so don't return constants here
 	 * @param[in] handle The plugin/gateway session used for this peer
 	 * @returns A json_t object with the requested info */
-	json_t *(* const query_session)(janus_plugin_session *handle);
+	json_t *(*   query_session)(janus_plugin_session *handle);
 
 };
 
@@ -334,36 +316,36 @@ struct janus_callbacks {
 	 * @param[in] transaction The transaction identifier this message refers to
 	 * @param[in] message The json_t object containing the JSON message
 	 * @param[in] jsep The json_t object containing the JSEP type and the SDP attached to the message/event, if any (offer/answer) */
-	int (* const push_event)(janus_plugin_session *handle, janus_plugin *plugin, const char *transaction, json_t *message, json_t *jsep);
+	int (*   push_event)(janus_plugin_session *handle, janus_plugin *plugin, const char *transaction, json_t *message, json_t *jsep);
 
 	/*! \brief Callback to relay RTP packets to a peer
 	 * @param[in] handle The plugin/gateway session used for this peer
 	 * @param[in] video Whether this is an audio or a video frame
 	 * @param[in] buf The packet data (buffer)
 	 * @param[in] len The buffer lenght */
-	void (* const relay_rtp)(janus_plugin_session *handle, int video, char *buf, int len);
+	void (*   relay_rtp)(janus_plugin_session *handle, int video, char *buf, int len);
 	/*! \brief Callback to relay RTCP messages to a peer
 	 * @param[in] handle The plugin/gateway session that will be used for this peer
 	 * @param[in] video Whether this is related to an audio or a video stream
 	 * @param[in] buf The message data (buffer)
 	 * @param[in] len The buffer lenght */
-	void (* const relay_rtcp)(janus_plugin_session *handle, int video, char *buf, int len);
+	void (*   relay_rtcp)(janus_plugin_session *handle, int video, char *buf, int len);
 	/*! \brief Callback to relay SCTP/DataChannel messages to a peer
 	 * @param[in] handle The plugin/gateway session that will be used for this peer
 	 * @param[in] buf The message data (buffer)
 	 * @param[in] len The buffer lenght */
-	void (* const relay_data)(janus_plugin_session *handle, char *buf, int len);
+	void (*   relay_data)(janus_plugin_session *handle, char *buf, int len);
 
 	/*! \brief Callback to ask the core to close a WebRTC PeerConnection
 	 * \note A call to this method will result in the core invoking the hangup_media
 	 * callback on this plugin when done
 	 * @param[in] handle The plugin/gateway session that the PeerConnection is related to */
-	void (* const close_pc)(janus_plugin_session *handle);
+	void (*   close_pc)(janus_plugin_session *handle);
 	/*! \brief Callback to ask the core to get rid of a plugin/gateway session
 	 * \note A call to this method will result in the core invoking the destroy_session
 	 * callback on this plugin when done
 	 * @param[in] handle The plugin/gateway session to get rid of */
-	void (* const end_session)(janus_plugin_session *handle);
+	void (*   end_session)(janus_plugin_session *handle);
 
 };
 

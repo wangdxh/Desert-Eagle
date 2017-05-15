@@ -222,23 +222,7 @@ JANUS_API void janus_set_non_blocking_mode(int fd);
 #define JANUS_VALIDATE_JSON_OBJECT(obj, params, error_code, error_cause, log_error, missing_code, invalid_code) \
 	JANUS_VALIDATE_JSON_OBJECT_FORMAT("Missing mandatory element (%s)", "Invalid element type (%s should be %s)", obj, params, error_code, error_cause, log_error, missing_code, invalid_code)
 
-long long  atoll (const char *p)  
-{  
-    int minus = 0;  
-    long long value = 0;  
-    if (*p == '-')  
-    {  
-        minus ++;  
-        p ++;  
-    }  
-    while (*p >= '0' && *p <= '9')  
-    {  
-        value *= 10;  
-        value += *p - '0';  
-        p ++;  
-    }  
-    return minus ? 0 - value : value;  
-}
+long long  atoll (const char *p);
 struct timezone  
 {  
     int tz_minuteswest;  
@@ -250,38 +234,8 @@ struct timezone
 #else   
 #define EPOCHFILETIME  11644473600000000ULL   
 #endif   
-int  gettimeofday (struct timeval *tv, struct timezone *tz)  
-{  
-    FILETIME ft;  
-    LARGE_INTEGER li;  
-    __int64 t;  
-    static int tzflag;  
-
-    if (tv)  
-    {  
-        GetSystemTimeAsFileTime (&ft);  
-        li.LowPart = ft.dwLowDateTime;  
-        li.HighPart = ft.dwHighDateTime;  
-        t = li.QuadPart;      /* In 100-nanosecond intervals */  
-        t -= EPOCHFILETIME;   /* Offset to the Epoch time */  
-        t /= 10;          /* In microseconds */  
-        tv->tv_sec = (long) (t / 1000000);  
-        tv->tv_usec = (long) (t % 1000000);  
-    }  
-
-    if (tz)  
-    {  
-        if (!tzflag)  
-        {  
-            _tzset ();  
-            tzflag++;  
-        }  
-        tz->tz_minuteswest = _timezone / 60;  
-        tz->tz_dsttime = _daylight;  
-    }  
-
-    return 0;  
-}  
+int  gettimeofday (struct timeval *tv, struct timezone *tz);  
+  
 
 /*! \brief If the secret isn't NULL, check the secret after validating the specified member of the JSON object
  * @param secret The secret to be checked; no check if the secret is NULL

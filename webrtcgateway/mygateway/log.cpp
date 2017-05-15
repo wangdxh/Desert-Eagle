@@ -13,7 +13,6 @@
 
 #include <errno.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "log.h"
 
@@ -163,18 +162,18 @@ void janus_vprintf(int nlevel, const char *format, ...)
 	janus_log_buffer *b = janus_log_getbuf();
 
 	va_start(ap, format);
-	va_copy(ap2, ap);
+	//va_copy(ap2, ap);
 	/* first try */
 	len = vsnprintf(b->str, b->allocated, format, ap);
 	va_end(ap);
 
-	if (len >= (int) b->allocated) {
+	//if (len >= (int) b->allocated) {
 		/* buffer wasn't big enough */
-		b = (janus_log_buffer *)g_realloc(b, len + 1 + sizeof(*b));
-		b->allocated = len + 1;
-		vsnprintf(b->str, b->allocated, format, ap2);
-	}
-	va_end(ap2);
+	//	b = (janus_log_buffer *)g_realloc(b, len + 1 + sizeof(*b));
+	//	b->allocated = len + 1;
+	//	vsnprintf(b->str, b->allocated, format, ap2);
+	//}
+	//va_end(ap2);
 
 	g_mutex_lock(&lock);
 	if (!printhead) {
