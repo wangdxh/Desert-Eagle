@@ -100,7 +100,7 @@ GList *janus_auth_list_tokens(void) {
 		gpointer value;
 		g_hash_table_iter_init(&iter, tokens);
 		while (g_hash_table_iter_next(&iter, NULL, &value)) {
-			const char *token = value;
+			const char *token = (const char *)value;
 			list = g_list_append(list, g_strdup(token));
 		}
 	}
@@ -116,7 +116,7 @@ gboolean janus_auth_remove_token(const char *token) {
 	janus_mutex_lock(&mutex);
 	gboolean ok = token && g_hash_table_remove(tokens, token);
 	/* Also clear the allowed plugins mapping */
-	GList *list = g_hash_table_lookup(allowed_plugins, token);
+	GList *list = (GList *)g_hash_table_lookup(allowed_plugins, token);
 	g_hash_table_remove(allowed_plugins, token);
 	if(list != NULL)
 		g_list_free(list);
@@ -138,7 +138,7 @@ gboolean janus_auth_allow_plugin(const char *token, void *plugin) {
 		janus_mutex_unlock(&mutex);
 		return FALSE;
 	}
-	GList *list = g_hash_table_lookup(allowed_plugins, token);
+	GList *list = (GList *)g_hash_table_lookup(allowed_plugins, token);
 	if(list == NULL) {
 		/* Add the new permission now */
 		list = g_list_append(list, plugin);
@@ -169,7 +169,7 @@ gboolean janus_auth_check_plugin(const char *token, void *plugin) {
 		janus_mutex_unlock(&mutex);
 		return FALSE;
 	}
-	GList *list = g_hash_table_lookup(allowed_plugins, token);
+	GList *list = (GList *)g_hash_table_lookup(allowed_plugins, token);
 	if(g_list_find(list, plugin) == NULL) {
 		janus_mutex_unlock(&mutex);
 		return FALSE;
@@ -188,7 +188,7 @@ GList *janus_auth_list_plugins(const char *token) {
 		return FALSE;
 	}
 	GList *list = NULL;
-	GList *plugins_list = g_hash_table_lookup(allowed_plugins, token);
+	GList *plugins_list = (GList *)g_hash_table_lookup(allowed_plugins, token);
 	if(plugins_list != NULL)
 		list = g_list_copy(plugins_list);
 	janus_mutex_unlock(&mutex);
@@ -205,7 +205,7 @@ gboolean janus_auth_disallow_plugin(const char *token, void *plugin) {
 		janus_mutex_unlock(&mutex);
 		return FALSE;
 	}
-	GList *list = g_hash_table_lookup(allowed_plugins, token);
+	GList *list = (GList *)g_hash_table_lookup(allowed_plugins, token);
 	if(list != NULL) {
 		/* Update the list */
 		list = g_list_remove_all(list, plugin);

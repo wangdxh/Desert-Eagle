@@ -52,7 +52,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\microhttpd;.\;..\getopt\include;..\jansson;..\pthread;..\glib\lib\glib-2.0\include;..\glib\include\glib-2.0;..\libnice\nice;..\openssl;..\srtp;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\microhttpd;.\;..\getopt\include;..\jansson;..\pthread;..\glib\lib\glib-2.0\include;..\glib\include\glib-2.0;..\libnice\nice;..\openssl;..\srtp;..\libnice;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -106,27 +106,27 @@
     <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="apierror.c" />
-    <ClCompile Include="auth.c" />
-    <ClCompile Include="cmdline.c" />
-    <ClCompile Include="config.c" />
-    <ClCompile Include="dtls-bio.c" />
-    <ClCompile Include="dtls.c" />
-    <ClCompile Include="ice.c" />
-    <ClCompile Include="janus.c" />
-    <ClCompile Include="janus_http.c" />
-    <ClCompile Include="janus_streaming.c" />
-    <ClCompile Include="log.c" />
+    <ClCompile Include="apierror.cpp" />
+    <ClCompile Include="auth.cpp" />
+    <ClCompile Include="cmdline.cpp" />
+    <ClCompile Include="config.cpp" />
+    <ClCompile Include="dtls-bio.cpp" />
+    <ClCompile Include="dtls.cpp" />
+    <ClCompile Include="ice.cpp" />
+    <ClCompile Include="janus.cpp" />
+    <ClCompile Include="janus_http.cpp" />
+    <ClCompile Include="janus_streaming.cpp" />
+    <ClCompile Include="log.cpp" />
     <ClCompile Include="mygateway.cpp" />
-    <ClCompile Include="os.c" />
-    <ClCompile Include="plugin.c" />
-    <ClCompile Include="record.c" />
-    <ClCompile Include="rtcp.c" />
-    <ClCompile Include="sctp.c" />
-    <ClCompile Include="sdp.c" />
+    <ClCompile Include="os.cpp" />
+    <ClCompile Include="plugin.cpp" />
+    <ClCompile Include="record.cpp" />
+    <ClCompile Include="rtcp.cpp" />
+    <ClCompile Include="sctp.cpp" />
+    <ClCompile Include="sdp.cpp" />
     <ClCompile Include="stdafx.cpp" />
-    <ClCompile Include="turnrest.c" />
-    <ClCompile Include="utils.c" />
+    <ClCompile Include="turnrest.cpp" />
+    <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -84,7 +84,7 @@ static janus_log_buffer *janus_log_getbuf(void) {
 	}
 	g_mutex_unlock(&lock);
 	if (b == NULL) {
-		b = g_malloc(INITIAL_BUFSZ + sizeof(*b));
+		b = (janus_log_buffer *)g_malloc(INITIAL_BUFSZ + sizeof(*b));
 		b->allocated = INITIAL_BUFSZ;
 		b->next = NULL;
 	}
@@ -156,7 +156,8 @@ static void *janus_log_thread(void *ctx) {
 	return NULL;
 }
 
-void janus_vprintf(const char *format, ...) {
+void janus_vprintf(int nlevel, const char *format, ...) 
+{
 	int len;
 	va_list ap, ap2;
 	janus_log_buffer *b = janus_log_getbuf();
@@ -166,6 +167,7 @@ void janus_vprintf(const char *format, ...) {
 	/* first try */
 	len = vsnprintf(b->str, b->allocated, format, ap);
 	va_end(ap);
+
 	if (len >= (int) b->allocated) {
 		/* buffer wasn't big enough */
 		b = (janus_log_buffer *)g_realloc(b, len + 1 + sizeof(*b));

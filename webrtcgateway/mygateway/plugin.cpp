@@ -11,8 +11,8 @@
 
 #include "plugin.h"
 
-#include "../apierror.h"
-#include "../debug.h"
+#include "apierror.h"
+#include "debug.h"
 
 janus_plugin_result *janus_plugin_result_new(janus_plugin_result_type type, const char *text, json_t *content) {
 	JANUS_LOG(LOG_HUGE, "Creating plugin result...\n");

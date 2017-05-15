@@ -24,7 +24,7 @@
 #include "sctp.h"
 #include "rtcp.h"
 #include "utils.h"
-#include "plugins/plugin.h"
+#include "plugin.h"
 
 
 /*! \brief ICE stuff initialization

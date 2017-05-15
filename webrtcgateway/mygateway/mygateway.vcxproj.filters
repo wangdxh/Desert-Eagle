@@ -98,61 +98,61 @@
     <ClCompile Include="mygateway.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="apierror.c">
+    <ClCompile Include="apierror.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="auth.c">
+    <ClCompile Include="auth.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="cmdline.c">
+    <ClCompile Include="cmdline.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="config.c">
+    <ClCompile Include="config.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="dtls.c">
+    <ClCompile Include="dtls-bio.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="dtls-bio.c">
+    <ClCompile Include="dtls.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ice.c">
+    <ClCompile Include="ice.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="janus.c">
+    <ClCompile Include="janus.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="log.c">
+    <ClCompile Include="janus_http.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="os.c">
+    <ClCompile Include="janus_streaming.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="record.c">
+    <ClCompile Include="log.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="rtcp.c">
+    <ClCompile Include="os.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="sctp.c">
+    <ClCompile Include="plugin.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="sdp.c">
+    <ClCompile Include="record.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="turnrest.c">
+    <ClCompile Include="rtcp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="utils.c">
+    <ClCompile Include="sctp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="janus_http.c">
+    <ClCompile Include="sdp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="janus_streaming.c">
+    <ClCompile Include="turnrest.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="plugin.c">
+    <ClCompile Include="utils.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

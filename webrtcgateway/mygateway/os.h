@@ -19,11 +19,12 @@
 #endif
 
 #ifdef _WIN32
-#ifdef SHARED
+/*#ifdef SHARED
 #define JANUS_API __declspec(dllexport) 
 #else
 #define JANUS_API __declspec(dllimport)
-#endif
+#endif*/
+#define JANUS_API
 #define JANUS_LOCAL JANUS_API
 #else
 #define JANUS_API

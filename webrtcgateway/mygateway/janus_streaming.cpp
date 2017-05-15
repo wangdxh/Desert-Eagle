@@ -866,7 +866,7 @@ int janus_streaming_init(janus_callbacks *callback, const char *config_path) {
 	g_hash_table_iter_init(&iter, mountpoints);
 	while (g_hash_table_iter_next(&iter, NULL, &value)) {
 		janus_streaming_mountpoint *mp = value;
-		JANUS_LOG(LOG_VERB, "  ::: [%"SCNu64"][%s] %s (%s, %s, %s, pin: %s)\n", mp->id, mp->name, mp->description,
+		JANUS_LOG(LOG_VERB, "  ::: [%I64u][%s] %s (%s, %s, %s, pin: %s)\n", mp->id, mp->name, mp->description,
 			mp->streaming_type == janus_streaming_type_live ? "live" : "on demand",
 			mp->streaming_source == janus_streaming_source_rtp ? "RTP source" : "file source",
 			mp->is_private ? "private" : "public",
@@ -1143,9 +1143,9 @@ struct janus_plugin_result *janus_streaming_handle_message(janus_plugin_session 
 		janus_streaming_mountpoint *mp = g_hash_table_lookup(mountpoints, &id_value);
 		if(mp == NULL) {
 			janus_mutex_unlock(&mountpoints_mutex);
-			JANUS_LOG(LOG_VERB, "No such mountpoint/stream %"SCNu64"\n", id_value);
+			JANUS_LOG(LOG_VERB, "No such mountpoint/stream %I64u\n", id_value);
 			error_code = JANUS_STREAMING_ERROR_NO_SUCH_MOUNTPOINT;
-			g_snprintf(error_cause, 512, "No such mountpoint/stream %"SCNu64"", id_value);
+			g_snprintf(error_cause, 512, "No such mountpoint/stream %I64u", id_value);
 			goto plugin_response;
 		}
 		json_t *ml = json_object();
@@ -1487,7 +1487,7 @@ struct janus_plugin_result *janus_streaming_handle_message(janus_plugin_session 
 		if(save) {
 			/* This mountpoint is permanent: save to the configuration file too
 			 * FIXME: We should check if anything fails... */
-			JANUS_LOG(LOG_VERB, "Saving mountpoint %"SCNu64" permanently in config file\n", mp->id);
+			JANUS_LOG(LOG_VERB, "Saving mountpoint %I64u permanently in config file\n", mp->id);
 			janus_mutex_lock(&config_mutex);
 			char value[BUFSIZ];
 			/* The category to add is the mountpoint name */
@@ -1581,9 +1581,9 @@ struct janus_plugin_result *janus_streaming_handle_message(janus_plugin_session 
 		janus_streaming_mountpoint *mp = g_hash_table_lookup(mountpoints, &id_value);
 		if(mp == NULL) {
 			janus_mutex_unlock(&mountpoints_mutex);
-			JANUS_LOG(LOG_VERB, "No such mountpoint/stream %"SCNu64"\n", id_value);
+			JANUS_LOG(LOG_VERB, "No such mountpoint/stream %I64u\n", id_value);
 			error_code = JANUS_STREAMING_ERROR_NO_SUCH_MOUNTPOINT;
-			g_snprintf(error_cause, 512, "No such mountpoint/stream %"SCNu64"", id_value);
+			g_snprintf(error_cause, 512, "No such mountpoint/stream %I64u", id_value);
 			goto plugin_response;
 		}
 		/* A secret may be required for this action */
@@ -1593,7 +1593,7 @@ struct janus_plugin_result *janus_streaming_handle_message(janus_plugin_session 
 			janus_mutex_unlock(&mountpoints_mutex);
 			goto plugin_response;
 		}
-		JANUS_LOG(LOG_VERB, "Request to unmount mountpoint/stream %"SCNu64"\n", id_value);
+		JANUS_LOG(LOG_VERB, "Request to unmount mountpoint/stream %I64u\n", id_value);
 		/* FIXME Should we kick the current viewers as well? */
 		janus_mutex_lock(&mp->mutex);
 		GList *viewer = g_list_first(mp->listeners);
@@ -1622,7 +1622,7 @@ struct janus_plugin_result *janus_streaming_handle_message(janus_plugin_session 
 		if(save) {
 			/* This change is permanent: save to the configuration file too
 			 * FIXME: We should check if anything fails... */
-			JANUS_LOG(LOG_VERB, "Destroying mountpoint %"SCNu64" (%s) permanently in config file\n", mp->id, mp->name);
+			JANUS_LOG(LOG_VERB, "Destroying mountpoint %I64u (%s) permanently in config file\n", mp->id, mp->name);
 			janus_mutex_lock(&config_mutex);
 			/* The category to remove is the mountpoint name */
 			janus_config_remove_category(config, mp->name);
@@ -1664,9 +1664,9 @@ struct janus_plugin_result *janus_streaming_handle_message(janus_plugin_session 
 		janus_streaming_mountpoint *mp = g_hash_table_lookup(mountpoints, &id_value);
 		if(mp == NULL) {
 			janus_mutex_unlock(&mountpoints_mutex);
-			JANUS_LOG(LOG_VERB, "No such mountpoint/stream %"SCNu64"\n", id_value);
+			JANUS_LOG(LOG_VERB, "No such mountpoint/stream %I64u\n", id_value);
 			error_code = JANUS_STREAMING_ERROR_NO_SUCH_MOUNTPOINT;
-			g_snprintf(error_cause, 512, "No such mountpoint/stream %"SCNu64"", id_value);
+			g_snprintf(error_cause, 512, "No such mountpoint/stream %I64u", id_value);
 			goto plugin_response;
 		}
 		if(mp->streaming_type != janus_streaming_type_live || mp->streaming_source != janus_streaming_source_rtp) {
@@ -1799,9 +1799,9 @@ struct janus_plugin_result *janus_streaming_handle_message(janus_plugin_session 
 		janus_streaming_mountpoint *mp = g_hash_table_lookup(mountpoints, &id_value);
 		if(mp == NULL) {
 			janus_mutex_unlock(&mountpoints_mutex);
-			JANUS_LOG(LOG_VERB, "No such mountpoint/stream %"SCNu64"\n", id_value);
+			JANUS_LOG(LOG_VERB, "No such mountpoint/stream %I64u\n", id_value);
 			error_code = JANUS_STREAMING_ERROR_NO_SUCH_MOUNTPOINT;
-			g_snprintf(error_cause, 512, "No such mountpoint/stream %"SCNu64"", id_value);
+			g_snprintf(error_cause, 512, "No such mountpoint/stream %I64u", id_value);
 			goto plugin_response;
 		}
 		/* A secret may be required for this action */
@@ -1959,7 +1959,7 @@ void janus_streaming_incoming_rtcp(janus_plugin_session *handle, int video, char
 	/* We might interested in the available bandwidth that the user advertizes */
 	uint64_t bw = janus_rtcp_get_remb(buf, len);
 	if(bw > 0) {
-		JANUS_LOG(LOG_HUGE, "REMB for this PeerConnection: %"SCNu64"\n", bw);
+		JANUS_LOG(LOG_HUGE, "REMB for this PeerConnection: %I64u\n", bw);
 		/* TODO Use this somehow (e.g., notification towards application?) */
 	}
 	/* FIXME Maybe we should care about RTCP, but not now */
@@ -2053,9 +2053,9 @@ static void *janus_streaming_handler(void *data) {
 			janus_streaming_mountpoint *mp = g_hash_table_lookup(mountpoints, &id_value);
 			if(mp == NULL) {
 				janus_mutex_unlock(&mountpoints_mutex);
-				JANUS_LOG(LOG_VERB, "No such mountpoint/stream %"SCNu64"\n", id_value);
+				JANUS_LOG(LOG_VERB, "No such mountpoint/stream %I64u\n", id_value);
 				error_code = JANUS_STREAMING_ERROR_NO_SUCH_MOUNTPOINT;
-				g_snprintf(error_cause, 512, "No such mountpoint/stream %"SCNu64"", id_value);
+				g_snprintf(error_cause, 512, "No such mountpoint/stream %I64u", id_value);
 				goto error;
 			}
 			/* A secret may be required for this action */
@@ -2066,7 +2066,7 @@ static void *janus_streaming_handler(void *data) {
 				goto error;
 			}
 			janus_mutex_unlock(&mountpoints_mutex);
-			JANUS_LOG(LOG_VERB, "Request to watch mountpoint/stream %"SCNu64"\n", id_value);
+			JANUS_LOG(LOG_VERB, "Request to watch mountpoint/stream %I64u\n", id_value);
 			session->stopping = FALSE;
 			session->mountpoint = mp;
 			if(mp->streaming_type == janus_streaming_type_on_demand) {
@@ -2093,7 +2093,7 @@ static void *janus_streaming_handler(void *data) {
 			gint64 sessid = janus_get_real_time();
 			gint64 version = sessid;	/* FIXME This needs to be increased when it changes, so time should be ok */
 			g_snprintf(buffer, 512,
-				"v=0\r\no=%s %"SCNu64" %"SCNu64" IN IP4 127.0.0.1\r\n",
+				"v=0\r\no=%s %I64u %I64u IN IP4 127.0.0.1\r\n",
 					"-", sessid, version);
 			g_strlcat(sdptemp, buffer, 2048);
 			g_strlcat(sdptemp, "s=Streaming Test\r\nt=0 0\r\n", 2048);
@@ -2204,9 +2204,9 @@ static void *janus_streaming_handler(void *data) {
 			janus_streaming_mountpoint *mp = g_hash_table_lookup(mountpoints, &id_value);
 			if(mp == NULL) {
 				janus_mutex_unlock(&mountpoints_mutex);
-				JANUS_LOG(LOG_VERB, "No such mountpoint/stream %"SCNu64"\n", id_value);
+				JANUS_LOG(LOG_VERB, "No such mountpoint/stream %I64u\n", id_value);
 				error_code = JANUS_STREAMING_ERROR_NO_SUCH_MOUNTPOINT;
-				g_snprintf(error_cause, 512, "No such mountpoint/stream %"SCNu64"", id_value);
+				g_snprintf(error_cause, 512, "No such mountpoint/stream %I64u", id_value);
 				goto error;
 			}
 			if(mp->streaming_type != janus_streaming_type_live || 
@@ -2218,7 +2218,7 @@ static void *janus_streaming_handler(void *data) {
 				goto error;
 			}
 			janus_mutex_unlock(&mountpoints_mutex);
-			JANUS_LOG(LOG_VERB, "Request to switch to mountpoint/stream %"SCNu64" (old: %"SCNu64")\n", id_value, oldmp->id);
+			JANUS_LOG(LOG_VERB, "Request to switch to mountpoint/stream %I64u (old: %I64u)\n", id_value, oldmp->id);
 			session->paused = TRUE;
 			/* Unsubscribe from the previous mountpoint and subscribe to the new one */
 			janus_mutex_lock(&oldmp->mutex);
@@ -3073,7 +3073,7 @@ static void *janus_streaming_filesource_thread(void *data) {
 	}
 	JANUS_LOG(LOG_VERB, "[%s] Streaming audio file: %s\n", mountpoint->name, source->filename);
 	/* Buffer */
-	char *buf = g_malloc0(1024);
+	char *buf = (char*)g_malloc0(1024);
 	char *name = g_strdup(mountpoint->name ? mountpoint->name : "??");
 	/* Set up RTP */
 	gint16 seq = 1;
@@ -3105,7 +3105,8 @@ static void *janus_streaming_filesource_thread(void *data) {
 		}
 		passed = d_s*1000000 + d_us;
 		if(passed < 18000) {	/* Let's wait about 18ms */
-			usleep(1000);
+			//usleep(1000);
+            Sleep(1);
 			continue;
 		}
 		/* Update the reference time */
@@ -3290,7 +3291,7 @@ static void *janus_streaming_relay_thread(void *data) {
 					if(source->keyframe.enabled) {
 						if(source->keyframe.temp_ts > 0 && ntohl(rtp->timestamp) != source->keyframe.temp_ts) {
 							/* We received the last part of the keyframe, get rid of the old one and use this from now on */
-							JANUS_LOG(LOG_HUGE, "[%s] ... ... last part of keyframe received! ts=%"SCNu32", %d packets\n",
+							JANUS_LOG(LOG_HUGE, "[%s] ... ... last part of keyframe received! ts=%d, %d packets\n",
 								mountpoint->name, source->keyframe.temp_ts, g_list_length(source->keyframe.temp_keyframe));
 							source->keyframe.temp_ts = 0;
 							janus_mutex_lock(&source->keyframe.mutex);
@@ -3309,7 +3310,7 @@ static void *janus_streaming_relay_thread(void *data) {
 						} else if(ntohl(rtp->timestamp) == source->keyframe.temp_ts) {
 							/* Part of the keyframe we're currently saving, store */
 							janus_mutex_lock(&source->keyframe.mutex);
-							JANUS_LOG(LOG_HUGE, "[%s] ... other part of keyframe received! ts=%"SCNu32"\n", mountpoint->name, source->keyframe.temp_ts);
+							JANUS_LOG(LOG_HUGE, "[%s] ... other part of keyframe received! ts=%d\n", mountpoint->name, source->keyframe.temp_ts);
 							janus_streaming_rtp_relay_packet *pkt = g_malloc0(sizeof(janus_streaming_rtp_relay_packet));
 							pkt->data = g_malloc0(bytes);
 							memcpy(pkt->data, buffer, bytes);
@@ -3325,7 +3326,7 @@ static void *janus_streaming_relay_thread(void *data) {
 						} else if(janus_streaming_is_keyframe(mountpoint->codecs.video_codec, buffer, bytes)) {
 							/* New keyframe, start saving it */
 							source->keyframe.temp_ts = ntohl(rtp->timestamp);
-							JANUS_LOG(LOG_HUGE, "[%s] New keyframe received! ts=%"SCNu32"\n", mountpoint->name, source->keyframe.temp_ts);
+							JANUS_LOG(LOG_HUGE, "[%s] New keyframe received! ts=%d\n", mountpoint->name, source->keyframe.temp_ts);
 							janus_mutex_lock(&source->keyframe.mutex);
 							janus_streaming_rtp_relay_packet *pkt = g_malloc0(sizeof(janus_streaming_rtp_relay_packet));
 							pkt->data = g_malloc0(bytes);
@@ -3494,12 +3495,12 @@ static gboolean janus_streaming_is_keyframe(gint codec, char* buffer, int len) {
 		rtp_header *header = (rtp_header *)buffer;
 		guint32 timestamp = ntohl(header->timestamp);
 		guint16 seq = ntohs(header->seq_number);
-		JANUS_LOG(LOG_HUGE, "Checking if VP8 packet (size=%d, seq=%"SCNu16", ts=%"SCNu32") is a key frame...\n",
+		JANUS_LOG(LOG_HUGE, "Checking if VP8 packet (size=%d, seq=%d, ts=%d) is a key frame...\n",
 			len, seq, timestamp);
 		uint16_t skip = 0;
 		if(header->extension) {
 			janus_rtp_header_extension *ext = (janus_rtp_header_extension *)(buffer+12);
-			JANUS_LOG(LOG_HUGE, "  -- RTP extension found (type=%"SCNu16", length=%"SCNu16")\n",
+			JANUS_LOG(LOG_HUGE, "  -- RTP extension found (type=%d, length=%d)\n",
 				ntohs(ext->type), ntohs(ext->length));
 			skip = 4 + ntohs(ext->length)*4;
 		}
@@ -3531,7 +3532,7 @@ static gboolean janus_streaming_is_keyframe(gint codec, char* buffer, int len) {
 					picid = (wholepicid & 0x7FFF);
 					buffer++;
 				}
-				JANUS_LOG(LOG_HUGE, "  -- -- PictureID: %"SCNu16"\n", picid);
+				JANUS_LOG(LOG_HUGE, "  -- -- PictureID: %d\n", picid);
 			}
 			if(lbit) {
 				JANUS_LOG(LOG_HUGE, "  -- L bit is set!\n");
@@ -3577,12 +3578,12 @@ static gboolean janus_streaming_is_keyframe(gint codec, char* buffer, int len) {
 		rtp_header *header = (rtp_header *)buffer;
 		guint32 timestamp = ntohl(header->timestamp);
 		guint16 seq = ntohs(header->seq_number);
-		JANUS_LOG(LOG_HUGE, "Checking if H264 packet (size=%d, seq=%"SCNu16", ts=%"SCNu32") is a key frame...\n",
+		JANUS_LOG(LOG_HUGE, "Checking if H264 packet (size=%d, seq=%d, ts=%d) is a key frame...\n",
 			len, seq, timestamp);
 		uint16_t skip = 0;
 		if(header->extension) {
 			janus_rtp_header_extension *ext = (janus_rtp_header_extension *)(buffer+12);
-			JANUS_LOG(LOG_HUGE, "  -- RTP extension found (type=%"SCNu16", length=%"SCNu16")\n",
+			JANUS_LOG(LOG_HUGE, "  -- RTP extension found (type=%d, length=%d)\n",
 				ntohs(ext->type), ntohs(ext->length));
 			skip = 4 + ntohs(ext->length)*4;
 		}

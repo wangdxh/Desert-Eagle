@@ -24,7 +24,7 @@
 * @param[in] format Format string as defined by glib
 * @param[in] args Parameters to insert into formatted string
 * \note This output is buffered and may not appear immediately on stdout. */
-JANUS_API void janus_vprintf(const char *format, ...) G_GNUC_PRINTF(1, 2);
+JANUS_API void janus_vprintf(int nlevel, const char *format, ...) G_GNUC_PRINTF(1, 2);
 
 /*! \brief Log initialization
 * \note This should be called before attempting to use the logger. A buffer

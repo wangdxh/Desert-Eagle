@@ -125,23 +125,23 @@ int janus_sdp_parse(janus_ice_handle *handle, janus_sdp *sdp) {
 	while(a) {
 		if(a->a_name) {
 			if(!strcasecmp(a->a_name, "fingerprint")) {
-				JANUS_LOG(LOG_VERB, "[%"SCNu64"] Fingerprint (global) : %s\n", handle->handle_id, a->a_value);
+				JANUS_LOG(LOG_VERB, "[%I64u] Fingerprint (global) : %s\n", handle->handle_id, a->a_value);
 				if(strcasestr(a->a_value, "sha-256 ") == a->a_value) {
 					rhashing = g_strdup("sha-256");
 					rfingerprint = g_strdup(a->a_value + strlen("sha-256 "));
 				} else if(strcasestr(a->a_value, "sha-1 ") == a->a_value) {
-					JANUS_LOG(LOG_WARN, "[%"SCNu64"]  Hashing algorithm not the one we expected (sha-1 instead of sha-256), but that's ok\n", handle->handle_id);
+					JANUS_LOG(LOG_WARN, "[%I64u]  Hashing algorithm not the one we expected (sha-1 instead of sha-256), but that's ok\n", handle->handle_id);
 					rhashing = g_strdup("sha-1");
 					rfingerprint = g_strdup(a->a_value + strlen("sha-1 "));
 				} else {
 					/* FIXME We should handle this somehow anyway... OpenSSL supports them all */
-					JANUS_LOG(LOG_WARN, "[%"SCNu64"]  Hashing algorithm not the one we expected (sha-256/sha-1), *NOT* cool\n", handle->handle_id);
+					JANUS_LOG(LOG_WARN, "[%I64u]  Hashing algorithm not the one we expected (sha-256/sha-1), *NOT* cool\n", handle->handle_id);
 				}
 			} else if(!strcasecmp(a->a_name, "ice-ufrag")) {
-				JANUS_LOG(LOG_VERB, "[%"SCNu64"] ICE ufrag (global):   %s\n", handle->handle_id, a->a_value);
+				JANUS_LOG(LOG_VERB, "[%I64u] ICE ufrag (global):   %s\n", handle->handle_id, a->a_value);
 				ruser = g_strdup(a->a_value);
 			} else if(!strcasecmp(a->a_name, "ice-pwd")) {
-				JANUS_LOG(LOG_VERB, "[%"SCNu64"] ICE pwd (global):     %s\n", handle->handle_id, a->a_value);
+				JANUS_LOG(LOG_VERB, "[%I64u] ICE pwd (global):     %s\n", handle->handle_id, a->a_value);
 				rpass = g_strdup(a->a_value);
 			}
 		}
@@ -160,12 +160,12 @@ int janus_sdp_parse(janus_ice_handle *handle, janus_sdp *sdp) {
 					m = m->m_next;
 					continue;
 				}
-				JANUS_LOG(LOG_VERB, "[%"SCNu64"] Parsing audio candidates (stream=%d)...\n", handle->handle_id, handle->audio_id);
+				JANUS_LOG(LOG_VERB, "[%I64u] Parsing audio candidates (stream=%d)...\n", handle->handle_id, handle->audio_id);
 				stream = g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(handle->audio_id));
 			} else {
 				/* Audio rejected? */
 				janus_flags_clear(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_HAS_AUDIO);
-				JANUS_LOG(LOG_VERB, "[%"SCNu64"] Audio rejected by peer...\n", handle->handle_id);
+				JANUS_LOG(LOG_VERB, "[%I64u] Audio rejected by peer...\n", handle->handle_id);
 			}
 		} else if(m->m_type == sdp_media_video) {
 			if(handle->rtp_profile == NULL && m->m_proto_name != NULL)
@@ -176,7 +176,7 @@ int janus_sdp_parse(janus_ice_handle *handle, janus_sdp *sdp) {
 					m = m->m_next;
 					continue;
 				}
-				JANUS_LOG(LOG_VERB, "[%"SCNu64"] Parsing video candidates (stream=%d)...\n", handle->handle_id, handle->video_id);
+				JANUS_LOG(LOG_VERB, "[%I64u] Parsing video candidates (stream=%d)...\n", handle->handle_id, handle->video_id);
 				if(!janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE)) {
 					stream = g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(handle->video_id));
 				} else {
@@ -185,7 +185,7 @@ int janus_sdp_parse(janus_ice_handle *handle, janus_sdp *sdp) {
 				}
 			} else {
 				/* Video rejected? */
-				JANUS_LOG(LOG_VERB, "[%"SCNu64"] Video rejected by peer...\n", handle->handle_id);
+				JANUS_LOG(LOG_VERB, "[%I64u] Video rejected by peer...\n", handle->handle_id);
 				janus_flags_clear(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_HAS_VIDEO);
 			}
 #ifdef HAVE_SCTP
@@ -199,7 +199,7 @@ int janus_sdp_parse(janus_ice_handle *handle, janus_sdp *sdp) {
 						m = m->m_next;
 						continue;
 					}
-					JANUS_LOG(LOG_VERB, "[%"SCNu64"] Parsing SCTP candidates (stream=%d)...\n", handle->handle_id, handle->video_id);
+					JANUS_LOG(LOG_VERB, "[%I64u] Parsing SCTP candidates (stream=%d)...\n", handle->handle_id, handle->video_id);
 					if(!janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE)) {
 						stream = g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(handle->data_id));
 					} else {
@@ -213,12 +213,12 @@ int janus_sdp_parse(janus_ice_handle *handle, janus_sdp *sdp) {
 				}
 			} else {
 				/* Data channels rejected? */
-				JANUS_LOG(LOG_VERB, "[%"SCNu64"] Data channels rejected by peer...\n", handle->handle_id);
+				JANUS_LOG(LOG_VERB, "[%I64u] Data channels rejected by peer...\n", handle->handle_id);
 				janus_flags_clear(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_DATA_CHANNELS);
 			}
 #endif
 		} else {
-			JANUS_LOG(LOG_WARN, "[%"SCNu64"] Skipping disabled/unsupported media line...\n", handle->handle_id);
+			JANUS_LOG(LOG_WARN, "[%I64u] Skipping disabled/unsupported media line...\n", handle->handle_id);
 		}
 		if(stream == NULL) {
 			m = m->m_next;
@@ -231,19 +231,19 @@ int janus_sdp_parse(janus_ice_handle *handle, janus_sdp *sdp) {
 				if(!strcasecmp(a->a_name, "mid")) {
 					/* Found mid attribute */
 					if(m->m_type == sdp_media_audio && m->m_port > 0) {
-						JANUS_LOG(LOG_VERB, "[%"SCNu64"] Audio mid: %s\n", handle->handle_id, a->a_value);
+						JANUS_LOG(LOG_VERB, "[%I64u] Audio mid: %s\n", handle->handle_id, a->a_value);
 						handle->audio_mid = g_strdup(a->a_value);
 					} else if(m->m_type == sdp_media_video && m->m_port > 0) {
-						JANUS_LOG(LOG_VERB, "[%"SCNu64"] Video mid: %s\n", handle->handle_id, a->a_value);
+						JANUS_LOG(LOG_VERB, "[%I64u] Video mid: %s\n", handle->handle_id, a->a_value);
 						handle->video_mid = g_strdup(a->a_value);
 #ifdef HAVE_SCTP
 					} else if(m->m_type == sdp_media_application) {
-						JANUS_LOG(LOG_VERB, "[%"SCNu64"] Data Channel mid: %s\n", handle->handle_id, a->a_value);
+						JANUS_LOG(LOG_VERB, "[%I64u] Data Channel mid: %s\n", handle->handle_id, a->a_value);
 						handle->data_mid = g_strdup(a->a_value);
 #endif
 					}
 				} else if(!strcasecmp(a->a_name, "fingerprint")) {
-					JANUS_LOG(LOG_VERB, "[%"SCNu64"] Fingerprint (local) : %s\n", handle->handle_id, a->a_value);
+					JANUS_LOG(LOG_VERB, "[%I64u] Fingerprint (local) : %s\n", handle->handle_id, a->a_value);
 					if(strcasestr(a->a_value, "sha-256 ") == a->a_value) {
 						if(rhashing)
 							g_free(rhashing);	/* FIXME We're overwriting the global one, if any */
@@ -252,7 +252,7 @@ int janus_sdp_parse(janus_ice_handle *handle, janus_sdp *sdp) {
 							g_free(rfingerprint);	/* FIXME We're overwriting the global one, if any */
 						rfingerprint = g_strdup(a->a_value + strlen("sha-256 "));
 					} else if(strcasestr(a->a_value, "sha-1 ") == a->a_value) {
-						JANUS_LOG(LOG_WARN, "[%"SCNu64"]  Hashing algorithm not the one we expected (sha-1 instead of sha-256), but that's ok\n", handle->handle_id);
+						JANUS_LOG(LOG_WARN, "[%I64u]  Hashing algorithm not the one we expected (sha-1 instead of sha-256), but that's ok\n", handle->handle_id);
 						if(rhashing)
 							g_free(rhashing);	/* FIXME We're overwriting the global one, if any */
 						rhashing = g_strdup("sha-1");
@@ -261,22 +261,22 @@ int janus_sdp_parse(janus_ice_handle *handle, janus_sdp *sdp) {
 						rfingerprint = g_strdup(a->a_value + strlen("sha-1 "));
 					} else {
 						/* FIXME We should handle this somehow anyway... OpenSSL supports them all */
-						JANUS_LOG(LOG_WARN, "[%"SCNu64"]  Hashing algorithm not the one we expected (sha-256), *NOT* cool\n", handle->handle_id);
+						JANUS_LOG(LOG_WARN, "[%I64u]  Hashing algorithm not the one we expected (sha-256), *NOT* cool\n", handle->handle_id);
 					}
 				} else if(!strcasecmp(a->a_name, "setup")) {
-					JANUS_LOG(LOG_VERB, "[%"SCNu64"] DTLS setup (local):  %s\n", handle->handle_id, a->a_value);
+					JANUS_LOG(LOG_VERB, "[%I64u] DTLS setup (local):  %s\n", handle->handle_id, a->a_value);
 					if(!strcasecmp(a->a_value, "actpass") || !strcasecmp(a->a_value, "passive"))
 						stream->dtls_role = JANUS_DTLS_ROLE_CLIENT;
 					else if(!strcasecmp(a->a_value, "active"))
 						stream->dtls_role = JANUS_DTLS_ROLE_SERVER;
 					/* TODO Handle holdconn... */
 				} else if(!strcasecmp(a->a_name, "ice-ufrag")) {
-					JANUS_LOG(LOG_VERB, "[%"SCNu64"] ICE ufrag (local):   %s\n", handle->handle_id, a->a_value);
+					JANUS_LOG(LOG_VERB, "[%I64u] ICE ufrag (local):   %s\n", handle->handle_id, a->a_value);
 					if(ruser)
 						g_free(ruser);	/* FIXME We're overwriting the global one, if any */
 					ruser = g_strdup(a->a_value);
 				} else if(!strcasecmp(a->a_name, "ice-pwd")) {
-					JANUS_LOG(LOG_VERB, "[%"SCNu64"] ICE pwd (local):     %s\n", handle->handle_id, a->a_value);
+					JANUS_LOG(LOG_VERB, "[%I64u] ICE pwd (local):     %s\n", handle->handle_id, a->a_value);
 					if(rpass)
 						g_free(rpass);	/* FIXME We're overwriting the global one, if any */
 					rpass = g_strdup(a->a_value);
@@ -320,22 +320,22 @@ int janus_sdp_parse(janus_ice_handle *handle, janus_sdp *sdp) {
 			if(a->a_name) {
 				if(!strcasecmp(a->a_name, "candidate")) {
 					if(m->m_type == sdp_media_video && handle->audio_id > 0 && janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE)) {
-						JANUS_LOG(LOG_VERB, "[%"SCNu64"] This is a video candidate but we're bundling, ignoring...\n", handle->handle_id);
+						JANUS_LOG(LOG_VERB, "[%I64u] This is a video candidate but we're bundling, ignoring...\n", handle->handle_id);
 #ifdef HAVE_SCTP
 					} else if(m->m_type == sdp_media_application && (handle->audio_id > 0 || handle->video_id > 0) && janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE)) {
-						JANUS_LOG(LOG_VERB, "[%"SCNu64"] This is a SCTP candidate but we're bundling, ignoring...\n", handle->handle_id);
+						JANUS_LOG(LOG_VERB, "[%I64u] This is a SCTP candidate but we're bundling, ignoring...\n", handle->handle_id);
 #endif
 					} else {
 						int res = janus_sdp_parse_candidate(stream, (const char *)a->a_value, 0);
 						if(res != 0) {
-							JANUS_LOG(LOG_ERR, "[%"SCNu64"] Failed to parse candidate... (%d)\n", handle->handle_id, res);
+							JANUS_LOG(LOG_ERR, "[%I64u] Failed to parse candidate... (%d)\n", handle->handle_id, res);
 						}
 					}
 				}
 				if(!strcasecmp(a->a_name, "ssrc")) {
 					int res = janus_sdp_parse_ssrc(stream, (const char *)a->a_value, m->m_type == sdp_media_video);
 					if(res != 0) {
-						JANUS_LOG(LOG_ERR, "[%"SCNu64"] Failed to parse SSRC attribute... (%d)\n", handle->handle_id, res);
+						JANUS_LOG(LOG_ERR, "[%I64u] Failed to parse SSRC attribute... (%d)\n", handle->handle_id, res);
 					}
 				}
 #ifdef HAVE_SCTP
@@ -373,7 +373,7 @@ int janus_sdp_parse_candidate(janus_ice_stream *stream, const char *candidate, i
 	janus_ice_component *component = NULL;
 	if(strstr(candidate, "end-of-candidates")) {
 		/* FIXME Should we do something with this? */
-		JANUS_LOG(LOG_VERB, "[%"SCNu64"] end-of-candidates received\n", handle->handle_id);
+		JANUS_LOG(LOG_VERB, "[%I64u] end-of-candidates received\n", handle->handle_id);
 		return 0;
 	}
 	if(strstr(candidate, "candidate:") == candidate) {
@@ -388,7 +388,7 @@ int janus_sdp_parse_candidate(janus_ice_stream *stream, const char *candidate, i
 	if(res < 7) {
 		/* Failed to parse this address, can it be IPv6? */
 		if(!janus_ice_is_ipv6_enabled()) {
-			JANUS_LOG(LOG_WARN, "[%"SCNu64"] Received IPv6 candidate, but IPv6 support is disabled...\n", handle->handle_id);
+			JANUS_LOG(LOG_WARN, "[%I64u] Received IPv6 candidate, but IPv6 support is disabled...\n", handle->handle_id);
 			return res;
 		}
 	}
@@ -397,19 +397,19 @@ int janus_sdp_parse_candidate(janus_ice_stream *stream, const char *candidate, i
 		component = g_hash_table_lookup(stream->components, GUINT_TO_POINTER(rcomponent));
 		if(component == NULL) {
 			if(rcomponent == 2 && janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_RTCPMUX)) {
-				JANUS_LOG(LOG_VERB, "[%"SCNu64"]   -- Skipping component %d in stream %d (rtcp-muxing)\n", handle->handle_id, rcomponent, stream->stream_id);
+				JANUS_LOG(LOG_VERB, "[%I64u]   -- Skipping component %d in stream %d (rtcp-muxing)\n", handle->handle_id, rcomponent, stream->stream_id);
 			} else {
-				JANUS_LOG(LOG_ERR, "[%"SCNu64"]   -- No such component %d in stream %d?\n", handle->handle_id, rcomponent, stream->stream_id);
+				JANUS_LOG(LOG_ERR, "[%I64u]   -- No such component %d in stream %d?\n", handle->handle_id, rcomponent, stream->stream_id);
 			}
 		} else {
 			if(rcomponent == 2 && janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_RTCPMUX)) {
-				JANUS_LOG(LOG_VERB, "[%"SCNu64"]   -- Skipping component %d in stream %d (rtcp-muxing)\n", handle->handle_id, rcomponent, stream->stream_id);
+				JANUS_LOG(LOG_VERB, "[%I64u]   -- Skipping component %d in stream %d (rtcp-muxing)\n", handle->handle_id, rcomponent, stream->stream_id);
 				return 0;
 			}
 			//~ if(trickle) {
 				//~ if(component->dtls != NULL) {
 					//~ /* This component is already ready, ignore this further candidate */
-					//~ JANUS_LOG(LOG_VERB, "[%"SCNu64"]   -- Ignoring this candidate, the component is already ready\n", handle->handle_id);
+					//~ JANUS_LOG(LOG_VERB, "[%I64u]   -- Ignoring this candidate, the component is already ready\n", handle->handle_id);
 					//~ return 0;
 				//~ }
 			//~ }
@@ -417,7 +417,7 @@ int janus_sdp_parse_candidate(janus_ice_stream *stream, const char *candidate, i
 			component->stream_id = stream->stream_id;
 			NiceCandidate *c = NULL;
 			if(!strcasecmp(rtype, "host")) {
-				JANUS_LOG(LOG_VERB, "[%"SCNu64"]  Adding remote candidate component:%d stream:%d type:host %s:%d\n",
+				JANUS_LOG(LOG_VERB, "[%I64u]  Adding remote candidate component:%d stream:%d type:host %s:%d\n",
 					handle->handle_id, rcomponent, stream->stream_id, rip, rport);
 				/* Unless this is libnice >= 0.1.8, we only support UDP... */
 				if(!strcasecmp(rtransport, "udp")) {
@@ -427,10 +427,10 @@ int janus_sdp_parse_candidate(janus_ice_stream *stream, const char *candidate, i
 					c = nice_candidate_new(NICE_CANDIDATE_TYPE_HOST);
 #endif
 				} else {
-					JANUS_LOG(LOG_VERB, "[%"SCNu64"]    Skipping unsupported transport '%s' for media\n", handle->handle_id, rtransport);
+					JANUS_LOG(LOG_VERB, "[%I64u]    Skipping unsupported transport '%s' for media\n", handle->handle_id, rtransport);
 				}
 			} else if(!strcasecmp(rtype, "srflx")) {
-				JANUS_LOG(LOG_VERB, "[%"SCNu64"]  Adding remote candidate component:%d stream:%d type:srflx %s:%d --> %s:%d \n",
+				JANUS_LOG(LOG_VERB, "[%I64u]  Adding remote candidate component:%d stream:%d type:srflx %s:%d --> %s:%d \n",
 					handle->handle_id, rcomponent, stream->stream_id,  rrelip, rrelport, rip, rport);
 				/* Unless this is libnice >= 0.1.8, we only support UDP... */
 				if(!strcasecmp(rtransport, "udp")) {
@@ -440,10 +440,10 @@ int janus_sdp_parse_candidate(janus_ice_stream *stream, const char *candidate, i
 					c = nice_candidate_new(NICE_CANDIDATE_TYPE_SERVER_REFLEXIVE);
 #endif
 				} else {
-					JANUS_LOG(LOG_VERB, "[%"SCNu64"]    Skipping unsupported transport '%s' for media\n", handle->handle_id, rtransport);
+					JANUS_LOG(LOG_VERB, "[%I64u]    Skipping unsupported transport '%s' for media\n", handle->handle_id, rtransport);
 				}
 			} else if(!strcasecmp(rtype, "prflx")) {
-				JANUS_LOG(LOG_VERB, "[%"SCNu64"]  Adding remote candidate component:%d stream:%d type:prflx %s:%d --> %s:%d\n",
+				JANUS_LOG(LOG_VERB, "[%I64u]  Adding remote candidate component:%d stream:%d type:prflx %s:%d --> %s:%d\n",
 					handle->handle_id, rcomponent, stream->stream_id, rrelip, rrelport, rip, rport);
 				/* Unless this is libnice >= 0.1.8, we only support UDP... */
 				if(!strcasecmp(rtransport, "udp")) {
@@ -453,20 +453,20 @@ int janus_sdp_parse_candidate(janus_ice_stream *stream, const char *candidate, i
 					c = nice_candidate_new(NICE_CANDIDATE_TYPE_PEER_REFLEXIVE);
 #endif
 				} else {
-					JANUS_LOG(LOG_VERB, "[%"SCNu64"]    Skipping unsupported transport '%s' for media\n", handle->handle_id, rtransport);
+					JANUS_LOG(LOG_VERB, "[%I64u]    Skipping unsupported transport '%s' for media\n", handle->handle_id, rtransport);
 				}
 			} else if(!strcasecmp(rtype, "relay")) {
-				JANUS_LOG(LOG_VERB, "[%"SCNu64"]  Adding remote candidate component:%d stream:%d type:relay %s:%d --> %s:%d\n",
+				JANUS_LOG(LOG_VERB, "[%I64u]  Adding remote candidate component:%d stream:%d type:relay %s:%d --> %s:%d\n",
 					handle->handle_id, rcomponent, stream->stream_id, rrelip, rrelport, rip, rport);
 				/* We only support UDP/TCP/TLS... */
 				if(strcasecmp(rtransport, "udp") && strcasecmp(rtransport, "tcp") && strcasecmp(rtransport, "tls")) {
-					JANUS_LOG(LOG_VERB, "[%"SCNu64"]    Skipping unsupported transport '%s' for media\n", handle->handle_id, rtransport);
+					JANUS_LOG(LOG_VERB, "[%I64u]    Skipping unsupported transport '%s' for media\n", handle->handle_id, rtransport);
 				} else {
 					c = nice_candidate_new(NICE_CANDIDATE_TYPE_RELAYED);
 				}
 			} else {
 				/* FIXME What now? */
-				JANUS_LOG(LOG_ERR, "[%"SCNu64"]  Unknown remote candidate type:%s for component:%d stream:%d!\n",
+				JANUS_LOG(LOG_ERR, "[%I64u]  Unknown remote candidate type:%s for component:%d stream:%d!\n",
 					handle->handle_id, rtype, rcomponent, stream->stream_id);
 			}
 			if(c != NULL) {
@@ -476,7 +476,7 @@ int janus_sdp_parse_candidate(janus_ice_stream *stream, const char *candidate, i
 				c->transport = NICE_CANDIDATE_TRANSPORT_UDP;
 #else
 				if(!strcasecmp(rtransport, "udp")) {
-					JANUS_LOG(LOG_VERB, "[%"SCNu64"]  Transport: UDP\n", handle->handle_id);
+					JANUS_LOG(LOG_VERB, "[%I64u]  Transport: UDP\n", handle->handle_id);
 					c->transport = NICE_CANDIDATE_TRANSPORT_UDP;
 				} else {
 					/* Check the type (https://tools.ietf.org/html/rfc6544#section-4.5) */
@@ -493,9 +493,9 @@ int janus_sdp_parse_candidate(janus_ice_stream *stream, const char *candidate, i
 						ctype = NICE_CANDIDATE_TRANSPORT_TCP_SO;
 					} else {
 						/* TODO: We should actually stop here... */
-						JANUS_LOG(LOG_ERR, "[%"SCNu64"] Missing tcptype info for the TCP candidate!\n", handle->handle_id);
+						JANUS_LOG(LOG_ERR, "[%I64u] Missing tcptype info for the TCP candidate!\n", handle->handle_id);
 					}
-					JANUS_LOG(LOG_VERB, "[%"SCNu64"]  Transport: TCP (%s)\n", handle->handle_id, type);
+					JANUS_LOG(LOG_VERB, "[%I64u]  Transport: TCP (%s)\n", handle->handle_id, type);
 					c->transport = ctype;
 				}
 #endif
@@ -514,7 +514,7 @@ int janus_sdp_parse_candidate(janus_ice_stream *stream, const char *candidate, i
 					nice_address_set_port(&c->base_addr, rrelport);
 				}
 				component->candidates = g_slist_append(component->candidates, c);
-				JANUS_LOG(LOG_HUGE, "[%"SCNu64"]    Candidate added to the list! (%u elements for %d/%d)\n", handle->handle_id,
+				JANUS_LOG(LOG_HUGE, "[%I64u]    Candidate added to the list! (%u elements for %d/%d)\n", handle->handle_id,
 					g_slist_length(component->candidates), stream->stream_id, component->component_id);
 				/* Save for the summary, in case we need it */
 				component->remote_candidates = g_slist_append(component->remote_candidates, g_strdup(candidate));
@@ -523,15 +523,15 @@ int janus_sdp_parse_candidate(janus_ice_stream *stream, const char *candidate, i
 						/* This is a trickle candidate and ICE has started, we should process it right away */
 						if(!component->process_started) {
 							/* Actually, ICE has JUST started for this component, take care of the candidates we've added so far */
-							JANUS_LOG(LOG_VERB, "[%"SCNu64"] ICE already started for this component, setting candidates we have up to now\n", handle->handle_id);
+							JANUS_LOG(LOG_VERB, "[%I64u] ICE already started for this component, setting candidates we have up to now\n", handle->handle_id);
 							janus_ice_setup_remote_candidates(handle, component->stream_id, component->component_id);
 						} else {
 							GSList *candidates = NULL;
 							candidates = g_slist_append(candidates, c);
 							if(nice_agent_set_remote_candidates(handle->agent, stream->stream_id, component->component_id, candidates) < 1) {
-								JANUS_LOG(LOG_ERR, "[%"SCNu64"] Failed to add trickle candidate :-(\n", handle->handle_id);
+								JANUS_LOG(LOG_ERR, "[%I64u] Failed to add trickle candidate :-(\n", handle->handle_id);
 							} else {
-								JANUS_LOG(LOG_HUGE, "[%"SCNu64"] Trickle candidate added!\n", handle->handle_id);
+								JANUS_LOG(LOG_HUGE, "[%I64u] Trickle candidate added!\n", handle->handle_id);
 							}
 							g_slist_free(candidates);
 						}
@@ -542,28 +542,28 @@ int janus_sdp_parse_candidate(janus_ice_stream *stream, const char *candidate, i
 							/* This is a trickle candidate and ICE has started, we should process it right away */
 							if(!component->process_started) {
 								/* Actually, ICE has JUST started for this component, take care of the candidates we've added so far */
-								JANUS_LOG(LOG_VERB, "[%"SCNu64"] SDP processed but ICE not started yet for this component, setting candidates we have up to now\n", handle->handle_id);
+								JANUS_LOG(LOG_VERB, "[%I64u] SDP processed but ICE not started yet for this component, setting candidates we have up to now\n", handle->handle_id);
 								janus_ice_setup_remote_candidates(handle, component->stream_id, component->component_id);
 							} else {
 								GSList *candidates = NULL;
 								candidates = g_slist_append(candidates, c);
 								if(nice_agent_set_remote_candidates(handle->agent, stream->stream_id, component->component_id, candidates) < 1) {
-									JANUS_LOG(LOG_ERR, "[%"SCNu64"] Failed to add trickle candidate :-(\n", handle->handle_id);
+									JANUS_LOG(LOG_ERR, "[%I64u] Failed to add trickle candidate :-(\n", handle->handle_id);
 								} else {
-									JANUS_LOG(LOG_HUGE, "[%"SCNu64"] Trickle candidate added!\n", handle->handle_id);
+									JANUS_LOG(LOG_HUGE, "[%I64u] Trickle candidate added!\n", handle->handle_id);
 								}
 								g_slist_free(candidates);
 							}
 						} else {
 							/* Still processing the offer/answer: queue the trickle candidate for now, we'll process it later */
-							JANUS_LOG(LOG_VERB, "[%"SCNu64"] Queueing trickle candidate, status is not START yet\n", handle->handle_id);
+							JANUS_LOG(LOG_VERB, "[%I64u] Queueing trickle candidate, status is not START yet\n", handle->handle_id);
 						}
 					}
 				}
 			}
 		}
 	} else {
-		JANUS_LOG(LOG_ERR, "[%"SCNu64"] Failed to parse candidate (res=%d)...\n", handle->handle_id, res);
+		JANUS_LOG(LOG_ERR, "[%I64u] Failed to parse candidate (res=%d)...\n", handle->handle_id, res);
 		return res;
 	}
 	return 0;
@@ -581,18 +581,18 @@ int janus_sdp_parse_ssrc(janus_ice_stream *stream, const char *ssrc_attr, int vi
 	if(video) {
 		if(stream->video_ssrc_peer == 0) {
 			stream->video_ssrc_peer = ssrc;
-			JANUS_LOG(LOG_VERB, "[%"SCNu64"] Peer video SSRC: %u\n", handle->handle_id, stream->video_ssrc_peer);
+			JANUS_LOG(LOG_VERB, "[%I64u] Peer video SSRC: %u\n", handle->handle_id, stream->video_ssrc_peer);
 		} else if(stream->video_ssrc_peer != ssrc) {
 			/* FIXME We assume the second SSRC we get is the one Chrome associates with retransmissions, e.g.
 			 * 	a=ssrc-group:FID 586466331 2053167359 (SSRC SSRC-rtx)
 			 * SSRC group FID: https://tools.ietf.org/html/rfc3388#section-7 */
 			stream->video_ssrc_peer_rtx = ssrc;
-			JANUS_LOG(LOG_VERB, "[%"SCNu64"] Peer video SSRC (rtx): %u\n", handle->handle_id, stream->video_ssrc_peer_rtx);
+			JANUS_LOG(LOG_VERB, "[%I64u] Peer video SSRC (rtx): %u\n", handle->handle_id, stream->video_ssrc_peer_rtx);
 		}
 	} else {
 		if(stream->audio_ssrc_peer == 0) {
 			stream->audio_ssrc_peer = ssrc;
-			JANUS_LOG(LOG_VERB, "[%"SCNu64"] Peer audio SSRC: %u\n", handle->handle_id, stream->audio_ssrc_peer);
+			JANUS_LOG(LOG_VERB, "[%I64u] Peer audio SSRC: %u\n", handle->handle_id, stream->audio_ssrc_peer);
 		}
 	}
 	return 0;
@@ -797,7 +797,7 @@ char *janus_sdp_merge(janus_ice_handle *handle, const char *origsdp) {
 	sdp_session_t *anon = NULL;
 	sdp_parser_t *parser = sdp_parse(home, origsdp, strlen(origsdp), 0);
 	if(!(anon = sdp_session(parser))) {
-		JANUS_LOG(LOG_ERR, "[%"SCNu64"] Error parsing/merging SDP: %s\n", handle->handle_id, sdp_parsing_error(parser));
+		JANUS_LOG(LOG_ERR, "[%I64u] Error parsing/merging SDP: %s\n", handle->handle_id, sdp_parsing_error(parser));
 		sdp_parser_free(parser);
 		return NULL;
 	}
@@ -825,7 +825,7 @@ char *janus_sdp_merge(janus_ice_handle *handle, const char *origsdp) {
 	/* Origin o= */
 	if(anon->sdp_origin) {
 		g_snprintf(buffer, 512,
-			"o=%s %"SCNu64" %"SCNu64" IN IP4 %s\r\n",
+			"o=%s %I64u %I64u IN IP4 %s\r\n",
 				anon->sdp_origin->o_username ? anon->sdp_origin->o_username : "-",
 				anon->sdp_origin->o_id, anon->sdp_origin->o_version,
 				janus_get_public_ip());
@@ -915,7 +915,7 @@ char *janus_sdp_merge(janus_ice_handle *handle, const char *origsdp) {
 			if(m->m_type == sdp_media_audio && m->m_port > 0) {
 				audio++;
 				if(audio > 1 || !handle->audio_id) {
-					JANUS_LOG(LOG_WARN, "[%"SCNu64"] Skipping audio line (we have %d audio lines, and the id is %d)\n", handle->handle_id, audio, handle->audio_id);
+					JANUS_LOG(LOG_WARN, "[%I64u] Skipping audio line (we have %d audio lines, and the id is %d)\n", handle->handle_id, audio, handle->audio_id);
 					g_snprintf(buffer, 512,
 						"m=audio 0 %s 0\r\n", rtp_profile);
 					g_strlcat(sdp, buffer, JANUS_BUFSIZE);
@@ -930,7 +930,7 @@ char *janus_sdp_merge(janus_ice_handle *handle, const char *origsdp) {
 				/* Audio */
 				stream = g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(handle->audio_id));
 				if(stream == NULL) {
-					JANUS_LOG(LOG_WARN, "[%"SCNu64"] Skipping audio line (invalid stream %d)\n", handle->handle_id, handle->audio_id);
+					JANUS_LOG(LOG_WARN, "[%I64u] Skipping audio line (invalid stream %d)\n", handle->handle_id, handle->audio_id);
 					g_snprintf(buffer, 512,
 						"m=audio 0 %s 0\r\n", rtp_profile);
 					g_strlcat(sdp, buffer, JANUS_BUFSIZE);
@@ -951,7 +951,7 @@ char *janus_sdp_merge(janus_ice_handle *handle, const char *origsdp) {
 				if(id == 0 && janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE))
 					id = handle->audio_id > 0 ? handle->audio_id : handle->video_id;
 				if(video > 1 || !id) {
-					JANUS_LOG(LOG_WARN, "[%"SCNu64"] Skipping video line (we have %d video lines, and the id is %d)\n", handle->handle_id, video,
+					JANUS_LOG(LOG_WARN, "[%I64u] Skipping video line (we have %d video lines, and the id is %d)\n", handle->handle_id, video,
 						janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE) ? handle->audio_id : handle->video_id);
 					g_snprintf(buffer, 512,
 						"m=video 0 %s 0\r\n", rtp_profile);
@@ -967,7 +967,7 @@ char *janus_sdp_merge(janus_ice_handle *handle, const char *origsdp) {
 				/* Video */
 				stream = g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(id));
 				if(stream == NULL) {
-					JANUS_LOG(LOG_WARN, "[%"SCNu64"] Skipping video line (invalid stream %d)\n", handle->handle_id, id);
+					JANUS_LOG(LOG_WARN, "[%I64u] Skipping video line (invalid stream %d)\n", handle->handle_id, id);
 					g_snprintf(buffer, 512,
 						"m=video 0 %s 0\r\n", rtp_profile);
 					g_strlcat(sdp, buffer, JANUS_BUFSIZE);
@@ -992,7 +992,7 @@ char *janus_sdp_merge(janus_ice_handle *handle, const char *origsdp) {
 					if(id == 0 && janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE))
 						id = handle->audio_id > 0 ? handle->audio_id : handle->video_id;
 					if(data > 1 || !id) {
-						JANUS_LOG(LOG_WARN, "[%"SCNu64"] Skipping SCTP line (we have %d SCTP lines, and the id is %d)\n", handle->handle_id, data, id);
+						JANUS_LOG(LOG_WARN, "[%I64u] Skipping SCTP line (we have %d SCTP lines, and the id is %d)\n", handle->handle_id, data, id);
 						g_snprintf(buffer, 512,
 							"m=%s 0 %s 0\r\n",
 							m->m_type_name, m->m_proto_name);
@@ -1007,7 +1007,7 @@ char *janus_sdp_merge(janus_ice_handle *handle, const char *origsdp) {
 					/* SCTP */
 					stream = g_hash_table_lookup(handle->streams, GUINT_TO_POINTER(id));
 					if(stream == NULL) {
-						JANUS_LOG(LOG_WARN, "[%"SCNu64"] Skipping SCTP line (invalid stream %d)\n", handle->handle_id, id);
+						JANUS_LOG(LOG_WARN, "[%I64u] Skipping SCTP line (invalid stream %d)\n", handle->handle_id, id);
 						g_snprintf(buffer, 512,
 							"m=%s 0 %s 0\r\n",
 							m->m_type_name, m->m_proto_name);
@@ -1021,7 +1021,7 @@ char *janus_sdp_merge(janus_ice_handle *handle, const char *origsdp) {
 					}
 					g_strlcat(sdp, "m=application 1 DTLS/SCTP", JANUS_BUFSIZE);
 				} else {
-					JANUS_LOG(LOG_WARN, "[%"SCNu64"] Skipping unsupported application media line...\n", handle->handle_id);
+					JANUS_LOG(LOG_WARN, "[%I64u] Skipping unsupported application media line...\n", handle->handle_id);
 					g_snprintf(buffer, 512,
 						"m=%s 0 %s 0\r\n",
 						m->m_type_name, m->m_proto_name);
@@ -1031,7 +1031,7 @@ char *janus_sdp_merge(janus_ice_handle *handle, const char *origsdp) {
 				}
 #endif
 			} else {
-				JANUS_LOG(LOG_WARN, "[%"SCNu64"] Skipping disabled/unsupported media line...\n", handle->handle_id);
+				JANUS_LOG(LOG_WARN, "[%I64u] Skipping disabled/unsupported media line...\n", handle->handle_id);
 				g_snprintf(buffer, 512,
 					"m=%s 0 %s 0\r\n",
 					m->m_type_name, m->m_type == sdp_media_application ? m->m_proto_name : rtp_profile);
@@ -1047,9 +1047,9 @@ char *janus_sdp_merge(janus_ice_handle *handle, const char *origsdp) {
 			}
 			/* Add formats now */
 			if(!m->m_rtpmaps) {
-				JANUS_LOG(LOG_VERB, "[%"SCNu64"] No RTP maps?? trying formats...\n", handle->handle_id);
+				JANUS_LOG(LOG_VERB, "[%I64u] No RTP maps?? trying formats...\n", handle->handle_id);
 				if(!m->m_format) {
-					JANUS_LOG(LOG_ERR, "[%"SCNu64"] No formats either?? this sucks!\n", handle->handle_id);
+					JANUS_LOG(LOG_ERR, "[%I64u] No formats either?? this sucks!\n", handle->handle_id);
 					g_strlcat(sdp, " 0", JANUS_BUFSIZE);	/* FIXME Won't work apparently */
 				} else {
 					sdp_list_t *fmt = m->m_format;
@@ -1213,18 +1213,18 @@ char *janus_sdp_merge(janus_ice_handle *handle, const char *origsdp) {
 				/* Single SSRC */
 				if(m->m_type == sdp_media_audio && m->m_mode != sdp_inactive && m->m_mode != sdp_recvonly) {
 					g_snprintf(buffer, 512,
-						"a=ssrc:%"SCNu32" cname:janusaudio\r\n"
-						"a=ssrc:%"SCNu32" msid:janus janusa0\r\n"
-						"a=ssrc:%"SCNu32" mslabel:janus\r\n"
-						"a=ssrc:%"SCNu32" label:janusa0\r\n",
+						"a=ssrc:%d cname:janusaudio\r\n"
+						"a=ssrc:%d msid:janus janusa0\r\n"
+						"a=ssrc:%d mslabel:janus\r\n"
+						"a=ssrc:%d label:janusa0\r\n",
 							stream->audio_ssrc, stream->audio_ssrc, stream->audio_ssrc, stream->audio_ssrc);
 					g_strlcat(sdp, buffer, JANUS_BUFSIZE);
 				} else if(m->m_type == sdp_media_video && m->m_mode != sdp_inactive && m->m_mode != sdp_recvonly) {
 					g_snprintf(buffer, 512,
-						"a=ssrc:%"SCNu32" cname:janusvideo\r\n"
-						"a=ssrc:%"SCNu32" msid:janus janusv0\r\n"
-						"a=ssrc:%"SCNu32" mslabel:janus\r\n"
-						"a=ssrc:%"SCNu32" label:janusv0\r\n",
+						"a=ssrc:%d cname:janusvideo\r\n"
+						"a=ssrc:%d msid:janus janusv0\r\n"
+						"a=ssrc:%d mslabel:janus\r\n"
+						"a=ssrc:%d label:janusv0\r\n",
 							stream->video_ssrc, stream->video_ssrc, stream->video_ssrc, stream->video_ssrc);
 					g_strlcat(sdp, buffer, JANUS_BUFSIZE);
 				}
@@ -1241,7 +1241,7 @@ char *janus_sdp_merge(janus_ice_handle *handle, const char *origsdp) {
 							a = a->a_next;
 							continue;
 						}
-						if(sscanf(a->a_value, "%255s %"SCNu32"", id, &ssrc) != 2) {
+						if(sscanf(a->a_value, "%255s %d", id, &ssrc) != 2) {
 							JANUS_LOG(LOG_ERR, "Error parsing 'planb' attribute, skipping it...\n");
 							a = a->a_next;
 							continue;
@@ -1250,17 +1250,17 @@ char *janus_sdp_merge(janus_ice_handle *handle, const char *origsdp) {
 						/* Add proper SSRC attributes */
 						if(m->m_type == sdp_media_audio) {
 							g_snprintf(buffer, 512,
-								"a=ssrc:%"SCNu32" cname:%saudio\r\n"
-								"a=ssrc:%"SCNu32" msid:%s %sa0\r\n"
-								"a=ssrc:%"SCNu32" mslabel:%s\r\n"
-								"a=ssrc:%"SCNu32" label:%sa0\r\n",
+								"a=ssrc:%d cname:%saudio\r\n"
+								"a=ssrc:%d msid:%s %sa0\r\n"
+								"a=ssrc:%d mslabel:%s\r\n"
+								"a=ssrc:%d label:%sa0\r\n",
 									ssrc, id, ssrc, id, id, ssrc, id, ssrc, id);
 						} else if(m->m_type == sdp_media_video) {
 							g_snprintf(buffer, 512,
-								"a=ssrc:%"SCNu32" cname:%svideo\r\n"
-								"a=ssrc:%"SCNu32" msid:%s %sv0\r\n"
-								"a=ssrc:%"SCNu32" mslabel:%s\r\n"
-								"a=ssrc:%"SCNu32" label:%sv0\r\n",
+								"a=ssrc:%d cname:%svideo\r\n"
+								"a=ssrc:%d msid:%s %sv0\r\n"
+								"a=ssrc:%d mslabel:%s\r\n"
+								"a=ssrc:%d label:%sv0\r\n",
 									ssrc, id, ssrc, id, id, ssrc, id, ssrc, id);
 						}
 						g_strlcat(sdp, buffer, JANUS_BUFSIZE);

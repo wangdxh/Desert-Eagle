@@ -25,7 +25,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#include <unistd.h>
 
 #include <jansson.h>
 
@@ -33,8 +32,8 @@
 #include "dtls.h"
 #include "ice.h"
 #include "sctp.h"
-#include "transports/transport.h"
-#include "plugins/plugin.h"
+#include "transport.h"
+#include "plugin.h"
 
 
 #define JANUS_BUFSIZE	8192

@@ -86,7 +86,6 @@ janus_transport *create(void) {
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include <unistd.h>
 #include <inttypes.h>
 
 #include <glib.h>

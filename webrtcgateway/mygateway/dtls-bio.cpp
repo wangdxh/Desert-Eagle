@@ -52,7 +52,8 @@ static BIO_METHOD janus_dtls_bio_filter_methods = {
 #else
 static BIO_METHOD *janus_dtls_bio_filter_methods = NULL;
 #endif
-int janus_dtls_bio_filter_init(void) {
+int janus_dtls_bio_filter_init(void) 
+{
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 	/* No initialization needed for OpenSSL pre-1.1.0 */
 #else
@@ -66,7 +67,8 @@ int janus_dtls_bio_filter_init(void) {
 #endif
 	return 0;
 }
-BIO_METHOD *BIO_janus_dtls_filter(void) {
+BIO_METHOD *BIO_janus_dtls_filter(void) 
+{
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 	return(&janus_dtls_bio_filter_methods);
 #else

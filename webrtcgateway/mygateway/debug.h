@@ -15,6 +15,7 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 #include "log.h"
+#include <time.h>
 
 JANUS_API extern int janus_log_level;
 JANUS_API extern gboolean janus_log_timestamps;
@@ -89,10 +90,11 @@ static const char *janus_log_prefix[] = {
 ///@{
 /*! \brief Simple wrapper to g_print/printf */
 #define JANUS_PRINT janus_vprintf
+#define JANUS_LOG janus_vprintf
 /*! \brief Logger based on different levels, which can either be displayed
  * or not according to the configuration of the gateway.
  * The format must be a string literal. */
-#define JANUS_LOG(level, format, ...) \
+/*#define JANUS_LOG(level, format, ...) \
 do { \
 	if (level > LOG_NONE && level <= LOG_MAX && level <= janus_log_level) { \
 	    char janus_log_ts[64] = {0}; \
@@ -100,8 +102,7 @@ do { \
 		if (janus_log_timestamps) { \
 			struct tm janustmresult; \
 			time_t janusltime = time(NULL); \
-			tm* pttempaaa = localtime(&janusltime); \
-			janustmresult = *pttempaaa;\
+			localtime_s(&janustmresult, &janusltime); \			
 			strftime(janus_log_ts, sizeof(janus_log_ts), \
 			         DATE_TIME_FORMAT, &janustmresult); \
 		} \
@@ -115,7 +116,7 @@ do { \
 			janus_log_src, \
 			##__VA_ARGS__); \
 	} \
-} while (0)
+} while (0)*/
 ///@}
 
 #endif

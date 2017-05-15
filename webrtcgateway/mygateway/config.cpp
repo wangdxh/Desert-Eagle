@@ -23,7 +23,7 @@
 static char *get_filename(const char *path) {
 	char *filename = NULL;
 	if(path)
-		filename = strrchr(path, '/')+1;
+		filename = (char*)strrchr(path, '/')+1;
 	return filename;
 }
 
@@ -92,7 +92,7 @@ janus_config *janus_config_parse(const char *config_file) {
 		return NULL;
 	}
 	/* Create configuration instance */
-	janus_config *jc = g_malloc0(sizeof(janus_config));
+	janus_config *jc = (janus_config *)g_malloc0(sizeof(janus_config));
 	jc->name = g_strdup(filename);
 	/* Traverse and parse it */
 	int line_number = 0;
@@ -190,7 +190,7 @@ janus_config *janus_config_parse(const char *config_file) {
 }
 
 janus_config *janus_config_create(const char *name) {
-	janus_config *jc = g_malloc0(sizeof(janus_config));
+	janus_config *jc = (janus_config *)g_malloc0(sizeof(janus_config));
 	if(jc == NULL) {
 		JANUS_LOG(LOG_FATAL, "Memory error!\n");
 		return NULL;
@@ -260,7 +260,7 @@ janus_config_category *janus_config_add_category(janus_config *config, const cha
 		/* Category exists, return this */
 		return c;
 	}
-	c = g_malloc0(sizeof(janus_config_category));
+	c = (janus_config_category *)g_malloc0(sizeof(janus_config_category));
 	if(c == NULL) {
 		JANUS_LOG(LOG_FATAL, "Memory error!\n");
 		return NULL;
@@ -295,7 +295,7 @@ janus_config_item *janus_config_add_item(janus_config *config, const char *categ
 	janus_config_item *item = c ? janus_config_get_item(c, name) : NULL;
 	if(item == NULL) {
 		/* Create it */
-		item = g_malloc0(sizeof(janus_config_item));
+		item = (janus_config_item *)g_malloc0(sizeof(janus_config_item));
 		if(item == NULL) {
 			JANUS_LOG(LOG_FATAL, "Memory error!\n");
 			return NULL;
@@ -387,7 +387,7 @@ gboolean janus_config_save(janus_config *config, const char *folder, const char 
 	char date[64], header[256];
 	struct tm tmresult;
 	time_t ltime = time(NULL);
-	localtime_r(&ltime, &tmresult);
+	localtime_s(&tmresult, &ltime);
 	strftime(date, sizeof(date), DATE_TIME_FORMAT, &tmresult);
 	g_snprintf(header, 256, ";\n; File automatically generated on %s\n;\n\n", date);
 	fwrite(header, sizeof(char), strlen(header), file);

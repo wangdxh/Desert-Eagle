@@ -963,7 +963,7 @@ int janus_http_send_message(void *transport, void *request_id, gboolean admin, j
 void janus_http_session_created(void *transport, guint64 session_id) {
 	if(transport == NULL)
 		return;
-	JANUS_LOG(LOG_VERB, "Session created (%"SCNu64"), create a queue for the long poll\n", session_id);
+	JANUS_LOG(LOG_VERB, "Session created (%I64u), create a queue for the long poll\n", session_id);
 	/* Create a queue of events for this session */
 	janus_mutex_lock(&sessions_mutex);
 	if(g_hash_table_lookup(sessions, &session_id) != NULL) {
@@ -981,7 +981,7 @@ void janus_http_session_created(void *transport, guint64 session_id) {
 void janus_http_session_over(void *transport, guint64 session_id, gboolean timeout) {
 	if(transport == NULL)
 		return;
-	JANUS_LOG(LOG_VERB, "Session %s (%"SCNu64"), getting rid of the queue for the long poll\n",
+	JANUS_LOG(LOG_VERB, "Session %s (%I64u), getting rid of the queue for the long poll\n",
 		timeout ? "has timed out" : "is over", session_id);
 	/* Get rid of the session's queue of events */
 	janus_mutex_lock(&sessions_mutex);
@@ -1298,7 +1298,7 @@ int janus_http_handler(void *cls, struct MHD_Connection *connection, const char 
 		janus_http_session *session = g_hash_table_lookup(sessions, &session_id);
 		janus_mutex_unlock(&sessions_mutex);
 		if(!session || session->destroyed) {
-			JANUS_LOG(LOG_ERR, "Couldn't find any session %"SCNu64"...\n", session_id);
+			JANUS_LOG(LOG_ERR, "Couldn't find any session %I64u...\n", session_id);
 			response = MHD_create_response_from_buffer(0, NULL, MHD_RESPMEM_PERSISTENT);
 			MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
 			if(msg->acrm)
@@ -1319,7 +1319,7 @@ int janus_http_handler(void *cls, struct MHD_Connection *connection, const char 
 				max_events = 1;
 			}
 		}
-		JANUS_LOG(LOG_VERB, "Session %"SCNu64" found... returning up to %d messages\n", session_id, max_events);
+		JANUS_LOG(LOG_VERB, "Session %I64u found... returning up to %d messages\n", session_id, max_events);
 		/* Handle GET, taking the first message from the list */
 		json_t *event = g_async_queue_try_pop(session->events);
 		if(event != NULL) {
@@ -1705,7 +1705,7 @@ int janus_http_notifier(janus_http_msg *msg, int max_events) {
 	janus_http_session *session = g_hash_table_lookup(sessions, &session_id);
 	janus_mutex_unlock(&sessions_mutex);
 	if(!session || session->destroyed) {
-		JANUS_LOG(LOG_ERR, "Couldn't find any session %"SCNu64"...\n", session_id);
+		JANUS_LOG(LOG_ERR, "Couldn't find any session %I64u...\n", session_id);
 		response = MHD_create_response_from_buffer(0, NULL, MHD_RESPMEM_PERSISTENT);
 		MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
 		if(msg->acrm)
@@ -1752,7 +1752,7 @@ int janus_http_notifier(janus_http_msg *msg, int max_events) {
 		end = janus_get_monotonic_time();
 	}
 	if(!found) {
-		JANUS_LOG(LOG_VERB, "Long poll time out for session %"SCNu64"...\n", session_id);
+		JANUS_LOG(LOG_VERB, "Long poll time out for session %I64u...\n", session_id);
 		/* Turn this into a "keepalive" response */
 		char tr[12];
 		janus_http_random_string(12, (char *)&tr);

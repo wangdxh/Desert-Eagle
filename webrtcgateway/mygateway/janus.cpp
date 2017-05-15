@@ -358,7 +358,7 @@ JANUS_LOCAL GMainContext *sessions_watchdog_context;
 static gboolean janus_cleanup_session(gpointer user_data) {
 	janus_session *session = (janus_session *) user_data;
 
-	JANUS_LOG(LOG_DBG, "Cleaning up session %"SCNu64"...\n", session->session_id);
+	JANUS_LOG(LOG_DBG, "Cleaning up session %I64u...\n", session->session_id);
 	janus_session_destroy(session->session_id);
 
 	return G_SOURCE_REMOVE;
@@ -378,7 +378,7 @@ static gboolean janus_check_sessions(gpointer user_data) {
 			}
 			gint64 now = janus_get_monotonic_time();
 			if (now - session->last_activity >= SESSION_TIMEOUT * G_USEC_PER_SEC && !session->timeout) {
-				JANUS_LOG(LOG_INFO, "Timeout expired for session %"SCNu64"...\n", session->session_id);
+				JANUS_LOG(LOG_INFO, "Timeout expired for session %I64u...\n", session->session_id);
 
 				/* Notify the transport */
 				if(session->source) {
@@ -437,7 +437,7 @@ janus_session *janus_session_create(guint64 session_id) {
 			}
 		}
 	}
-	JANUS_LOG(LOG_INFO, "Creating new session: %"SCNu64"\n", session_id);
+	JANUS_LOG(LOG_INFO, "Creating new session: %I64u\n", session_id);
 	janus_session *session = (janus_session *)g_malloc0(sizeof(janus_session));
 	if(session == NULL) {
 		JANUS_LOG(LOG_FATAL, "Memory error!\n");
@@ -489,10 +489,10 @@ void janus_session_notify_event(guint64 session_id, json_t *event) {
 gint janus_session_destroy(guint64 session_id) {
 	janus_session *session = janus_session_find_destroyed(session_id);
 	if(session == NULL) {
-		JANUS_LOG(LOG_ERR, "Couldn't find session to destroy: %"SCNu64"\n", session_id);
+		JANUS_LOG(LOG_ERR, "Couldn't find session to destroy: %I64u\n", session_id);
 		return -1;
 	}
-	JANUS_LOG(LOG_VERB, "Destroying session %"SCNu64"\n", session_id);
+	JANUS_LOG(LOG_VERB, "Destroying session %I64u\n", session_id);
 	session->destroy = 1;
 	if (session->ice_handles != NULL && g_hash_table_size(session->ice_handles) > 0) {
 		GHashTableIter iter;
@@ -707,8 +707,8 @@ int janus_process_incoming_request(janus_request *request) {
 	/* If we got here, make sure we have a session (and/or a handle) */
 	janus_session *session = janus_session_find(session_id);
 	if(!session) {
-		JANUS_LOG(LOG_ERR, "Couldn't find any session %"SCNu64"...\n", session_id);
-		ret = janus_process_error(request, session_id, transaction_text, JANUS_ERROR_SESSION_NOT_FOUND, "No such session %"SCNu64"", session_id);
+		JANUS_LOG(LOG_ERR, "Couldn't find any session %I64u...\n", session_id);
+		ret = janus_process_error(request, session_id, transaction_text, JANUS_ERROR_SESSION_NOT_FOUND, "No such session %I64u", session_id);
 		goto jsondone;
 	}
 	/* Update the last activity timer */
@@ -717,8 +717,8 @@ int janus_process_incoming_request(janus_request *request) {
 	if(handle_id > 0) {
 		handle = janus_ice_handle_find(session, handle_id);
 		if(!handle) {
-			JANUS_LOG(LOG_ERR, "Couldn't find any handle %"SCNu64" in session %"SCNu64"...\n", handle_id, session_id);
-			ret = janus_process_error(request, session_id, transaction_text, JANUS_ERROR_HANDLE_NOT_FOUND, "No such handle %"SCNu64" in session %"SCNu64"", handle_id, session_id);
+			JANUS_LOG(LOG_ERR, "Couldn't find any handle %I64u in session %I64u...\n", handle_id, session_id);
+			ret = janus_process_error(request, session_id, transaction_text, JANUS_ERROR_HANDLE_NOT_FOUND, "No such handle %I64u in session %I64u", handle_id, session_id);
 			goto jsondone;
 		}
 	}
@@ -726,7 +726,7 @@ int janus_process_incoming_request(janus_request *request) {
 	/* What is this? */
 	if(!strcasecmp(message_text, "keepalive")) {
 		/* Just a keep-alive message, reply with an ack */
-		JANUS_LOG(LOG_VERB, "Got a keep-alive on session %"SCNu64"\n", session_id);
+		JANUS_LOG(LOG_VERB, "Got a keep-alive on session %I64u\n", session_id);
 		json_t *reply = json_object();
 		json_object_set_new(reply, "janus", json_string("ack"));
 		json_object_set_new(reply, "session_id", json_integer(session_id));
@@ -878,7 +878,7 @@ int janus_process_incoming_request(janus_request *request) {
 			goto jsondone;
 		}
 		janus_plugin *plugin_t = (janus_plugin *)handle->app;
-		JANUS_LOG(LOG_VERB, "[%"SCNu64"] There's a message for %s\n", handle->handle_id, plugin_t->get_name());
+		JANUS_LOG(LOG_VERB, "[%I64u] There's a message for %s\n", handle->handle_id, plugin_t->get_name());
 		JANUS_VALIDATE_JSON_OBJECT(root, body_parameters,
 			error_code, error_cause, FALSE,
 			JANUS_ERROR_MISSING_MANDATORY_ELEMENT, JANUS_ERROR_INVALID_ELEMENT_TYPE);
@@ -912,13 +912,13 @@ int janus_process_incoming_request(janus_request *request) {
 			do_trickle = jsep_trickle ? json_is_true(jsep_trickle) : TRUE;
 			/* Are we still cleaning up from a previous media session? */
 			if(janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_CLEANING)) {
-				JANUS_LOG(LOG_VERB, "[%"SCNu64"] Still cleaning up from a previous media session, let's wait a bit...\n", handle->handle_id);
+				JANUS_LOG(LOG_VERB, "[%I64u] Still cleaning up from a previous media session, let's wait a bit...\n", handle->handle_id);
 				gint64 waited = 0;
 				while(janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_CLEANING)) {
 					g_usleep(100000);
 					waited += 100000;
 					if(waited >= 3*G_USEC_PER_SEC) {
-						JANUS_LOG(LOG_VERB, "[%"SCNu64"]   -- Waited 3 seconds, that's enough!\n", handle->handle_id);
+						JANUS_LOG(LOG_VERB, "[%I64u]   -- Waited 3 seconds, that's enough!\n", handle->handle_id);
 						break;
 					}
 				}
@@ -944,7 +944,7 @@ int janus_process_incoming_request(janus_request *request) {
 			}
 			json_t *sdp = json_object_get(jsep, "sdp");
 			jsep_sdp = (char *)json_string_value(sdp);
-			JANUS_LOG(LOG_VERB, "[%"SCNu64"] Remote SDP:\n%s", handle->handle_id, jsep_sdp);
+			JANUS_LOG(LOG_VERB, "[%I64u] Remote SDP:\n%s", handle->handle_id, jsep_sdp);
 			/* Is this valid SDP? */
 			int audio = 0, video = 0, data = 0, bundle = 0, rtcpmux = 0, trickle = 0;
 			janus_sdp *parsed_sdp = janus_sdp_preparse(jsep_sdp, &audio, &video, &data, &bundle, &rtcpmux, &trickle);
@@ -958,26 +958,26 @@ int janus_process_incoming_request(janus_request *request) {
 				goto jsondone;
 			}
 			/* FIXME We're only handling single audio/video lines for now... */
-			JANUS_LOG(LOG_VERB, "[%"SCNu64"] Audio %s been negotiated, Video %s been negotiated, SCTP/DataChannels %s been negotiated\n",
+			JANUS_LOG(LOG_VERB, "[%I64u] Audio %s been negotiated, Video %s been negotiated, SCTP/DataChannels %s been negotiated\n",
 			                    handle->handle_id,
 			                    audio ? "has" : "has NOT",
 			                    video ? "has" : "has NOT",
 			                    data ? "have" : "have NOT");
 			if(audio > 1) {
-				JANUS_LOG(LOG_WARN, "[%"SCNu64"] More than one audio line? only going to negotiate one...\n", handle->handle_id);
+				JANUS_LOG(LOG_WARN, "[%I64u] More than one audio line? only going to negotiate one...\n", handle->handle_id);
 			}
 			if(video > 1) {
-				JANUS_LOG(LOG_WARN, "[%"SCNu64"] More than one video line? only going to negotiate one...\n", handle->handle_id);
+				JANUS_LOG(LOG_WARN, "[%I64u] More than one video line? only going to negotiate one...\n", handle->handle_id);
 			}
 			if(data > 1) {
-				JANUS_LOG(LOG_WARN, "[%"SCNu64"] More than one data line? only going to negotiate one...\n", handle->handle_id);
+				JANUS_LOG(LOG_WARN, "[%I64u] More than one data line? only going to negotiate one...\n", handle->handle_id);
 			}
 #ifndef HAVE_SCTP
 			if(data) {
-				JANUS_LOG(LOG_WARN, "[%"SCNu64"]   -- DataChannels have been negotiated, but support for them has not been compiled...\n", handle->handle_id);
+				JANUS_LOG(LOG_WARN, "[%I64u]   -- DataChannels have been negotiated, but support for them has not been compiled...\n", handle->handle_id);
 			}
 #endif
-			JANUS_LOG(LOG_VERB, "[%"SCNu64"] The browser: %s BUNDLE, %s rtcp-mux, %s doing Trickle ICE\n", handle->handle_id,
+			JANUS_LOG(LOG_VERB, "[%I64u] The browser: %s BUNDLE, %s rtcp-mux, %s doing Trickle ICE\n", handle->handle_id,
 			                    bundle  ? "supports" : "does NOT support",
 			                    rtcpmux ? "supports" : "does NOT support",
 			                    trickle ? "is"       : "is NOT");
@@ -1026,7 +1026,7 @@ int janus_process_incoming_request(janus_request *request) {
 						janus_flags_clear(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_TRICKLE);
 					}
 					if(janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE)) {
-						JANUS_LOG(LOG_HUGE, "[%"SCNu64"]   -- bundle is supported by the browser, getting rid of one of the RTP/RTCP components, if any...\n", handle->handle_id);
+						JANUS_LOG(LOG_HUGE, "[%I64u]   -- bundle is supported by the browser, getting rid of one of the RTP/RTCP components, if any...\n", handle->handle_id);
 						if(audio) {
 							/* Get rid of video and data, if present */
 							if(handle->streams && handle->video_stream) {
@@ -1066,7 +1066,7 @@ int janus_process_incoming_request(janus_request *request) {
 						}
 					}
 					if(janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_RTCPMUX) && !janus_ice_is_rtcpmux_forced()) {
-						JANUS_LOG(LOG_HUGE, "[%"SCNu64"]   -- rtcp-mux is supported by the browser, getting rid of RTCP components, if any...\n", handle->handle_id);
+						JANUS_LOG(LOG_HUGE, "[%I64u]   -- rtcp-mux is supported by the browser, getting rid of RTCP components, if any...\n", handle->handle_id);
 						if(handle->audio_stream && handle->audio_stream->components != NULL) {
 							nice_agent_attach_recv(handle->agent, handle->audio_id, 2, g_main_loop_get_context (handle->iceloop), NULL, NULL);
 							/* Free the component */
@@ -1086,7 +1086,7 @@ int janus_process_incoming_request(janus_request *request) {
 							c->username = g_strdup(handle->audio_stream->ruser);
 							c->password = g_strdup(handle->audio_stream->rpass);
 							if(!nice_agent_set_selected_remote_candidate(handle->agent, handle->audio_stream->stream_id, 2, c)) {
-								JANUS_LOG(LOG_ERR, "[%"SCNu64"] Error forcing dummy candidate on RTCP component of stream %d\n", handle->handle_id, handle->audio_stream->stream_id);
+								JANUS_LOG(LOG_ERR, "[%I64u] Error forcing dummy candidate on RTCP component of stream %d\n", handle->handle_id, handle->audio_stream->stream_id);
 								nice_candidate_free(c);
 							}
 						}
@@ -1109,14 +1109,14 @@ int janus_process_incoming_request(janus_request *request) {
 							c->username = g_strdup(handle->video_stream->ruser);
 							c->password = g_strdup(handle->video_stream->rpass);
 							if(!nice_agent_set_selected_remote_candidate(handle->agent, handle->video_stream->stream_id, 2, c)) {
-								JANUS_LOG(LOG_ERR, "[%"SCNu64"] Error forcing dummy candidate on RTCP component of stream %d\n", handle->handle_id, handle->video_stream->stream_id);
+								JANUS_LOG(LOG_ERR, "[%I64u] Error forcing dummy candidate on RTCP component of stream %d\n", handle->handle_id, handle->video_stream->stream_id);
 								nice_candidate_free(c);
 							}
 						}
 					}
 					/* FIXME Any disabled m-line? */
 					if(strstr(jsep_sdp, "m=audio 0")) {
-						JANUS_LOG(LOG_VERB, "[%"SCNu64"] Audio disabled via SDP\n", handle->handle_id);
+						JANUS_LOG(LOG_VERB, "[%I64u] Audio disabled via SDP\n", handle->handle_id);
 						if(!janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE)
 								|| (!video && !data)) {
 							JANUS_LOG(LOG_HUGE, "  -- Marking audio stream as disabled\n");
@@ -1126,7 +1126,7 @@ int janus_process_incoming_request(janus_request *request) {
 						}
 					}
 					if(strstr(jsep_sdp, "m=video 0")) {
-						JANUS_LOG(LOG_VERB, "[%"SCNu64"] Video disabled via SDP\n", handle->handle_id);
+						JANUS_LOG(LOG_VERB, "[%I64u] Video disabled via SDP\n", handle->handle_id);
 						if(!janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE)
 								|| (!audio && !data)) {
 							JANUS_LOG(LOG_HUGE, "  -- Marking video stream as disabled\n");
@@ -1142,7 +1142,7 @@ int janus_process_incoming_request(janus_request *request) {
 						}
 					}
 					if(strstr(jsep_sdp, "m=application 0 DTLS/SCTP")) {
-						JANUS_LOG(LOG_VERB, "[%"SCNu64"] Data Channel disabled via SDP\n", handle->handle_id);
+						JANUS_LOG(LOG_VERB, "[%I64u] Data Channel disabled via SDP\n", handle->handle_id);
 						if(!janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE)
 								|| (!audio && !video)) {
 							JANUS_LOG(LOG_HUGE, "  -- Marking data channel stream as disabled\n");
@@ -1161,7 +1161,7 @@ int janus_process_incoming_request(janus_request *request) {
 					janus_flags_clear(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_PROCESSING_OFFER);
 					/* Any pending trickles? */
 					if(handle->pending_trickles) {
-						JANUS_LOG(LOG_VERB, "[%"SCNu64"]   -- Processing %d pending trickle candidates\n", handle->handle_id, g_list_length(handle->pending_trickles));
+						JANUS_LOG(LOG_VERB, "[%I64u]   -- Processing %d pending trickle candidates\n", handle->handle_id, g_list_length(handle->pending_trickles));
 						GList *temp = NULL;
 						while(handle->pending_trickles) {
 							temp = g_list_first(handle->pending_trickles);
@@ -1208,10 +1208,10 @@ int janus_process_incoming_request(janus_request *request) {
 					/* This was an answer, check if it's time to start ICE */
 					if(janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_TRICKLE) &&
 							!janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_ALL_TRICKLES)) {
-						JANUS_LOG(LOG_VERB, "[%"SCNu64"]   -- ICE Trickling is supported by the browser, waiting for remote candidates...\n", handle->handle_id);
+						JANUS_LOG(LOG_VERB, "[%I64u]   -- ICE Trickling is supported by the browser, waiting for remote candidates...\n", handle->handle_id);
 						janus_flags_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_START);
 					} else {
-						JANUS_LOG(LOG_VERB, "[%"SCNu64"] Done! Sending connectivity checks...\n", handle->handle_id);
+						JANUS_LOG(LOG_VERB, "[%I64u] Done! Sending connectivity checks...\n", handle->handle_id);
 						if(handle->audio_id > 0) {
 							janus_ice_setup_remote_candidates(handle, handle->audio_id, 1);
 							if(!janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_RTCPMUX))	/* http://tools.ietf.org/html/rfc5761#section-5.1.3 */
@@ -1229,7 +1229,7 @@ int janus_process_incoming_request(janus_request *request) {
 				}
 			} else {
 				/* TODO Actually handle session updates: for now we ignore them, and just relay them to plugins */
-				JANUS_LOG(LOG_WARN, "[%"SCNu64"] Ignoring negotiation update, we don't support them yet...\n", handle->handle_id);
+				JANUS_LOG(LOG_WARN, "[%I64u] Ignoring negotiation update, we don't support them yet...\n", handle->handle_id);
 			}
 			handle->remote_sdp = g_strdup(jsep_sdp);
 			janus_mutex_unlock(&handle->mutex);
@@ -1333,12 +1333,12 @@ int janus_process_incoming_request(janus_request *request) {
 		janus_mutex_lock(&handle->mutex);
 		if(!janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_TRICKLE)) {
 			/* It looks like this peer supports Trickle, after all */
-			JANUS_LOG(LOG_VERB, "Handle %"SCNu64" supports trickle even if it didn't negotiate it...\n", handle->handle_id);
+			JANUS_LOG(LOG_VERB, "Handle %I64u supports trickle even if it didn't negotiate it...\n", handle->handle_id);
 			janus_flags_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_TRICKLE);
 		}
 		/* Is there any stream ready? this trickle may get here before the SDP it relates to */
 		if(handle->audio_stream == NULL && handle->video_stream == NULL && handle->data_stream == NULL) {
-			JANUS_LOG(LOG_WARN, "[%"SCNu64"] No stream, queueing this trickle as it got here before the SDP...\n", handle->handle_id);
+			JANUS_LOG(LOG_WARN, "[%I64u] No stream, queueing this trickle as it got here before the SDP...\n", handle->handle_id);
 			/* Enqueue this trickle candidate(s), we'll process this later */
 			janus_ice_trickle *early_trickle = janus_ice_trickle_new(handle, transaction_text, candidate ? candidate : candidates);
 			handle->pending_trickles = g_list_append(handle->pending_trickles, early_trickle);
@@ -1356,7 +1356,7 @@ int janus_process_incoming_request(janus_request *request) {
 				cause = "waiting for the answer";
 			else if(!janus_flags_is_set(&handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_GOT_OFFER))
 				cause = "waiting for the offer";
-			JANUS_LOG(LOG_VERB, "[%"SCNu64"] Still %s, queueing this trickle to wait until we're done there...\n",
+			JANUS_LOG(LOG_VERB, "[%I64u] Still %s, queueing this trickle to wait until we're done there...\n",
 				handle->handle_id, cause);
 			/* Enqueue this trickle candidate(s), we'll process this later */
 			janus_ice_trickle *early_trickle = janus_ice_trickle_new(handle, transaction_text, candidate ? candidate : candidates);
@@ -1985,16 +1985,16 @@ int janus_process_incoming_admin_request(janus_request *request) {
 	/* If we got here, make sure we have a session (and/or a handle) */
 	janus_session *session = janus_session_find(session_id);
 	if(!session) {
-		JANUS_LOG(LOG_ERR, "Couldn't find any session %"SCNu64"...\n", session_id);
-		ret = janus_process_error(request, session_id, transaction_text, JANUS_ERROR_SESSION_NOT_FOUND, "No such session %"SCNu64"", session_id);
+		JANUS_LOG(LOG_ERR, "Couldn't find any session %I64u...\n", session_id);
+		ret = janus_process_error(request, session_id, transaction_text, JANUS_ERROR_SESSION_NOT_FOUND, "No such session %I64u", session_id);
 		goto jsondone;
 	}
 	janus_ice_handle *handle = NULL;
 	if(handle_id > 0) {
 		handle = janus_ice_handle_find(session, handle_id);
 		if(!handle) {
-			JANUS_LOG(LOG_ERR, "Couldn't find any handle %"SCNu64" in session %"SCNu64"...\n", handle_id, session_id);
-			ret = janus_process_error(request, session_id, transaction_text, JANUS_ERROR_HANDLE_NOT_FOUND, "No such handle %"SCNu64" in session %"SCNu64"", handle_id, session_id);
+			JANUS_LOG(LOG_ERR, "Couldn't find any handle %I64u in session %I64u...\n", handle_id, session_id);
+			ret = janus_process_error(request, session_id, transaction_text, JANUS_ERROR_HANDLE_NOT_FOUND, "No such handle %I64u in session %I64u", handle_id, session_id);
 			goto jsondone;
 		}
 	}
@@ -2402,7 +2402,7 @@ void janus_transport_gone(janus_transport *plugin, void *transport) {
 			if(!session || session->destroy || session->timeout || session->last_activity == 0)
 				continue;
 			if(session->source && session->source->instance == transport) {
-				JANUS_LOG(LOG_VERB, "  -- Marking Session %"SCNu64" as over\n", session->session_id);
+				JANUS_LOG(LOG_VERB, "  -- Marking Session %I64u as over\n", session->session_id);
 				session->last_activity = 0;	/* This will trigger a timeout */
 			}
 		}
@@ -2484,7 +2484,7 @@ int janus_plugin_push_event(janus_plugin_session *plugin_session, janus_plugin *
 		return JANUS_ERROR_SESSION_NOT_FOUND;
 	/* Make sure this is a JSON object */
 	if(!json_is_object(message)) {
-		JANUS_LOG(LOG_ERR, "[%"SCNu64"] Cannot push event (JSON error: not an object)\n", ice_handle->handle_id);
+		JANUS_LOG(LOG_ERR, "[%I64u] Cannot push event (JSON error: not an object)\n", ice_handle->handle_id);
 		return JANUS_ERROR_INVALID_JSON_OBJECT;
 	}
 	/* Attach JSEP if possible? */
@@ -2496,10 +2496,10 @@ int janus_plugin_push_event(janus_plugin_session *plugin_session, janus_plugin *
 		if(merged_jsep == NULL) {
 			if(ice_handle == NULL || janus_flags_is_set(&ice_handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_STOP)
 					|| janus_flags_is_set(&ice_handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_ALERT)) {
-				JANUS_LOG(LOG_ERR, "[%"SCNu64"] Cannot push event (handle not available anymore or negotiation stopped)\n", ice_handle->handle_id);
+				JANUS_LOG(LOG_ERR, "[%I64u] Cannot push event (handle not available anymore or negotiation stopped)\n", ice_handle->handle_id);
 				return JANUS_ERROR_HANDLE_NOT_FOUND;
 			} else {
-				JANUS_LOG(LOG_ERR, "[%"SCNu64"] Cannot push event (JSON error: problem with the SDP)\n", ice_handle->handle_id);
+				JANUS_LOG(LOG_ERR, "[%I64u] Cannot push event (JSON error: problem with the SDP)\n", ice_handle->handle_id);
 				return JANUS_ERROR_JSEP_INVALID_SDP;
 			}
 		}
@@ -2520,7 +2520,7 @@ int janus_plugin_push_event(janus_plugin_session *plugin_session, janus_plugin *
 	if(merged_jsep != NULL)
 		json_object_set_new(event, "jsep", merged_jsep);
 	/* Send the event */
-	JANUS_LOG(LOG_VERB, "[%"SCNu64"] Sending event to transport...\n", ice_handle->handle_id);
+	JANUS_LOG(LOG_VERB, "[%I64u] Sending event to transport...\n", ice_handle->handle_id);
 	janus_session_notify_event(session->session_id, event);
 
 	return JANUS_OK;
@@ -2557,40 +2557,40 @@ json_t *janus_plugin_handle_sdp(janus_plugin_session *plugin_session, janus_plug
 	int audio = 0, video = 0, data = 0, bundle = 0, rtcpmux = 0, trickle = 0;
 	janus_sdp *parsed_sdp = janus_sdp_preparse(sdp, &audio, &video, &data, &bundle, &rtcpmux, &trickle);
 	if(parsed_sdp == NULL) {
-		JANUS_LOG(LOG_ERR, "[%"SCNu64"] Couldn't parse SDP...\n", ice_handle->handle_id);
+		JANUS_LOG(LOG_ERR, "[%I64u] Couldn't parse SDP...\n", ice_handle->handle_id);
 		return NULL;
 	}
 	janus_sdp_free(parsed_sdp);
 	gboolean updating = FALSE;
 	if(offer) {
 		/* We still don't have a local ICE setup */
-		JANUS_LOG(LOG_VERB, "[%"SCNu64"] Audio %s been negotiated\n", ice_handle->handle_id, audio ? "has" : "has NOT");
+		JANUS_LOG(LOG_VERB, "[%I64u] Audio %s been negotiated\n", ice_handle->handle_id, audio ? "has" : "has NOT");
 		if(audio > 1) {
-			JANUS_LOG(LOG_ERR, "[%"SCNu64"] More than one audio line? only going to negotiate one...\n", ice_handle->handle_id);
+			JANUS_LOG(LOG_ERR, "[%I64u] More than one audio line? only going to negotiate one...\n", ice_handle->handle_id);
 		}
-		JANUS_LOG(LOG_VERB, "[%"SCNu64"] Video %s been negotiated\n", ice_handle->handle_id, video ? "has" : "has NOT");
+		JANUS_LOG(LOG_VERB, "[%I64u] Video %s been negotiated\n", ice_handle->handle_id, video ? "has" : "has NOT");
 		if(video > 1) {
-			JANUS_LOG(LOG_ERR, "[%"SCNu64"] More than one video line? only going to negotiate one...\n", ice_handle->handle_id);
+			JANUS_LOG(LOG_ERR, "[%I64u] More than one video line? only going to negotiate one...\n", ice_handle->handle_id);
 		}
-		JANUS_LOG(LOG_VERB, "[%"SCNu64"] SCTP/DataChannels %s been negotiated\n", ice_handle->handle_id, data ? "have" : "have NOT");
+		JANUS_LOG(LOG_VERB, "[%I64u] SCTP/DataChannels %s been negotiated\n", ice_handle->handle_id, data ? "have" : "have NOT");
 		if(data > 1) {
-			JANUS_LOG(LOG_ERR, "[%"SCNu64"] More than one data line? only going to negotiate one...\n", ice_handle->handle_id);
+			JANUS_LOG(LOG_ERR, "[%I64u] More than one data line? only going to negotiate one...\n", ice_handle->handle_id);
 		}
 #ifndef HAVE_SCTP
 		if(data) {
-			JANUS_LOG(LOG_WARN, "[%"SCNu64"]   -- DataChannels have been negotiated, but support for them has not been compiled...\n", ice_handle->handle_id);
+			JANUS_LOG(LOG_WARN, "[%I64u]   -- DataChannels have been negotiated, but support for them has not been compiled...\n", ice_handle->handle_id);
 		}
 #endif
 		/* Are we still cleaning up from a previous media session? */
 		if(janus_flags_is_set(&ice_handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_CLEANING)) {
-			JANUS_LOG(LOG_VERB, "[%"SCNu64"] Still cleaning up from a previous media session, let's wait a bit...\n", ice_handle->handle_id);
+			JANUS_LOG(LOG_VERB, "[%I64u] Still cleaning up from a previous media session, let's wait a bit...\n", ice_handle->handle_id);
 			gint64 waited = 0;
 			while(janus_flags_is_set(&ice_handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_CLEANING)) {
-				JANUS_LOG(LOG_VERB, "[%"SCNu64"] Still cleaning up from a previous media session, let's wait a bit...\n", ice_handle->handle_id);
+				JANUS_LOG(LOG_VERB, "[%I64u] Still cleaning up from a previous media session, let's wait a bit...\n", ice_handle->handle_id);
 				g_usleep(100000);
 				waited += 100000;
 				if(waited >= 3*G_USEC_PER_SEC) {
-					JANUS_LOG(LOG_VERB, "[%"SCNu64"]   -- Waited 3 seconds, that's enough!\n", ice_handle->handle_id);
+					JANUS_LOG(LOG_VERB, "[%I64u]   -- Waited 3 seconds, that's enough!\n", ice_handle->handle_id);
 					break;
 				}
 			}
@@ -2598,12 +2598,12 @@ json_t *janus_plugin_handle_sdp(janus_plugin_session *plugin_session, janus_plug
 		if(ice_handle->agent == NULL) {
 			/* Process SDP in order to setup ICE locally (this is going to result in an answer from the browser) */
 			if(janus_ice_setup_local(ice_handle, 0, audio, video, data, bundle, rtcpmux, trickle) < 0) {
-				JANUS_LOG(LOG_ERR, "[%"SCNu64"] Error setting ICE locally\n", ice_handle->handle_id);
+				JANUS_LOG(LOG_ERR, "[%I64u] Error setting ICE locally\n", ice_handle->handle_id);
 				return NULL;
 			}
 		} else {
 			updating = TRUE;
-			JANUS_LOG(LOG_INFO, "[%"SCNu64"] Updating existing session\n", ice_handle->handle_id);
+			JANUS_LOG(LOG_INFO, "[%I64u] Updating existing session\n", ice_handle->handle_id);
 		}
 	}
 	if(!updating) {
@@ -2611,13 +2611,13 @@ json_t *janus_plugin_handle_sdp(janus_plugin_session *plugin_session, janus_plug
 		while(ice_handle->cdone < ice_handle->streams_num) {
 			if(ice_handle == NULL || janus_flags_is_set(&ice_handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_STOP)
 					|| janus_flags_is_set(&ice_handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_ALERT)) {
-				JANUS_LOG(LOG_WARN, "[%"SCNu64"] Handle detached or PC closed, giving up...!\n", ice_handle ? ice_handle->handle_id : 0);
+				JANUS_LOG(LOG_WARN, "[%I64u] Handle detached or PC closed, giving up...!\n", ice_handle ? ice_handle->handle_id : 0);
 				return NULL;
 			}
-			JANUS_LOG(LOG_VERB, "[%"SCNu64"] Waiting for candidates-done callback...\n", ice_handle->handle_id);
+			JANUS_LOG(LOG_VERB, "[%I64u] Waiting for candidates-done callback...\n", ice_handle->handle_id);
 			g_usleep(100000);
 			if(ice_handle->cdone < 0) {
-				JANUS_LOG(LOG_ERR, "[%"SCNu64"] Error gathering candidates!\n", ice_handle->handle_id);
+				JANUS_LOG(LOG_ERR, "[%I64u] Error gathering candidates!\n", ice_handle->handle_id);
 				return NULL;
 			}
 		}
@@ -2626,33 +2626,33 @@ json_t *janus_plugin_handle_sdp(janus_plugin_session *plugin_session, janus_plug
 	char *sdp_stripped = janus_sdp_anonymize(sdp);
 	if(sdp_stripped == NULL) {
 		/* Invalid SDP */
-		JANUS_LOG(LOG_ERR, "[%"SCNu64"] Invalid SDP\n", ice_handle->handle_id);
+		JANUS_LOG(LOG_ERR, "[%I64u] Invalid SDP\n", ice_handle->handle_id);
 		return NULL;
 	}
 	/* Add our details */
 	char *sdp_merged = janus_sdp_merge(ice_handle, sdp_stripped);
 	if(sdp_merged == NULL) {
 		/* Couldn't merge SDP */
-		JANUS_LOG(LOG_ERR, "[%"SCNu64"] Error merging SDP\n", ice_handle->handle_id);
+		JANUS_LOG(LOG_ERR, "[%I64u] Error merging SDP\n", ice_handle->handle_id);
 		g_free(sdp_stripped);
 		return NULL;
 	}
 	/* FIXME Any disabled m-line? */
 	if(strstr(sdp_merged, "m=audio 0")) {
-		JANUS_LOG(LOG_VERB, "[%"SCNu64"] Audio disabled via SDP\n", ice_handle->handle_id);
+		JANUS_LOG(LOG_VERB, "[%I64u] Audio disabled via SDP\n", ice_handle->handle_id);
 		if(!janus_flags_is_set(&ice_handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE)
 				|| (!video && !data)) {
-			JANUS_LOG(LOG_VERB, "[%"SCNu64"]   -- Marking audio stream as disabled\n", ice_handle->handle_id);
+			JANUS_LOG(LOG_VERB, "[%I64u]   -- Marking audio stream as disabled\n", ice_handle->handle_id);
 			janus_ice_stream *stream = g_hash_table_lookup(ice_handle->streams, GUINT_TO_POINTER(ice_handle->audio_id));
 			if(stream)
 				stream->disabled = TRUE;
 		}
 	}
 	if(strstr(sdp_merged, "m=video 0")) {
-		JANUS_LOG(LOG_VERB, "[%"SCNu64"] Video disabled via SDP\n", ice_handle->handle_id);
+		JANUS_LOG(LOG_VERB, "[%I64u] Video disabled via SDP\n", ice_handle->handle_id);
 		if(!janus_flags_is_set(&ice_handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE)
 				|| (!audio && !data)) {
-			JANUS_LOG(LOG_VERB, "[%"SCNu64"]   -- Marking video stream as disabled\n", ice_handle->handle_id);
+			JANUS_LOG(LOG_VERB, "[%I64u]   -- Marking video stream as disabled\n", ice_handle->handle_id);
 			janus_ice_stream *stream = NULL;
 			if(!janus_flags_is_set(&ice_handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE)) {
 				stream = g_hash_table_lookup(ice_handle->streams, GUINT_TO_POINTER(ice_handle->video_id));
@@ -2665,10 +2665,10 @@ json_t *janus_plugin_handle_sdp(janus_plugin_session *plugin_session, janus_plug
 		}
 	}
 	if(strstr(sdp_merged, "m=application 0 DTLS/SCTP")) {
-		JANUS_LOG(LOG_VERB, "[%"SCNu64"] Data Channel disabled via SDP\n", ice_handle->handle_id);
+		JANUS_LOG(LOG_VERB, "[%I64u] Data Channel disabled via SDP\n", ice_handle->handle_id);
 		if(!janus_flags_is_set(&ice_handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE)
 				|| (!audio && !video)) {
-			JANUS_LOG(LOG_VERB, "[%"SCNu64"]   -- Marking data channel stream as disabled\n", ice_handle->handle_id);
+			JANUS_LOG(LOG_VERB, "[%I64u]   -- Marking data channel stream as disabled\n", ice_handle->handle_id);
 			janus_ice_stream *stream = NULL;
 			if(!janus_flags_is_set(&ice_handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE)) {
 				stream = g_hash_table_lookup(ice_handle->streams, GUINT_TO_POINTER(ice_handle->data_id));
@@ -2686,9 +2686,9 @@ json_t *janus_plugin_handle_sdp(janus_plugin_session *plugin_session, janus_plug
 			/* We set the flag to wait for an answer before handling trickle candidates */
 			janus_flags_set(&ice_handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_PROCESSING_OFFER);
 		} else {
-			JANUS_LOG(LOG_VERB, "[%"SCNu64"] Done! Ready to setup remote candidates and send connectivity checks...\n", ice_handle->handle_id);
+			JANUS_LOG(LOG_VERB, "[%I64u] Done! Ready to setup remote candidates and send connectivity checks...\n", ice_handle->handle_id);
 			if(janus_flags_is_set(&ice_handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_BUNDLE)) {
-				JANUS_LOG(LOG_VERB, "[%"SCNu64"]   -- bundle is supported by the browser, getting rid of one of the RTP/RTCP components, if any...\n", ice_handle->handle_id);
+				JANUS_LOG(LOG_VERB, "[%I64u]   -- bundle is supported by the browser, getting rid of one of the RTP/RTCP components, if any...\n", ice_handle->handle_id);
 				if(audio) {
 					/* Get rid of video and data, if present */
 					if(ice_handle->streams && ice_handle->video_stream) {
@@ -2728,7 +2728,7 @@ json_t *janus_plugin_handle_sdp(janus_plugin_session *plugin_session, janus_plug
 				}
 			}
 			if(janus_flags_is_set(&ice_handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_RTCPMUX) && !janus_ice_is_rtcpmux_forced()) {
-				JANUS_LOG(LOG_VERB, "[%"SCNu64"]   -- rtcp-mux is supported by the browser, getting rid of RTCP components, if any...\n", ice_handle->handle_id);
+				JANUS_LOG(LOG_VERB, "[%I64u]   -- rtcp-mux is supported by the browser, getting rid of RTCP components, if any...\n", ice_handle->handle_id);
 				if(ice_handle->audio_stream && ice_handle->audio_stream->rtcp_component && ice_handle->audio_stream->components != NULL) {
 					nice_agent_attach_recv(ice_handle->agent, ice_handle->audio_id, 2, g_main_loop_get_context (ice_handle->iceloop), NULL, NULL);
 					/* Free the component */
@@ -2748,7 +2748,7 @@ json_t *janus_plugin_handle_sdp(janus_plugin_session *plugin_session, janus_plug
 					c->username = g_strdup(ice_handle->audio_stream->ruser);
 					c->password = g_strdup(ice_handle->audio_stream->rpass);
 					if(!nice_agent_set_selected_remote_candidate(ice_handle->agent, ice_handle->audio_stream->stream_id, 2, c)) {
-						JANUS_LOG(LOG_ERR, "[%"SCNu64"] Error forcing dummy candidate on RTCP component of stream %d\n", ice_handle->handle_id, ice_handle->audio_stream->stream_id);
+						JANUS_LOG(LOG_ERR, "[%I64u] Error forcing dummy candidate on RTCP component of stream %d\n", ice_handle->handle_id, ice_handle->audio_stream->stream_id);
 						nice_candidate_free(c);
 					}
 				}
@@ -2771,7 +2771,7 @@ json_t *janus_plugin_handle_sdp(janus_plugin_session *plugin_session, janus_plug
 					c->username = g_strdup(ice_handle->video_stream->ruser);
 					c->password = g_strdup(ice_handle->video_stream->rpass);
 					if(!nice_agent_set_selected_remote_candidate(ice_handle->agent, ice_handle->video_stream->stream_id, 2, c)) {
-						JANUS_LOG(LOG_ERR, "[%"SCNu64"] Error forcing dummy candidate on RTCP component of stream %d\n", ice_handle->handle_id, ice_handle->video_stream->stream_id);
+						JANUS_LOG(LOG_ERR, "[%I64u] Error forcing dummy candidate on RTCP component of stream %d\n", ice_handle->handle_id, ice_handle->video_stream->stream_id);
 						nice_candidate_free(c);
 					}
 				}
@@ -2781,7 +2781,7 @@ json_t *janus_plugin_handle_sdp(janus_plugin_session *plugin_session, janus_plug
 			janus_flags_clear(&ice_handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_PROCESSING_OFFER);
 			/* Any pending trickles? */
 			if(ice_handle->pending_trickles) {
-				JANUS_LOG(LOG_VERB, "[%"SCNu64"]   -- Processing %d pending trickle candidates\n", ice_handle->handle_id, g_list_length(ice_handle->pending_trickles));
+				JANUS_LOG(LOG_VERB, "[%I64u]   -- Processing %d pending trickle candidates\n", ice_handle->handle_id, g_list_length(ice_handle->pending_trickles));
 				GList *temp = NULL;
 				while(ice_handle->pending_trickles) {
 					temp = g_list_first(ice_handle->pending_trickles);
@@ -2810,7 +2810,7 @@ json_t *janus_plugin_handle_sdp(janus_plugin_session *plugin_session, janus_plug
 						}
 					} else if(json_is_array(candidate)) {
 						/* We got multiple candidates in an array */
-						JANUS_LOG(LOG_VERB, "[%"SCNu64"] Got multiple candidates (%zu)\n", ice_handle->handle_id, json_array_size(candidate));
+						JANUS_LOG(LOG_VERB, "[%I64u] Got multiple candidates (%zu)\n", ice_handle->handle_id, json_array_size(candidate));
 						if(json_array_size(candidate) > 0) {
 							/* Handle remote candidates */
 							size_t i = 0;
@@ -2828,10 +2828,10 @@ json_t *janus_plugin_handle_sdp(janus_plugin_session *plugin_session, janus_plug
 			/* This was an answer, check if it's time to start ICE */
 			if(janus_flags_is_set(&ice_handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_TRICKLE) &&
 					!janus_flags_is_set(&ice_handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_ALL_TRICKLES)) {
-				JANUS_LOG(LOG_VERB, "[%"SCNu64"]   -- ICE Trickling is supported by the browser, waiting for remote candidates...\n", ice_handle->handle_id);
+				JANUS_LOG(LOG_VERB, "[%I64u]   -- ICE Trickling is supported by the browser, waiting for remote candidates...\n", ice_handle->handle_id);
 				janus_flags_set(&ice_handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_START);
 			} else {
-				JANUS_LOG(LOG_VERB, "[%"SCNu64"] Done! Sending connectivity checks...\n", ice_handle->handle_id);
+				JANUS_LOG(LOG_VERB, "[%I64u] Done! Sending connectivity checks...\n", ice_handle->handle_id);
 				if(ice_handle->audio_id > 0) {
 					janus_ice_setup_remote_candidates(ice_handle, ice_handle->audio_id, 1);
 					if(!janus_flags_is_set(&ice_handle->webrtc_flags, JANUS_ICE_HANDLE_WEBRTC_RTCPMUX))	/* http://tools.ietf.org/html/rfc5761#section-5.1.3 */
@@ -2908,7 +2908,7 @@ void janus_plugin_close_pc(janus_plugin_session *plugin_session) {
 	if(!session)
 		return;
 
-	JANUS_LOG(LOG_VERB, "[%"SCNu64"] Plugin asked to hangup PeerConnection: sending alert\n", ice_handle->handle_id);
+	JANUS_LOG(LOG_VERB, "[%I64u] Plugin asked to hangup PeerConnection: sending alert\n", ice_handle->handle_id);
 	/* Send an alert on all the DTLS connections */
 	janus_ice_webrtc_hangup(ice_handle);
 }

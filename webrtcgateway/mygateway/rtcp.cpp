@@ -136,7 +136,7 @@ static void janus_rtcp_incoming_rr(rtcp_context *ctx, rtcp_rr *rr) {
 		double jitter = (double)ntohl(rr->rb[0].jitter);
 		uint32_t fraction = ntohl(rr->rb[0].flcnpl) >> 24;
 		uint32_t total = ntohl(rr->rb[0].flcnpl) & 0x00FFFFFF;
-		JANUS_LOG(LOG_HUGE, "jitter=%f, fraction=%"SCNu32", loss=%"SCNu32"\n", jitter, fraction, total);
+		JANUS_LOG(LOG_HUGE, "jitter=%f, fraction=%d, loss=%d\n", jitter, fraction, total);
 		ctx->lost_remote = total;
 		ctx->jitter_remote = jitter;
 	}
@@ -256,7 +256,7 @@ int janus_rtcp_fix_ssrc(rtcp_context *ctx, char *packet, int len, int fixssrc, u
 								bitmask[j] = (blp & ( 1 << j )) >> j ? '1' : '0';
 							}
 							bitmask[16] = '\n';
-							JANUS_LOG(LOG_DBG, "[%d] %"SCNu16" / %s\n", i, pid, bitmask);
+							JANUS_LOG(LOG_DBG, "[%d] %d / %s\n", i, pid, bitmask);
 						}
 					}
 				} else if(fmt == 3) {	/* rfc5104 */
@@ -330,7 +330,7 @@ int janus_rtcp_fix_ssrc(rtcp_context *ctx, char *packet, int len, int fixssrc, u
 						brMantissa += (_ptrRTCPData[2] << 8);
 						brMantissa += (_ptrRTCPData[3]);
 						uint64_t bitRate = brMantissa << brExp;
-						JANUS_LOG(LOG_HUGE, "       -- -- -- REMB: %u * 2^%u = %"SCNu64" (%d SSRCs, %"SCNu32")\n",
+						JANUS_LOG(LOG_HUGE, "       -- -- -- REMB: %u * 2^%u = %I64u (%d SSRCs, %d)\n",
 							brMantissa, brExp, bitRate, numssrc, (uint32_t)ntohl(remb->ssrc[0]));
 					} else {
 						JANUS_LOG(LOG_HUGE, "     #%d AFB ?? -- PSFB (206)\n", pno);
@@ -621,7 +621,7 @@ GSList *janus_rtcp_get_nacks(char *packet, int len) {
 								list = g_slist_append(list, GUINT_TO_POINTER(pid+j+1));
 						}
 						bitmask[16] = '\n';
-						JANUS_LOG(LOG_DBG, "[%d] %"SCNu16" / %s\n", i, pid, bitmask);
+						JANUS_LOG(LOG_DBG, "[%d] %d / %s\n", i, pid, bitmask);
 					}
 				}
 			}
@@ -711,7 +711,7 @@ uint64_t janus_rtcp_get_remb(char *packet, int len) {
 					brMantissa += (_ptrRTCPData[2] << 8);
 					brMantissa += (_ptrRTCPData[3]);
 					uint64_t bitrate = brMantissa << brExp;
-					JANUS_LOG(LOG_HUGE, "Got REMB bitrate %"SCNu64"\n", bitrate);
+					JANUS_LOG(LOG_HUGE, "Got REMB bitrate %I64u\n", bitrate);
 					return bitrate;
 				}
 			}
@@ -756,8 +756,8 @@ int janus_rtcp_cap_remb(char *packet, int len, uint64_t bitrate) {
 					brMantissa += (_ptrRTCPData[3]);
 					uint64_t origbitrate = brMantissa << brExp;
 					if(origbitrate > bitrate) {
-						JANUS_LOG(LOG_HUGE, "Got REMB bitrate %"SCNu64", need to cap it to %"SCNu64"\n", origbitrate, bitrate);
-						JANUS_LOG(LOG_HUGE, "  >> %u * 2^%u = %"SCNu64"\n", brMantissa, brExp, origbitrate);
+						JANUS_LOG(LOG_HUGE, "Got REMB bitrate %I64u, need to cap it to %I64u\n", origbitrate, bitrate);
+						JANUS_LOG(LOG_HUGE, "  >> %u * 2^%u = %I64u\n", brMantissa, brExp, origbitrate);
 						/* bitrate --> brexp/brmantissa */
 						uint8_t b = 0;
 						uint8_t newbrexp = 0;
@@ -770,7 +770,7 @@ int janus_rtcp_cap_remb(char *packet, int len, uint64_t bitrate) {
 						}
 						newbrmantissa = bitrate >> b;
 						JANUS_LOG(LOG_HUGE, "new brexp:      %"SCNu8"\n", newbrexp);
-						JANUS_LOG(LOG_HUGE, "new brmantissa: %"SCNu32"\n", newbrmantissa);
+						JANUS_LOG(LOG_HUGE, "new brmantissa: %d\n", newbrmantissa);
 						/* FIXME From rtcp_sender.cc */
 						_ptrRTCPData[1] = (uint8_t)((newbrexp << 2) + ((newbrmantissa >> 16) & 0x03));
 						_ptrRTCPData[2] = (uint8_t)(newbrmantissa >> 8);
@@ -854,7 +854,7 @@ int janus_rtcp_remb(char *packet, int len, uint64_t bitrate) {
 	_ptrRTCPData[1] = (uint8_t)((newbrexp << 2) + ((newbrmantissa >> 16) & 0x03));
 	_ptrRTCPData[2] = (uint8_t)(newbrmantissa >> 8);
 	_ptrRTCPData[3] = (uint8_t)(newbrmantissa);
-	JANUS_LOG(LOG_HUGE, "[REMB] bitrate=%"SCNu64" (%d bytes)\n", bitrate, 4*(ntohs(rtcp->length)+1));
+	JANUS_LOG(LOG_HUGE, "[REMB] bitrate=%I64u (%d bytes)\n", bitrate, 4*(ntohs(rtcp->length)+1));
 	return 24;
 }
 
@@ -938,10 +938,10 @@ int janus_rtcp_nacks(char *packet, int len, GSList *nacks) {
 	while(nacks) {
 		guint16 npid = GPOINTER_TO_UINT(nacks->data);
 		if(npid-pid < 1) {
-			JANUS_LOG(LOG_HUGE, "Skipping PID to NACK (%"SCNu16" already added)...\n", npid);
+			JANUS_LOG(LOG_HUGE, "Skipping PID to NACK (%d already added)...\n", npid);
 		} else if(npid-pid > 16) {
 			/* We need a new block: this sequence number will be its root PID */
-			JANUS_LOG(LOG_HUGE, "Adding another block of NACKs (%"SCNu16"-%"SCNu16" > %"SCNu16")...\n", npid, pid, npid-pid);
+			JANUS_LOG(LOG_HUGE, "Adding another block of NACKs (%d-%d > %d)...\n", npid, pid, npid-pid);
 			words++;
 			if(len < (words*4+4)) {
 				JANUS_LOG(LOG_ERR, "Buffer too small: %d < %d (at least %d NACK blocks needed)\n", len, words*4+4, words);
