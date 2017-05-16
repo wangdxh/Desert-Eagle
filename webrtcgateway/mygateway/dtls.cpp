@@ -279,12 +279,14 @@ error:
 
 static int janus_dtls_load_keys(const char* server_pem, const char* server_key, X509** certificate, EVP_PKEY** private_key) {
 	FILE* f = NULL;
-
-	f = fopen(server_pem, "r");
+    int x = 0;
+	f = fopen(server_pem, "r");    
+    
 	if (!f) {
 		JANUS_LOG(LOG_FATAL, "Error opening certificate file\n");
 		goto error;
 	}
+    JANUS_LOG(LOG_FATAL, "PEM_read_X509 will start\n");
 	*certificate = PEM_read_X509(f, NULL, NULL, NULL);
 	if (!*certificate) {
 		JANUS_LOG(LOG_FATAL, "PEM_read_X509 failed\n");
@@ -324,7 +326,7 @@ gint janus_dtls_srtp_init(const char* server_pem, const char* server_key) {
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 	JANUS_LOG(LOG_WARN, "OpenSSL pre-1.1.0\n");
 	/* First of all make OpenSSL thread safe (see note above on issue #316) */
-	janus_dtls_locks = g_malloc0(sizeof(*janus_dtls_locks) * CRYPTO_num_locks());
+	janus_dtls_locks = (janus_mutex *)g_malloc0(sizeof(*janus_dtls_locks) * CRYPTO_num_locks());
 	int l=0;
 	for(l = 0; l < CRYPTO_num_locks(); l++) {
 		janus_mutex_init(&janus_dtls_locks[l]);

@@ -151,7 +151,7 @@ url = RTSP stream URL (only if type=rtsp)
 #define JANUS_STREAMING_PACKAGE			"janus.plugin.streaming"
 
 /* Plugin methods */
-janus_plugin *create(void);
+
 int janus_streaming_init(janus_callbacks *callback, const char *config_path);
 void janus_streaming_destroy(void);
 int janus_streaming_get_api_compatibility(void);
@@ -174,7 +174,7 @@ json_t *janus_streaming_query_session(janus_plugin_session *handle);
 static janus_plugin janus_streaming_plugin ={0};
 
 /* Plugin creator */
-janus_plugin *create(void) {
+janus_plugin *create_streaming(void) {
 	JANUS_LOG(LOG_VERB, "%s created!\n", JANUS_STREAMING_NAME);
 	janus_streaming_plugin.init = janus_streaming_init;
 	janus_streaming_plugin.destroy = janus_streaming_destroy;

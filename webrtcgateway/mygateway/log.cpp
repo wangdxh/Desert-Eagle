@@ -156,7 +156,7 @@ static void *janus_log_thread(void *ctx) {
 }
 
 void janus_vprintf(int nlevel, const char *format, ...) 
-{
+{    
 	int len;
 	va_list ap, ap2;
 	janus_log_buffer *b = janus_log_getbuf();

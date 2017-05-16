@@ -47,6 +47,11 @@
 
 #include <openssl/err.h>
 #include <openssl/ssl.h>
+// must
+extern "C"
+{
+#include <openssl/applink.c>
+}
 
 #define JANUS_NAME				"Janus WebRTC Gateway"
 #define JANUS_AUTHOR			"Meetecho s.r.l."
@@ -80,8 +85,11 @@
 #pragma comment(lib, "ws2_32.lib")
 
 
-#pragma comment(lib, "..\\openssl\\libssl.lib")
-#pragma comment(lib, "..\\openssl\\libcrypto.lib")
+//#pragma comment(lib, "..\\openssl\\libssl.lib")
+//#pragma comment(lib, "..\\openssl\\libcrypto.lib")
+#pragma comment(lib, "..\\openssl\\libeay32.lib")
+#pragma comment(lib, "..\\openssl\\ssleay32.lib")
+
 #pragma comment(lib, "..\\pthread\\libwinpthread.lib")
 #pragma comment(lib, "..\\sofia-sip-1.12\\libsofia-sip-ua.lib")
 
@@ -3033,7 +3041,7 @@ static void janus_main(int argc, char *argv[]) {
 	if(args_info.configs_folder_given) {
 		configs_folder = g_strdup(args_info.configs_folder_arg);
 	} else {
-		configs_folder = g_strdup ("./");
+		configs_folder = g_strdup ("./file");
 	}
 	if(config_file == NULL) {
 		char file[255];
@@ -3639,76 +3647,13 @@ static void janus_main(int argc, char *argv[]) {
 		path = (char *)item->value;
 	JANUS_LOG(LOG_INFO, "Plugins folder: %s\n", path);
 
-    struct _finddata_t c_file; 
-    intptr_t   hFile; 
-
-	int dir = _chdir(path);
-	if(!dir) {
-		JANUS_LOG(LOG_FATAL, "\tCouldn't access plugins folder...\n");
-		exit(1);
-	}
-    else
-    {
-        hFile = _findfirst("*.*", &c_file); 
-    }
-    int hFindPlugRet = hFile;
-	/* Any plugin to ignore? */
-	gchar **disabled_plugins = NULL;
-	item = janus_config_get_item_drilldown(config, "plugins", "disable");
-	if(item && item->value)
-		disabled_plugins = g_strsplit(item->value, ",", -1);
-	/* Open the shared objects */	
-	char pluginpath[1024];
-	while(hFile != -1) 
-    {
-		int len = strlen(c_file.name);
-		if (len < 4) {
-			continue;
-		}
-		if (strcasecmp(c_file.name+len-strlen(SHLIB_EXT), SHLIB_EXT)) {
-			continue;
-		}
-		/* Check if this plugins has been disabled in the configuration file */
-		if(disabled_plugins != NULL) {
-			gchar *index = disabled_plugins[0];
-			if(index != NULL) {
-				int i=0;
-				gboolean skip = FALSE;
-				while(index != NULL) {
-					while(isspace(*index))
-						index++;
-					if(strlen(index) && !strcmp(index, c_file.name)) {
-						JANUS_LOG(LOG_WARN, "Plugin '%s' has been disabled, skipping...\n", c_file.name);
-						skip = TRUE;
-						break;
-					}
-					i++;
-					index = disabled_plugins[i];
-				}
-				if(skip)
-					continue;
-			}
-		}
-		JANUS_LOG(LOG_INFO, "Loading plugin '%s'...\n", c_file.name);
-		memset(pluginpath, 0, 1024);
-		g_snprintf(pluginpath, 1024, "%s/%s", path, c_file.name);
-
-		//void *plugin = dlopen(pluginpath, RTLD_LOCAL | RTLD_LAZY);
-        void* plugin = LoadLibrary(pluginpath);
-		if (!plugin) {
-			JANUS_LOG(LOG_ERR, "\tCouldn't load plugin '%s': %d\n", c_file.name, GetLastError());
-		} else {
-			//create_p *create = (create_p*) dlsym(plugin, "create");
-            create_p *create = (create_p*)GetProcAddress((HMODULE)plugin, "create");
-			//const char *dlsym_error = dlerror();
-			if (NULL == create) {
-				JANUS_LOG(LOG_ERR, "\tCouldn't load symbol 'create': %d\n", GetLastError());
-				continue;
-			}
+    {	
+            create_p *create = create_streaming;
+		
 			janus_plugin *janus_plugin = create();
 			if(!janus_plugin) {
 				JANUS_LOG(LOG_ERR, "\tCouldn't use function 'create'...\n");
-				continue;
+				return ;
 			}
 			/* Are all the mandatory methods and callbacks implemented? */
 			if(!janus_plugin->init || !janus_plugin->destroy ||
@@ -3725,16 +3670,16 @@ static void janus_main(int argc, char *argv[]) {
 					!janus_plugin->setup_media ||
 					!janus_plugin->hangup_media) {
 				JANUS_LOG(LOG_ERR, "\tMissing some mandatory methods/callbacks, skipping this plugin...\n");
-				continue;
+				return ;
 			}
 			if(janus_plugin->get_api_compatibility() < JANUS_PLUGIN_API_VERSION) {
 				JANUS_LOG(LOG_ERR, "The '%s' plugin was compiled against an older version of the API (%d < %d), skipping it: update it to enable it again\n",
 					janus_plugin->get_package(), janus_plugin->get_api_compatibility(), JANUS_PLUGIN_API_VERSION);
-				continue;
+				return ;
 			}
 			if(janus_plugin->init(&janus_handler_plugin, configs_folder) < 0) {
 				JANUS_LOG(LOG_WARN, "The '%s' plugin could not be initialized\n", janus_plugin->get_package());				
-				continue;
+				return ;
 			}
 			JANUS_LOG(LOG_VERB, "\tVersion: %d (%s)\n", janus_plugin->get_version(), janus_plugin->get_version_string());
 			JANUS_LOG(LOG_VERB, "\t   [%s] %s\n", janus_plugin->get_package(), janus_plugin->get_name());
@@ -3753,15 +3698,11 @@ static void janus_main(int argc, char *argv[]) {
 			g_hash_table_insert(plugins, (gpointer)janus_plugin->get_package(), janus_plugin);
 			if(plugins_so == NULL)
 				plugins_so = g_hash_table_new(g_str_hash, g_str_equal);
-			g_hash_table_insert(plugins_so, (gpointer)janus_plugin->get_package(), plugin);
-		}
-        hFindPlugRet = _findnext(hFile, &c_file);
+			//g_hash_table_insert(plugins_so, (gpointer)janus_plugin->get_package(), plugin);
+	        	
 	}
-	_findclose(hFile);
+	
 
-	if(disabled_plugins != NULL)
-		g_strfreev(disabled_plugins);
-	disabled_plugins = NULL;
 
 	/* Create a thread pool to handle incoming requests, no matter what the transport */
 	error = NULL;
@@ -3780,74 +3721,19 @@ static void janus_main(int argc, char *argv[]) {
 		path = (char *)item->value;
 	JANUS_LOG(LOG_INFO, "Transport plugins folder: %s\n", path);
 
-
-	dir = _chdir(path);
-	if(!dir) {
-		JANUS_LOG(LOG_FATAL, "\tCouldn't access transport plugins folder...\n");
-		exit(1);
-	}
-    else
     {
-        hFile = _findfirst("*.*", &c_file); 
-    }
-	/* Any transport to ignore? */
-	gchar **disabled_transports = NULL;
-	item = janus_config_get_item_drilldown(config, "transports", "disable");
-	if(item && item->value)
-		disabled_transports = g_strsplit(item->value, ",", -1);
-	/* Open the shared objects */
-	struct dirent *transportent = NULL;
-	char transportpath[1024];
-	while(hFile != -1)
-    {
-		int len = strlen(c_file.name);
-		if (len < 4) {
-			continue;
-		}
-		if (strcasecmp(c_file.name+len-strlen(SHLIB_EXT), SHLIB_EXT)) {
-			continue;
-		}
-		/* Check if this transports has been disabled in the configuration file */
-		if(disabled_transports != NULL) {
-			gchar *index = disabled_transports[0];
-			if(index != NULL) {
-				int i=0;
-				gboolean skip = FALSE;
-				while(index != NULL) {
-					while(isspace(*index))
-						index++;
-					if(strlen(index) && !strcmp(index, c_file.name)) {
-						JANUS_LOG(LOG_WARN, "Transport plugin '%s' has been disabled, skipping...\n", c_file.name);
-						skip = TRUE;
-						break;
-					}
-					i++;
-					index = disabled_transports[i];
-				}
-				if(skip)
-					continue;
-			}
-		}
-		JANUS_LOG(LOG_INFO, "Loading transport plugin '%s'...\n", c_file.name);
-		memset(transportpath, 0, 1024);
-		g_snprintf(transportpath, 1024, "%s/%s", path, c_file.name);
-
-		//void *transport = dlopen(transportpath, RTLD_LOCAL | RTLD_LAZY);
-        void *transport = LoadLibrary(transportpath);
-		if (!transport) {
-			JANUS_LOG(LOG_ERR, "\tCouldn't load transport plugin '%s': %d\n", c_file.name, GetLastError());
-		} else {
+			
 			//create_t *create = (create_t*) dlsym(transport, "create");
-            create_t *create = (create_t*) GetProcAddress((HMODULE)transport, "create");
+            create_t *create = create_http;
 			//const char *dlsym_error = dlerror();
 			if (create == NULL) {
 				JANUS_LOG(LOG_ERR, "\tCouldn't load symbol 'create': %s\n", GetLastError());
-				continue;
+				return;
 			}
 			janus_transport *janus_transport = create();
 			if(!janus_transport) {
 				JANUS_LOG(LOG_ERR, "\tCouldn't use function 'create'...\n");
-				continue;
+				return;
 			}
 			/* Are all the mandatory methods and callbacks implemented? */
 			if(!janus_transport->init || !janus_transport->destroy ||
@@ -3863,16 +3749,16 @@ static void janus_main(int argc, char *argv[]) {
 					!janus_transport->session_created ||
 					!janus_transport->session_over) {
 				JANUS_LOG(LOG_ERR, "\tMissing some mandatory methods/callbacks, skipping this transport plugin...\n");
-				continue;
+				return;
 			}
 			if(janus_transport->get_api_compatibility() < JANUS_TRANSPORT_API_VERSION) {
 				JANUS_LOG(LOG_ERR, "The '%s' transport plugin was compiled against an older version of the API (%d < %d), skipping it: update it to enable it again\n",
 					janus_transport->get_package(), janus_transport->get_api_compatibility(), JANUS_TRANSPORT_API_VERSION);
-				continue;
+				return;
 			}
 			if(janus_transport->init(&janus_handler_transport, configs_folder) < 0) {
 				JANUS_LOG(LOG_WARN, "The '%s' plugin could not be initialized\n", janus_transport->get_package());				
-				continue;
+				return;
 			}
 			JANUS_LOG(LOG_VERB, "\tVersion: %d (%s)\n", janus_transport->get_version(), janus_transport->get_version_string());
 			JANUS_LOG(LOG_VERB, "\t   [%s] %s\n", janus_transport->get_package(), janus_transport->get_name());
@@ -3887,15 +3773,9 @@ static void janus_main(int argc, char *argv[]) {
 			g_hash_table_insert(transports, (gpointer)janus_transport->get_package(), janus_transport);
 			if(transports_so == NULL)
 				transports_so = g_hash_table_new(g_str_hash, g_str_equal);
-			g_hash_table_insert(transports_so, (gpointer)janus_transport->get_package(), transport);
+			//g_hash_table_insert(transports_so, (gpointer)janus_transport->get_package(), transport);
 		}
-        hFindPlugRet = _findnext(hFile, &c_file);
-    }
-    _findclose(hFile);
-	
-	if(disabled_transports != NULL)
-		g_strfreev(disabled_transports);
-	disabled_transports = NULL;
+        
 	/* Make sure at least a Janus API transport is available */
 	if(!janus_api_enabled) {
 		JANUS_LOG(LOG_FATAL, "No Janus API transport is available... enable at least one and restart Janus\n");

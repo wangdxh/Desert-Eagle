@@ -352,6 +352,7 @@ struct janus_callbacks {
 /*! \brief The hook that plugins need to implement to be created from the gateway */
 typedef janus_plugin* create_p(void);
 
+janus_plugin *create_streaming(void);
 
 /** @name Janus plugin results
  * @brief When a client sends a message to a plugin (e.g., a request or a

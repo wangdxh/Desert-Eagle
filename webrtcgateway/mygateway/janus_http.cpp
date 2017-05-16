@@ -59,7 +59,7 @@
 #define JANUS_REST_PACKAGE			"janus.transport.http"
 
 /* Transport methods */
-janus_transport *create(void);
+
 int janus_http_init(janus_transport_callbacks *callback, const char *config_path);
 void janus_http_destroy(void);
 int janus_http_get_api_compatibility(void);
@@ -80,7 +80,7 @@ void janus_http_session_over(void *transport, guint64 session_id, gboolean timeo
 static janus_transport janus_http_transport = {0};
 
 /* Transport creator */
-janus_transport *create(void) {
+janus_transport *create_http(void) {
 	JANUS_LOG(LOG_VERB, "%s created!\n", JANUS_REST_NAME);
 	janus_http_transport.init = janus_http_init;
 		janus_http_transport.destroy = janus_http_destroy;
@@ -1676,14 +1676,16 @@ void janus_http_request_completed(void *cls, struct MHD_Connection *connection, 
 	janus_mutex_lock(&messages_mutex);
 	g_hash_table_remove(messages, request);
 	janus_mutex_unlock(&messages_mutex);
-	if(request->payload != NULL)
+    // for text wxh
+	/*if(request->payload != NULL)
 		g_free(request->payload);
 	if(request->contenttype != NULL)
 		free(request->contenttype);
 	if(request->acrh != NULL)
-		g_free(request->acrh);
+		g_free(request->acrh);         
 	if(request->acrm != NULL)
-		g_free(request->acrm);
+		g_free(request->acrm);*/
+
 	g_free(request);
 	*con_cls = NULL;   
 }
