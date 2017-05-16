@@ -72,17 +72,20 @@
 
 #pragma comment(lib, "..\\glib\\lib\\gthread-2.0.lib")
 
-#pragma comment(lib, "..\\microhttpd\\libmicrohttpd.dll.a")
-
+#pragma comment(lib, "..\\microhttpd\\libmicrohttpd-12.lib")
+#pragma comment(lib, "..\\jansson\\libjansson-4.lib")
 
 #pragma comment(lib, "..\\libnice\\nice\\nice.lib")
-#pragma comment(lib, "..\\openssl\\libcrypto.dll.a")
-#pragma comment(lib, "..\\openssl\\libssl.dll.a")
 #pragma comment(lib, "..\\srtp\\srtp.lib")
-#pragma comment(lib, "..\\pthread\\libwinpthread.dll.a")
-#pragma comment(lib, "..\\sofia-sip-1.12\\libsofia-sip-ua.dll.a")
 #pragma comment(lib, "ws2_32.lib")
-#pragma comment(lib, "..\\jansson\\libjansson.dll.a")
+
+
+#pragma comment(lib, "..\\openssl\\libssl.lib")
+#pragma comment(lib, "..\\openssl\\libcrypto.lib")
+#pragma comment(lib, "..\\pthread\\libwinpthread.lib")
+#pragma comment(lib, "..\\sofia-sip-1.12\\libsofia-sip-ua.lib")
+
+
 
 JANUS_LOCAL janus_config *config;
 JANUS_LOCAL char *config_file;
@@ -2965,15 +2968,16 @@ static void janus_detect_local_ip(gchar *buf, size_t buflen) {
 	len = sizeof(addr);
 	if (getsockname(fd, (struct sockaddr*) &addr, &len) < 0)
 		goto error;
+        
 	if (getnameinfo((const struct sockaddr*) &addr, sizeof(addr),
 			buf, buflen,
 			NULL, 0, NI_NUMERICHOST) != 0)
 		goto error;
-	close(fd);
+	closesocket(fd);
 	return;
 error:
 	if (fd != -1)
-		close(fd);
+		closesocket(fd);
 	JANUS_LOG(LOG_VERB, "Couldn't find any address! using 127.0.0.1 as the local IP... (which is NOT going to work out of your machine)\n");
 	g_strlcpy(buf, "127.0.0.1", buflen);
 }
@@ -3109,7 +3113,7 @@ static void janus_main(int argc, char *argv[]) {
 		}
 		if(pid > 0) {
 			/* Ok, we're the parent: let's wait for the child to tell us everything started fine */
-			close(pipefd[1]);
+			closesocket(pipefd[1]);
 			int code = -1;
 			struct pollfd pollfds;
 
@@ -3381,7 +3385,7 @@ static void janus_main(int argc, char *argv[]) {
 					addrlen = sizeof(struct sockaddr_in6);
 				}
 				r = bind(fd, (const struct sockaddr*)&ss, addrlen);
-				close(fd);
+				closesocket(fd);
 				if (r < 0) {
 					JANUS_LOG(LOG_WARN, "Error setting local IP address to %s, falling back to detecting IP address...\n", item->value);
 				} else {

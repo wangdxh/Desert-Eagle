@@ -195,7 +195,8 @@ int janus_log_init(gboolean daemon, gboolean console, const char *logfile) {
 	g_cond_init(&cond);
 	if(console) {
 		/* Set stdout to block buffering, see BUFSIZ in stdio.h */
-		setvbuf(stdout, NULL, _IOFBF, 0);
+		//setvbuf(stdout, NULL, _IOFBF, 0);
+        setvbuf(stdout, NULL, _IONBF, 0);
 	}
 	janus_log_console = console;
 	if(logfile != NULL) {

@@ -2314,7 +2314,7 @@ static int janus_streaming_create_fd(int port, in_addr_t mcast, const char* list
 		guint bufsize = 212992;
 		if(setsockopt(fd, SOL_SOCKET, SO_RCVBUF, (const char *)&bufsize, sizeof(bufsize)) < 0) {
 			JANUS_LOG(LOG_ERR, "[%s] %s listener setsockopt SO_RCVBUF failed\n", mountpointname, listenername);
-			close(fd);
+			closesocket(fd);
 			return -1;
 		}
 #endif
@@ -2323,7 +2323,7 @@ static int janus_streaming_create_fd(int port, in_addr_t mcast, const char* list
 			int mc_all = 0;
 			if((setsockopt(fd, IPPROTO_IP, IP_MULTICAST_ALL, (void*) &mc_all, sizeof(mc_all))) < 0) {
 				JANUS_LOG(LOG_ERR, "[%s] %s listener setsockopt IP_MULTICAST_ALL failed\n", mountpointname, listenername);
-				close(fd);
+				closesocket(fd);
 				return -1;
 			}			
 #endif			
@@ -2332,7 +2332,7 @@ static int janus_streaming_create_fd(int port, in_addr_t mcast, const char* list
 			mreq.imr_multiaddr.s_addr = mcast;
 			if(setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char *)&mreq, sizeof(struct ip_mreq)) == -1) {
 				JANUS_LOG(LOG_ERR, "[%s] %s listener IP_ADD_MEMBERSHIP failed\n", mountpointname, listenername);
-				close(fd);
+				closesocket(fd);
 				return -1;
 			}
 			JANUS_LOG(LOG_ERR, "[%s] %s listener IP_ADD_MEMBERSHIP ok\n", mountpointname, listenername);
@@ -2347,7 +2347,7 @@ static int janus_streaming_create_fd(int port, in_addr_t mcast, const char* list
 		int reuse = 1;
 		if(setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, (const char *)&reuse, sizeof(reuse)) == -1) {
 			JANUS_LOG(LOG_ERR, "[%s] %s listener setsockopt SO_REUSEPORT failed\n", mountpointname, listenername);
-			close(fd);
+			closesocket(fd);
 			return -1;
 		}
 		address.sin_addr.s_addr = mcast;
@@ -2355,7 +2355,7 @@ static int janus_streaming_create_fd(int port, in_addr_t mcast, const char* list
 	/* Bind to the specified port */
 	if(bind(fd, (struct sockaddr *)(&address), sizeof(struct sockaddr)) < 0) {
 		JANUS_LOG(LOG_ERR, "[%s] Bind failed for %s (port %d)...\n", mountpointname, medianame, port);
-		close(fd);
+		closesocket(fd);
 		return -1;
 	}
 	return fd;
@@ -2364,10 +2364,10 @@ static int janus_streaming_create_fd(int port, in_addr_t mcast, const char* list
 /* Helpers to destroy a streaming mountpoint. */
 static void janus_streaming_rtp_source_free(janus_streaming_rtp_source *source) {
 	if(source->audio_fd > 0) {
-		close(source->audio_fd);
+		closesocket(source->audio_fd);
 	}
 	if(source->video_fd > 0) {
-		close(source->video_fd);
+		closesocket(source->video_fd);
 	}
 	janus_mutex_lock(&source->keyframe.mutex);
 	GList *temp = NULL;
@@ -2489,7 +2489,7 @@ janus_streaming_mountpoint *janus_streaming_create_rtp_source(
 		if(video_fd < 0) {
 			JANUS_LOG(LOG_ERR, "Can't bind to port %d for video...\n", vport);
 			if(audio_fd > 0)
-				close(audio_fd);
+				closesocket(audio_fd);
 			janus_mutex_unlock(&mountpoints_mutex);
 			return NULL;
 		}
@@ -2715,7 +2715,7 @@ static int janus_streaming_rtsp_parse_sdp(const char* buffer, const char* name, 
 	socklen_t len = sizeof(address);
 	if(getsockname(fd, (struct sockaddr *)&address, &len) < 0) {
 		JANUS_LOG(LOG_ERR, "[%s] Bind failed for %s (%d)...\n", name, media, port);
-		close(fd);
+		closesocket(fd);
 		return -1;
 	}
 	port=ntohs(address.sin_port);

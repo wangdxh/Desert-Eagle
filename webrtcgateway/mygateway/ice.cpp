@@ -140,13 +140,13 @@ void janus_ice_force_rtcpmux(gboolean forced) {
 		serveraddr.sin_port = htons(0);		/* Choose a random port, that works for us */
 		if(bind(blackhole, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0) {
 			JANUS_LOG(LOG_WARN, "Error binding RTCP component blackhole socket, using port %d instead\n", janus_force_rtcpmux_blackhole_port);
-			close(blackhole);
+			closesocket(blackhole);
 			return;
 		}
 		socklen_t len = sizeof(serveraddr);
 		if(getsockname(blackhole, (struct sockaddr *)&serveraddr, &len) < 0) {
 			JANUS_LOG(LOG_WARN, "Error retrieving port assigned to RTCP component blackhole socket, using port %d instead\n", janus_force_rtcpmux_blackhole_port);
-			close(blackhole);
+			closesocket(blackhole);
 			return;
 		}
 		janus_force_rtcpmux_blackhole_port = ntohs(serveraddr.sin_port);
@@ -699,7 +699,7 @@ void janus_ice_deinit(void) {
 	if(old_handles != NULL)
 		g_hash_table_destroy(old_handles);
 	if(janus_force_rtcpmux_blackhole_fd >= 0)
-		close(janus_force_rtcpmux_blackhole_fd);
+		closesocket(janus_force_rtcpmux_blackhole_fd);
 	old_handles = NULL;
 	janus_mutex_unlock(&old_handles_mutex);
 #ifdef HAVE_LIBCURL
@@ -746,13 +746,13 @@ int janus_ice_set_stun_server(gchar *stun_server, uint16_t stun_port) {
 	remote.sin_addr.s_addr = inet_addr(janus_stun_server);
 	if(bind(fd, (struct sockaddr *)(&address), sizeof(struct sockaddr)) < 0) {
 		JANUS_LOG(LOG_FATAL, "Bind failed for STUN BINDING test\n");
-		close(fd);
+		closesocket(fd);
 		return -1;
 	}
 	int bytes = sendto(fd, (const char*)buf, len, 0, (struct sockaddr*)&remote, sizeof(remote));
 	if(bytes < 0) {
 		JANUS_LOG(LOG_FATAL, "Error sending STUN BINDING test\n");
-		close(fd);
+		closesocket(fd);
 		return -1;
 	}
 	JANUS_LOG(LOG_VERB, "  >> Sent %d bytes %s:%u, waiting for reply...\n", bytes, janus_stun_server, janus_stun_port);
@@ -765,7 +765,7 @@ int janus_ice_set_stun_server(gchar *stun_server, uint16_t stun_port) {
 	select(fd+1, &readfds, NULL, NULL, &timeout);
 	if(!FD_ISSET(fd, &readfds)) {
 		JANUS_LOG(LOG_FATAL, "No response to our STUN BINDING test\n");
-		close(fd);
+		closesocket(fd);
 		return -1;
 	}
 	socklen_t addrlen = sizeof(remote);
@@ -773,14 +773,14 @@ int janus_ice_set_stun_server(gchar *stun_server, uint16_t stun_port) {
 	JANUS_LOG(LOG_VERB, "  >> Got %d bytes...\n", bytes);
 	if(stun_agent_validate (&stun, &msg, buf, bytes, NULL, NULL) != STUN_VALIDATION_SUCCESS) {
 		JANUS_LOG(LOG_FATAL, "Failed to validate STUN BINDING response\n");
-		close(fd);
+		closesocket(fd);
 		return -1;
 	}
 	StunClass classstun = stun_message_get_class(&msg);
 	StunMethod method = stun_message_get_method(&msg);
 	if(classstun != STUN_RESPONSE || method != STUN_BINDING) {
 		JANUS_LOG(LOG_FATAL, "Unexpected STUN response: %d/%d\n", classstun, method);
-		close(fd);
+		closesocket(fd);
 		return -1;
 	}
 	StunMessageReturn ret = stun_message_find_xor_addr(&msg, STUN_ATTRIBUTE_XOR_MAPPED_ADDRESS, (struct sockaddr_storage *)&address, &addrlen);
@@ -790,7 +790,7 @@ int janus_ice_set_stun_server(gchar *stun_server, uint16_t stun_port) {
 		JANUS_LOG(LOG_INFO, "  >> Our public address is %s\n", public_ip);
 		janus_set_public_ip(public_ip);
 		g_free(public_ip);
-		close(fd);
+		closesocket(fd);
 		return 0;
 	}
 	ret = stun_message_find_addr(&msg, STUN_ATTRIBUTE_MAPPED_ADDRESS, (struct sockaddr_storage *)&address, &addrlen);
@@ -800,10 +800,10 @@ int janus_ice_set_stun_server(gchar *stun_server, uint16_t stun_port) {
 		JANUS_LOG(LOG_INFO, "  >> Our public address is %s\n", public_ip);
 		janus_set_public_ip(public_ip);
 		g_free(public_ip);
-		close(fd);
+		closesocket(fd);
 		return 0;
 	}
-	close(fd);
+	closesocket(fd);
 	return -1;
 }
 
