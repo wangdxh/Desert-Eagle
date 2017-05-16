@@ -211,7 +211,7 @@ int janus_recorder_close(janus_recorder *recorder) {
 		fseek(recorder->file, 0L, SEEK_END);
 		size_t fsize = ftell(recorder->file);
 		fseek(recorder->file, 0L, SEEK_SET);
-		JANUS_LOG(LOG_INFO, "File is %zu bytes: %s\n", fsize, recorder->filename);
+		JANUS_LOG(LOG_INFO, "File is %d bytes: %s\n", fsize, recorder->filename);
 	}
 	janus_mutex_unlock_nodebug(&recorder->mutex);
 	return 0;

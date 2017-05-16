@@ -735,7 +735,7 @@ int janus_ice_set_stun_server(gchar *stun_server, uint16_t stun_port) {
 	StunMessage msg;
 	uint8_t buf[1500];
 	size_t len = stun_usage_bind_create(&stun, &msg, buf, 1500);
-	JANUS_LOG(LOG_INFO, "Testing STUN server: message is of %zu bytes\n", len);
+	JANUS_LOG(LOG_INFO, "Testing STUN server: message is of %d bytes\n", len);
 	int fd = socket(AF_INET, SOCK_DGRAM, 0);
 	struct sockaddr_in address, remote;
 	address.sin_family = AF_INET;

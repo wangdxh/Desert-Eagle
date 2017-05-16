@@ -311,7 +311,7 @@ int janus_sctp_data_to_dtls(void *instance, void *buffer, size_t length, uint8_t
 	janus_sctp_association *sctp = (janus_sctp_association *)instance;
 	if(sctp == NULL || sctp->dtls == NULL)
 		return -1;
-	JANUS_LOG(LOG_HUGE, "[%I64u] Data from SCTP to DTLS stack: %zu bytes\n", sctp->handle_id, length);
+	JANUS_LOG(LOG_HUGE, "[%I64u] Data from SCTP to DTLS stack: %d bytes\n", sctp->handle_id, length);
 	janus_mutex_lock(&sctp->mutex);
 	if(sctp->messages != NULL)
 		g_async_queue_push(sctp->messages, janus_sctp_message_create(FALSE, buffer, length));
@@ -466,7 +466,7 @@ int janus_sctp_send_open_request_message(struct socket *sock, uint16_t stream, u
 	/* FIXME For open requests we send, we always use this label */
 	const char *label = "JanusDataChannel";
 	guint label_size = (strlen(label)+3) & ~3;
-	JANUS_LOG(LOG_VERB, "Using label '%s' (%zu, %u with padding)\n", label, strlen(label), label_size);
+	JANUS_LOG(LOG_VERB, "Using label '%s' (%d, %u with padding)\n", label, strlen(label), label_size);
 
 	req = g_malloc0(sizeof(janus_datachannel_open_request) + label_size);
 	memset(req, 0, sizeof(janus_datachannel_open_request) + label_size);
@@ -912,7 +912,7 @@ void janus_sctp_handle_data_message(janus_sctp_association *sctp, char *buffer, 
 	} else {
 		/* Assuming DATA_CHANNEL_PPID_DOMSTRING */
 		/* XXX: Protect for non 0 terminated buffer */
-		JANUS_LOG(LOG_VERB, "[%I64u] Message received of length %zu on channel with id %d: %.*s\n",
+		JANUS_LOG(LOG_VERB, "[%I64u] Message received of length %d on channel with id %d: %.*s\n",
 		       sctp->handle_id, length, channel->id, (int)length, buffer);
 		/* FIXME: notify this to the core */
 		janus_dtls_notify_data((janus_dtls_srtp *)sctp->dtls, buffer, (int)length);
@@ -968,7 +968,7 @@ void janus_sctp_handle_message(janus_sctp_association *sctp, char *buffer, size_
 			janus_sctp_handle_data_message(sctp, buffer, length, stream);
 			break;
 		default:
-			JANUS_LOG(LOG_VERB, "[%I64u] Message of length %zu, PPID %u on stream %u received.\n",
+			JANUS_LOG(LOG_VERB, "[%I64u] Message of length %d, PPID %u on stream %u received.\n",
 				   sctp->handle_id, length, ppid, stream);
 			break;
 	}

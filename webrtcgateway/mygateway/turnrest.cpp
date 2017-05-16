@@ -180,7 +180,7 @@ janus_turnrest_response *janus_turnrest_request(void) {
 	/* Cleanup the libcurl context */
 	curl_easy_cleanup(curl);
 	/* Process the response */
-	JANUS_LOG(LOG_VERB, "Got %zu bytes from the TURN REST API server\n", data.size);
+	JANUS_LOG(LOG_VERB, "Got %d bytes from the TURN REST API server\n", data.size);
 	JANUS_LOG(LOG_VERB, "%s\n", data.buffer);
 	json_error_t error;
 	json_t *root = json_loads(data.buffer, 0, &error);

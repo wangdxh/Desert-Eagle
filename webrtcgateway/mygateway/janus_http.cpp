@@ -349,7 +349,7 @@ static struct MHD_Daemon *janus_http_create_daemon(gboolean admin, char *path,
 					MHD_OPTION_END);
 			}
 		} else {
-			JANUS_LOG(LOG_VERB, "Using a thread pool of size %llu"" the %s API %s webserver\n", threads,
+			JANUS_LOG(LOG_VERB, "Using a thread pool of size %I64u"" the %s API %s webserver\n", threads,
 				admin ? "Admin" : "Janus", secure ? "HTTPS" : "HTTP");
 			if(!interface && !ip) {
 				/* Bind to all interfaces */
@@ -451,7 +451,7 @@ static struct MHD_Daemon *janus_http_create_daemon(gboolean admin, char *path,
 					MHD_OPTION_END);
 			}
 		} else {
-			JANUS_LOG(LOG_VERB, "Using a thread pool of size %llu"" the %s API %s webserver\n", threads,
+			JANUS_LOG(LOG_VERB, "Using a thread pool of size %I64u"" the %s API %s webserver\n", threads,
 				admin ? "Admin" : "Janus", secure ? "HTTPS" : "HTTP");
 			if(!interface && !ip) {
 				/* Bind to all interfaces */
@@ -659,7 +659,7 @@ int janus_http_init(janus_transport_callbacks *callback, const char *config_path
 				if(threads == 0) {
 					JANUS_LOG(LOG_WARN, "Chose '0' as size for the thread pool, which is equivalent to 'unlimited'\n");
 				} else if(threads < 0) {
-					JANUS_LOG(LOG_WARN, "Invalid value '%llu""' as size for the thread pool, falling back to to 'unlimited'\n", threads);
+					JANUS_LOG(LOG_WARN, "Invalid value '%I64u""' as size for the thread pool, falling back to to 'unlimited'\n", threads);
 					threads = 0;
 				}
 			}
@@ -738,7 +738,7 @@ int janus_http_init(janus_transport_callbacks *callback, const char *config_path
 				if(threads == 0) {
 					JANUS_LOG(LOG_WARN, "Chose '0' as size for the admin/monitor thread pool, which is equivalent to 'unlimited'\n");
 				} else if(threads < 0) {
-					JANUS_LOG(LOG_WARN, "Invalid value '%llu""' as size for the admin/monitor thread pool, falling back to to 'unlimited'\n", threads);
+					JANUS_LOG(LOG_WARN, "Invalid value '%I64u""' as size for the admin/monitor thread pool, falling back to to 'unlimited'\n", threads);
 					threads = 0;
 				}
 			}
@@ -1158,7 +1158,7 @@ int janus_http_handler(void *cls, struct MHD_Connection *connection, const char 
 	}
 	/* Get payload, if any */
 	if(!strcasecmp(method, "POST")) {
-		JANUS_LOG(LOG_HUGE, "Processing POST data (%s) (%zu bytes)...\n", msg->contenttype, *upload_data_size);
+		JANUS_LOG(LOG_HUGE, "Processing POST data (%s) (%d bytes)...\n", msg->contenttype, *upload_data_size);
 		if(*upload_data_size != 0) {
 			if(msg->payload == NULL)
 				msg->payload = (gchar*)g_malloc0(*upload_data_size+1);
@@ -1173,7 +1173,7 @@ int janus_http_handler(void *cls, struct MHD_Connection *connection, const char 
 			memcpy(msg->payload+msg->len, upload_data, *upload_data_size);
 			msg->len += *upload_data_size;
 			memset(msg->payload + msg->len, '\0', 1);
-			JANUS_LOG(LOG_DBG, "  -- Data we have now (%zu bytes)\n", msg->len);
+			JANUS_LOG(LOG_DBG, "  -- Data we have now (%d bytes)\n", msg->len);
 			*upload_data_size = 0;	/* Go on */
 			ret = MHD_YES;
 			goto done;
@@ -1545,7 +1545,7 @@ int janus_http_admin_handler(void *cls, struct MHD_Connection *connection, const
 	}
 	/* Get payload, if any */
 	if(!strcasecmp(method, "POST")) {
-		JANUS_LOG(LOG_HUGE, "Processing POST data (%s) (%zu bytes)...\n", msg->contenttype, *upload_data_size);
+		JANUS_LOG(LOG_HUGE, "Processing POST data (%s) (%d bytes)...\n", msg->contenttype, *upload_data_size);
 		if(*upload_data_size != 0) {
 			if(msg->payload == NULL)
 				msg->payload = (gchar*)g_malloc0(*upload_data_size+1);
@@ -1560,7 +1560,7 @@ int janus_http_admin_handler(void *cls, struct MHD_Connection *connection, const
 			memcpy(msg->payload+msg->len, upload_data, *upload_data_size);
 			msg->len += *upload_data_size;
 			memset(msg->payload + msg->len, '\0', 1);
-			JANUS_LOG(LOG_DBG, "  -- Data we have now (%zu bytes)\n", msg->len);
+			JANUS_LOG(LOG_DBG, "  -- Data we have now (%d bytes)\n", msg->len);
 			*upload_data_size = 0;	/* Go on */
 			ret = MHD_YES;
 			goto done;

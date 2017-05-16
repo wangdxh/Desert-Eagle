@@ -779,7 +779,7 @@ char *janus_sdp_anonymize(const char *sdp) {
 			replace = strstr(replace, "a=jfmod:sr");
 		}
 		JANUS_LOG(LOG_VERB, " -------------------------------------------\n");
-		JANUS_LOG(LOG_VERB, "  >> Anonymized (%zu --> %d bytes)\n", strlen(sdp), retval);
+		JANUS_LOG(LOG_VERB, "  >> Anonymized (%d --> %d bytes)\n", strlen(sdp), retval);
 		JANUS_LOG(LOG_VERB, " -------------------------------------------\n");
 		JANUS_LOG(LOG_VERB, "%s\n", buf);
 		return g_strdup(buf);
@@ -1292,7 +1292,7 @@ char *janus_sdp_merge(janus_ice_handle *handle, const char *origsdp) {
 	sdp_parser_free(parser);
 
 	JANUS_LOG(LOG_VERB, " -------------------------------------------\n");
-	JANUS_LOG(LOG_VERB, "  >> Merged (%zu --> %zu bytes)\n", strlen(origsdp), strlen(sdp));
+	JANUS_LOG(LOG_VERB, "  >> Merged (%d --> %d bytes)\n", strlen(origsdp), strlen(sdp));
 	JANUS_LOG(LOG_VERB, " -------------------------------------------\n");
 	JANUS_LOG(LOG_VERB, "%s\n", sdp);
 

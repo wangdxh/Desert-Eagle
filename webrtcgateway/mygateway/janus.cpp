@@ -1220,7 +1220,7 @@ int janus_process_incoming_request(janus_request *request) {
 								}
 							} else if(json_is_array(candidate)) {
 								/* We got multiple candidates in an array */
-								JANUS_LOG(LOG_VERB, "Got multiple candidates (%zu)\n", json_array_size(candidate));
+								JANUS_LOG(LOG_VERB, "Got multiple candidates (%d)\n", json_array_size(candidate));
 								if(json_array_size(candidate) > 0) {
 									/* Handle remote candidates */
 									size_t i = 0;
@@ -1410,7 +1410,7 @@ int janus_process_incoming_request(janus_request *request) {
 				janus_mutex_unlock(&handle->mutex);
 				goto jsondone;
 			}
-			JANUS_LOG(LOG_VERB, "Got multiple candidates (%zu)\n", json_array_size(candidates));
+			JANUS_LOG(LOG_VERB, "Got multiple candidates (%d)\n", json_array_size(candidates));
 			if(json_array_size(candidates) > 0) {
 				/* Handle remote candidates */
 				size_t i = 0;
@@ -2840,7 +2840,7 @@ json_t *janus_plugin_handle_sdp(janus_plugin_session *plugin_session, janus_plug
 						}
 					} else if(json_is_array(candidate)) {
 						/* We got multiple candidates in an array */
-						JANUS_LOG(LOG_VERB, "[%I64u] Got multiple candidates (%zu)\n", ice_handle->handle_id, json_array_size(candidate));
+						JANUS_LOG(LOG_VERB, "[%I64u] Got multiple candidates (%d)\n", ice_handle->handle_id, json_array_size(candidate));
 						if(json_array_size(candidate) > 0) {
 							/* Handle remote candidates */
 							size_t i = 0;
