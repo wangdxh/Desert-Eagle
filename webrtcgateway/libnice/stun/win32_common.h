@@ -72,14 +72,14 @@ typedef unsigned long long   uint64_t;
 
 /* Using the [S]SIZE_T definitions from:
  * http://msdn.microsoft.com/en-gb/library/windows/desktop/aa383751%28v=vs.85%29.aspx#SSIZE_T */
-#ifndef HAVE_SIZE_T
+#if !defined(HAVE_SIZE_T) && !defined(_SIZE_T_DEFINED)
 #if defined(_WIN64)
 typedef unsigned __int64 size_t;
 #else
-//typedef unsigned long size_t;
+typedef unsigned long size_t;
 #endif
 #endif  /* !HAVE_SSIZE_T */
-#ifndef HAVE_SSIZE_T
+#if !defined(HAVE_SSIZE_T) && !defined(_SSIZE_T_DEFINED)
 #if defined(_WIN64)
 typedef signed __int64 ssize_t;
 #else

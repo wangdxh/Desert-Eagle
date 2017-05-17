@@ -867,7 +867,8 @@ void janus_dtls_fd_bridge(janus_dtls_srtp *dtls) {
 	while(pending > 0) {
 		JANUS_LOG(LOG_HUGE, "[%I64u] >> Going to send DTLS data: %d bytes\n", handle->handle_id, pending);
 		char* outgoing = new char[pending];
-		int out = BIO_read(dtls->write_bio, outgoing, sizeof(outgoing));
+        int noutgoinglen = pending;
+		int out = BIO_read(dtls->write_bio, outgoing, noutgoinglen);
 		JANUS_LOG(LOG_HUGE, "[%I64u] >> >> Read %d bytes from the write_BIO...\n", handle->handle_id, out);
 		if(out > 1500) {
 			/* FIXME Just a warning for now, this will need to be solved with proper fragmentation */

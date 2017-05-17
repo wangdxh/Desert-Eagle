@@ -1463,6 +1463,7 @@ void janus_ice_cb_component_state_changed(NiceAgent *agent, guint stream_id, gui
 		char tname[16];
 		g_snprintf(tname, sizeof(tname), "icesend %I64d", handle->handle_id);
 		handle->send_thread = g_thread_try_new(tname, &janus_ice_send_thread, handle, &error);
+        Sleep(20);
 		if(error != NULL) {
 			/* FIXME We should clear some resources... */
 			JANUS_LOG(LOG_ERR, "[%I64u] Got error %d (%s) trying to launch the ICE send thread...\n", handle->handle_id, error->code, error->message ? error->message : "??");
@@ -3192,7 +3193,7 @@ void *janus_ice_send_thread(void *data) {
 				int srlen = 28;
 				int sdeslen = 20;
 				char* rtcpbuf = new char [srlen+sdeslen];
-				rtcp_sr *sr = (rtcp_sr *)&rtcpbuf;
+				rtcp_sr *sr = (rtcp_sr *)rtcpbuf;
 				sr->header.version = 2;
 				sr->header.type = RTCP_SR;
 				sr->header.rc = 0;
@@ -3232,7 +3233,7 @@ void *janus_ice_send_thread(void *data) {
 				int srlen = 28;
 				int sdeslen = 20;
 				char* rtcpbuf= new char[srlen+sdeslen];
-				rtcp_sr *sr = (rtcp_sr *)&rtcpbuf;
+				rtcp_sr *sr = (rtcp_sr *)rtcpbuf;
 				sr->header.version = 2;
 				sr->header.type = RTCP_SR;
 				sr->header.rc = 0;

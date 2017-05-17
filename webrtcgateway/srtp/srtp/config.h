@@ -143,7 +143,7 @@
 #define PACKAGE_NAME "libsrtp"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libsrtp 1.5.4"
+#define PACKAGE_STRING "libsrtp 1.5.3"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libsrtp"
@@ -152,7 +152,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.5.4"
+#define PACKAGE_VERSION "1.5.3"
 
 /* The size of `unsigned long', as computed by sizeof. */
 #define SIZEOF_UNSIGNED_LONG 4
