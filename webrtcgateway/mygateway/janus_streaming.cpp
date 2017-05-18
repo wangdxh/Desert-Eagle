@@ -2965,17 +2965,17 @@ static void *janus_streaming_ondemand_thread(void *data) {
 	header->timestamp = htonl(ts);
 	header->ssrc = htonl(1);	/* The gateway will fix this anyway */
 	/* Timer */
-	struct timeval now, before;
+	/*struct timeval now, before;
 	gettimeofday(&before, NULL);
 	now.tv_sec = before.tv_sec;
-	now.tv_usec = before.tv_usec;
+	now.tv_usec = before.tv_usec;*/
 	time_t passed, d_s, d_us;
 	/* Loop */
 	gint read = 0;
 	janus_streaming_rtp_relay_packet packet;
 	while(!g_atomic_int_get(&stopping) && !mountpoint->destroyed && !session->stopping && !session->destroyed) {
 		/* See if it's time to prepare a frame */
-		gettimeofday(&now, NULL);
+		/*gettimeofday(&now, NULL);
 		d_s = now.tv_sec - before.tv_sec;
 		d_us = now.tv_usec - before.tv_usec;
 		if(d_us < 0) {
@@ -2983,17 +2983,19 @@ static void *janus_streaming_ondemand_thread(void *data) {
 			--d_s;
 		}
 		passed = d_s*1000000 + d_us;
-		if(passed < 18000) {	/* Let's wait about 18ms */
+		if(passed < 18000) {	// Let's wait about 18ms 
 			Sleep(1);
 			continue;
 		}
-		/* Update the reference time */
+		// Update the reference time 
 		before.tv_usec += 20000;
 		if(before.tv_usec > 1000000) {
 			before.tv_sec++;
 			before.tv_usec -= 1000000;
-		}
+		}*/
+        g_usleep(18000);
 		/* If not started or paused, wait some more */
+        
 		if(!session->started || session->paused || !mountpoint->enabled)
 			continue;
 		/* Read frame from file... */
