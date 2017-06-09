@@ -3,18 +3,18 @@
 
 #include "stdafx.h"
 #include "offer_answer_server.h"
-#include "my_nice.h"
+#include "nice_agent.h"
 
 
 
 int _tmain(int argc, _TCHAR* argv[])
 {      
-    CNiceAgent::init();
+    nice_agent::init();
 
-    boost::asio::io_service service;    
+    boost::asio::io_service service;
     offer_answer_server server_instance(&service, 9002);
     boost::system::error_code ec;
      service.run(ec);
 
-     CNiceAgent::release();
+     nice_agent::release();
 }

@@ -19,10 +19,13 @@ static void cb_nice_recv(NiceAgent *agent, guint stream_id, guint component_id, 
 static void cb_candidate_gathering_done(NiceAgent *agent, guint stream_id, gpointer data);
 static void cb_component_state_changed(NiceAgent *agent, guint stream_id, guint component_id, guint state, gpointer data);
 
-class CNiceAgent
+class nice_agent;
+typedef std::shared_ptr<nice_agent> nice_agent_ptr;
+
+class nice_agent
 {
 public:
-    explicit CNiceAgent(gboolean controlling, gchar* stun_addr = NULL, guint stun_port= 0)
+    explicit nice_agent(gboolean controlling, gchar* stun_addr = NULL, guint stun_port= 0)
     {
         agent = nullptr;        
         agent = nice_agent_new(g_main_loop_get_context (gloop), NICE_COMPATIBILITY_RFC5245);
@@ -45,7 +48,7 @@ public:
         g_signal_connect(agent, "candidate-gathering-done", G_CALLBACK(cb_candidate_gathering_done), this);
         g_signal_connect(agent, "component-state-changed", G_CALLBACK(cb_component_state_changed), this);
     }
-    ~CNiceAgent()
+    ~nice_agent()
     {
         if (agent)
         {
@@ -218,24 +221,24 @@ public:
     }
 };
 
-GMainLoop* CNiceAgent::gloop = NULL;
-GThread* CNiceAgent::gloopthread = NULL;
+GMainLoop* nice_agent::gloop = NULL;
+GThread* nice_agent::gloopthread = NULL;
 
 static void cb_nice_recv(NiceAgent *agent, guint stream_id, guint component_id, guint len, gchar *buf, gpointer data)
 {   
-    CNiceAgent* pAgent = (CNiceAgent*)data;
+    nice_agent* pAgent = (nice_agent*)data;
     pAgent->nice_recv_data(stream_id, component_id, len, buf);    
 }
 
 
 static void cb_candidate_gathering_done(NiceAgent *agent, guint stream_id, gpointer data)
 {
-    CNiceAgent* pAgent = (CNiceAgent*)data;
+    nice_agent* pAgent = (nice_agent*)data;
     pAgent->candidate_gathering_done(stream_id);
 }
 static void cb_component_state_changed(NiceAgent *agent, guint stream_id, guint component_id, guint state, gpointer data)
 {
-    CNiceAgent* pAgent = (CNiceAgent*)data;
+    nice_agent* pAgent = (nice_agent*)data;
     pAgent->component_state_changed(stream_id, component_id, state);
 }
 

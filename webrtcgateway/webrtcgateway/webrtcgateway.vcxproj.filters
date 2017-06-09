@@ -27,7 +27,7 @@
     <ClInclude Include="offer_answer_server.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="my_nice.h">
+    <ClInclude Include="nice_agent.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

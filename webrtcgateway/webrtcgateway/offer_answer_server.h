@@ -1,6 +1,7 @@
 #ifndef _WXH_OFFER_ANSWER_SERVER_H_
 #define _WXH_OFFER_ANSWER_SERVER_H_
 
+
 #include <websocketpp/config/asio_no_tls.hpp>
 
 #include <websocketpp/server.hpp>
@@ -21,10 +22,7 @@ using websocketpp::lib::placeholders::_2;
 using websocketpp::lib::bind;
 
 
-/* on_open insert connection_hdl into channel
- * on_close remove connection_hdl from channel
- * on_message queue send to all channels
- */
+#include "nice_agent.h"
 
 
 class offer_answer_server 
@@ -52,7 +50,7 @@ public:
         /*CNiceAgent agent(true);
         int nstreamid = agent.add_stream("audio", 1);
         agent.start_gather(nstreamid);*/
-
+        std::make_shared< nice_agent >(1);
     }
 
     void on_close(connection_hdl hdl) 
@@ -70,7 +68,8 @@ public:
     
 
 private:
-    typedef std::set<connection_hdl,std::owner_less<connection_hdl> > con_list;
+
+    typedef std::set<connection_hdl, std::owner_less<connection_hdl> > con_list;
     websocket_server m_server;
     con_list m_connections;
 };
