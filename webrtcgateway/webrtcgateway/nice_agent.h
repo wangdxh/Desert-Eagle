@@ -21,7 +21,7 @@ static const gchar *candidate_type_name[] = {"host", "srflx", "prflx", "relay"};
 void cb_nice_recv(NiceAgent *agent, guint stream_id, guint component_id, guint len, gchar *buf, gpointer data);
 void cb_candidate_gathering_done(NiceAgent *agent, guint stream_id, gpointer data);
 void cb_component_state_changed(NiceAgent *agent, guint stream_id, guint component_id, guint state, gpointer data);
-
+void cb_new_selected_pair_full(NiceAgent* agent, guint stream_id,guint component_id, NiceCandidate *lcandidate, NiceCandidate* rcandidate, gpointer user_data);
 class nice_agent
 {
 public:
@@ -49,6 +49,7 @@ public:
 
         g_signal_connect(agent, "candidate-gathering-done", G_CALLBACK(cb_candidate_gathering_done), this);
         g_signal_connect(agent, "component-state-changed", G_CALLBACK(cb_component_state_changed), this);
+        g_signal_connect (agent, "new-selected-pair-full",G_CALLBACK (cb_new_selected_pair_full), this);
     }
     ~nice_agent()
     {
@@ -195,11 +196,19 @@ public:
 
         }
     }
-    void nice_recv_data(int32_t streamid, uint32_t componentid, guint len, gchar *buf)
+
+    void new_selected_pair_full(guint stream_id,guint component_id, NiceCandidate *lcandidate, NiceCandidate* rcandidate)
     {
-        std::cout << this << " recv data from stream: " << streamid << " componetid: " << componentid << " len: " << len << buf <<std::endl;
+        std::cout << this << "Component is ready enough, starting DTLS handshake...\n";
 
     }
+
+    void nice_recv_data(int32_t streamid, uint32_t componentid, guint len, gchar *buf)
+    {
+        std::cout << this << " recv data from stream: " << streamid << " componetid: " << componentid << " len: " << len << "first data :"<< (int)buf[0] <<std::endl;
+
+    }
+
 private:
     NiceAgent *agent;
     std::map < int32_t, uint32_t> mapstream_componet;
