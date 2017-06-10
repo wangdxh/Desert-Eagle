@@ -38,5 +38,11 @@
     <ClCompile Include="webrtcgateway.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="offer_answer_server.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="nice_agent.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

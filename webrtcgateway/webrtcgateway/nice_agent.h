@@ -2,6 +2,9 @@
 #define _WXH_MY_NICE_H_
 
 #include <iostream>
+
+#include "offer_answer_server.h"
+
 #include <agent.h>
 #include <gio/gnetworking.h>
 
@@ -15,18 +18,17 @@
 
 static const gchar *candidate_type_name[] = {"host", "srflx", "prflx", "relay"};
 
-static void cb_nice_recv(NiceAgent *agent, guint stream_id, guint component_id, guint len, gchar *buf, gpointer data);
-static void cb_candidate_gathering_done(NiceAgent *agent, guint stream_id, gpointer data);
-static void cb_component_state_changed(NiceAgent *agent, guint stream_id, guint component_id, guint state, gpointer data);
-
-class nice_agent;
-typedef std::shared_ptr<nice_agent> nice_agent_ptr;
+void cb_nice_recv(NiceAgent *agent, guint stream_id, guint component_id, guint len, gchar *buf, gpointer data);
+void cb_candidate_gathering_done(NiceAgent *agent, guint stream_id, gpointer data);
+void cb_component_state_changed(NiceAgent *agent, guint stream_id, guint component_id, guint state, gpointer data);
 
 class nice_agent
 {
 public:
-    explicit nice_agent(gboolean controlling, gchar* stun_addr = NULL, guint stun_port= 0)
+    explicit nice_agent(websocket_server* pserver, connection_hdl hdl, gboolean controlling, gchar* stun_addr = NULL, guint stun_port= 0)
     {
+        pserver_ = pserver;
+        hdl_ = hdl;
         agent = nullptr;        
         agent = nice_agent_new(g_main_loop_get_context (gloop), NICE_COMPATIBILITY_RFC5245);
         
@@ -137,6 +139,7 @@ public:
             local_ufrag, local_password, c->foundation, c->priority, nice_address_get_port(&c->addr),
             candidate_type_name[c->type]
         );
+        pserver_->send(hdl_, szsdp, websocketpp::frame::opcode::text);
         printf("\r\n%s\r\n", szsdp);
 
         if (local_ufrag)
@@ -146,14 +149,17 @@ public:
         if (cands)
             g_slist_free_full(cands, (GDestroyNotify)&nice_candidate_free);
     }
-    bool set_remote_sdp(char* sdp)
+    bool set_remote_sdp(const char* sdp)
     {
-        gchar* sdp2 = "v=0\r\no=- 5358450128380337511 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\na=group:BUNDLE audio\r\na=msid-semantic: WMS\r\nm=audio 9 RTP/SAVPF 0\r\nc=IN IP4 0.0.0.0\r\na=rtcp:9 IN IP4 0.0.0.0\r\na=ice-ufrag:PeSQ\r\na=ice-pwd:EsKyz4fKNx4tvlsbx1uM1UQ/\r\na=fingerprint:sha-256 3F:66:59:88:8A:01:60:F3:17:23:F7:DA:7B:C9:DA:A4:37:A8:4F:B8:64:BC:1A:2D:AF:0E:DC:BE:E4:E7:19:8C\r\na=setup:active\r\na=mid:audio\r\na=recvonly\r\na=rtcp-mux\r\na=rtpmap:0 PCMU/8000\r\na=candidate:2153010912 1 udp 2113937151 172.16.64.92 58726 typ host generation 0 ufrag PeSQ network-cost 50\r\n";
-        //int nret = nice_agent_parse_remote_sdp (agent, sdp2);
-
+        remote_sdp = sdp;                
+        return true;
+    }
+    bool set_remote_candidate(const char* szcandidate)
+    {
+        std::string szsdp = remote_sdp +"a="+ szcandidate + "\r\n";
         gchar* ufrag = NULL;
         gchar* pwd = NULL;
-        GSList * plist = nice_agent_parse_remote_stream_sdp (agent, 1, sdp2, &ufrag, &pwd);
+        GSList * plist = nice_agent_parse_remote_stream_sdp (agent, 1, szsdp.c_str(), &ufrag, &pwd);
         if (ufrag && pwd && g_slist_length(plist) > 0)
         {
             ufrag[strlen(ufrag)-1] = 0;
@@ -179,23 +185,27 @@ public:
             //g_slist_free(plist);
             g_slist_free_full(plist, (GDestroyNotify)&nice_candidate_free);
         }
-        return true;
     }
     void component_state_changed(int32_t streamid, uint32_t componentid, guint state)
     {
-        printf("state changed %d %d %s[%d]\n", streamid, componentid, nice_component_state_to_string((NiceComponentState )state), state);
+        std::cout << this <<" state changed " << streamid << ":"<< componentid << " " << nice_component_state_to_string((NiceComponentState )state) 
+                     << state << std::endl;
         if (state == NICE_COMPONENT_STATE_READY) 
         {
+
         }
     }
     void nice_recv_data(int32_t streamid, uint32_t componentid, guint len, gchar *buf)
     {
-        std::cout << "recv data from stream: " << streamid << " componetid: " << componentid << " len: " << len << buf <<std::endl;
+        std::cout << this << " recv data from stream: " << streamid << " componetid: " << componentid << " len: " << len << buf <<std::endl;
 
     }
 private:
     NiceAgent *agent;
     std::map < int32_t, uint32_t> mapstream_componet;
+    websocket_server* pserver_;
+    connection_hdl hdl_;
+    std::string remote_sdp;
     static GMainLoop *gloop;
     static GThread *gloopthread;
 public:
@@ -221,26 +231,6 @@ public:
     }
 };
 
-GMainLoop* nice_agent::gloop = NULL;
-GThread* nice_agent::gloopthread = NULL;
-
-static void cb_nice_recv(NiceAgent *agent, guint stream_id, guint component_id, guint len, gchar *buf, gpointer data)
-{   
-    nice_agent* pAgent = (nice_agent*)data;
-    pAgent->nice_recv_data(stream_id, component_id, len, buf);    
-}
-
-
-static void cb_candidate_gathering_done(NiceAgent *agent, guint stream_id, gpointer data)
-{
-    nice_agent* pAgent = (nice_agent*)data;
-    pAgent->candidate_gathering_done(stream_id);
-}
-static void cb_component_state_changed(NiceAgent *agent, guint stream_id, guint component_id, guint state, gpointer data)
-{
-    nice_agent* pAgent = (nice_agent*)data;
-    pAgent->component_state_changed(stream_id, component_id, state);
-}
 
 
 #endif
