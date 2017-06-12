@@ -55,8 +55,7 @@ Using certificates:
 ICE handles watchdog started
 OpenSSL pre-1.1.0
 PEM_read_X509 will start
-Fingerprint of our certificate: D2:B9:31:8F:DF:24:D8:0E:ED:D2:EF:25:9E:AF:6F:B8:34:AE:53:9C:E6:F3:8F:F2:64:15:FA:E8:7F:5
-3:2D:38
+Fingerprint of our certificate: D2:B9:31:8F:DF:24:D8:0E:ED:D2:EF:25:9E:AF:6F:B8:34:AE:53:9C:E6:F3:8F:F2:64:15:FA:E8:7F:53:2D:38
 Data Channels support not compiled
 Plugins folder: ./plugins
 JANUS Streaming plugin created!

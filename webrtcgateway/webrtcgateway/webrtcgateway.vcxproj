@@ -52,12 +52,12 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>./;../;C:\boost_1_63_0;../libnice/nice;../libnice/stun;../glib/include/glib-2.0;..\glib\lib\glib-2.0\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;../;C:\boost_1_63_0;../libnice/nice;../libnice/stun;../glib/include/glib-2.0;..\glib\lib\glib-2.0\include;../opensslnew;../srtp;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\boost_1_63_0\lib32-msvc-11.0;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\boost_1_63_0\lib32-msvc-11.0;../opensslnew;</AdditionalLibraryDirectories>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
     </Link>
   </ItemDefinitionGroup>
@@ -69,26 +69,31 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>./;../;C:\boost_1_63_0;../libnice/nice;../libnice/stun;../glib/include/glib-2.0;..\glib\lib\glib-2.0\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;../;C:\boost_1_63_0;../libnice/nice;../libnice/stun;../glib/include/glib-2.0;..\glib\lib\glib-2.0\include;../opensslnew;../srtp;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>C:\boost_1_63_0\lib32-msvc-11.0;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\boost_1_63_0\lib32-msvc-11.0;../opensslnew;</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="dtls_srtp.h" />
     <ClInclude Include="nice_agent.h" />
     <ClInclude Include="offer_answer_server.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="dtls_srtp.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="nice_agent.cpp" />
     <ClCompile Include="offer_answer_server.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
