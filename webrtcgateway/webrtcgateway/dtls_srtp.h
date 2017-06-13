@@ -17,20 +17,20 @@
 #pragma comment(lib, "../opensslnew/libcrypto.lib")
 #pragma comment(lib, "../srtp/srtp.lib")
 
-typedef enum janus_dtls_role 
+typedef enum dtls_role 
 {
-    JANUS_DTLS_ROLE_ACTPASS = -1,
-    JANUS_DTLS_ROLE_SERVER,
-    JANUS_DTLS_ROLE_CLIENT,
-} janus_dtls_role;
+    DTLS_ROLE_ACTPASS = -1,
+    DTLS_ROLE_SERVER,
+    DTLS_ROLE_CLIENT,
+} dtls_role;
 
-typedef enum janus_dtls_state 
+typedef enum dtls_state 
 {
-    JANUS_DTLS_STATE_FAILED = -1,
-    JANUS_DTLS_STATE_CREATED,
-    JANUS_DTLS_STATE_TRYING,
-    JANUS_DTLS_STATE_CONNECTED,
-} janus_dtls_state;
+    DTLS_STATE_FAILED = -1,
+    DTLS_STATE_CREATED,
+    DTLS_STATE_TRYING,
+    DTLS_STATE_CONNECTED,
+} dtls_state;
 
 class nice_agent;
 
@@ -38,11 +38,12 @@ class dtls_srtp
 {
 public:
     static int init(const char* server_pem, const char* server_key);
+    static char* get_local_fingerprint();
     static void release();
 
     dtls_srtp();
     ~dtls_srtp();
-    int create(int streamid, int componetid, janus_dtls_role role);
+    int create(nice_agent* niceagent, int streamid, int componetid, dtls_role role);
     void destroy();
     void handshake();
     void fd_bridge();
@@ -50,9 +51,9 @@ public:
 
 private:
     /*! \brief DTLS role of the gateway for this stream: 1=client, 0=server */
-    janus_dtls_role dtls_role;
+    dtls_role m_dtls_role;
     /*! \brief DTLS state of this component: -1=failed, 0=nothing, 1=trying, 2=connected */
-    janus_dtls_state dtls_state;
+    dtls_state m_dtls_state;
     /*! \brief Monotonic time of when the DTLS state has switched to connected */
     gint64 dtls_connected;
     /*! \brief SSL context used for DTLS for this component */

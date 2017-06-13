@@ -36,7 +36,7 @@ int dtls_bio_filter_init(void)
     return 0;
 }
 
-BIO_METHOD *BIO_janus_dtls_filter(void) 
+BIO_METHOD *BIO_dtls_filter(void) 
 {
     return dtls_bio_filter_methods;
 }
@@ -64,7 +64,7 @@ int dtls_bio_filter_new(BIO *bio)
     /* Create a filter state struct */
     dtls_bio_filter *filter = new dtls_bio_filter();//(dtls_bio_filter *)g_malloc0(sizeof(dtls_bio_filter));
     //filter->packets = NULL;
-    //janus_mutex_init(&filter->mutex);
+    //mutex_init(&filter->mutex);
 
     BIO_set_init(bio, 1);
     BIO_set_data(bio, filter);
@@ -135,7 +135,7 @@ long dtls_bio_filter_ctrl(BIO *bio, int cmd, long num, void *ptr) {
 
             boost::mutex::scoped_lock lock(filter->mutex);
 
-            //janus_mutex_lock(&filter->mutex);
+            //mutex_lock(&filter->mutex);
             if(0 == filter->packets.size()) {return 0;}            
             
             /*GList *first = g_list_first(filter->packets);
@@ -144,7 +144,7 @@ long dtls_bio_filter_ctrl(BIO *bio, int cmd, long num, void *ptr) {
             int pending = filter->packets.front();
             filter->packets.pop_front();
             /*g_list_free(first);
-            janus_mutex_unlock(&filter->mutex);*/
+            mutex_unlock(&filter->mutex);*/
 
             /* We return its size so that only part of the buffer is read from the write BIO */
             return pending;
@@ -156,7 +156,7 @@ long dtls_bio_filter_ctrl(BIO *bio, int cmd, long num, void *ptr) {
 }
 
 //////////////////////////////////////////////////////////////////////////
-static const char *janus_srtp_error[] =
+static const char *srtp_error[] =
 {
     "err_status_ok",
     "err_status_fail",
@@ -184,22 +184,22 @@ static const char *janus_srtp_error[] =
     "err_status_semaphore_err",
     "err_status_pfkey_err",
 };
-const gchar *janus_get_srtp_error(int error) {
+const gchar *get_srtp_error(int error) {
     if(error < 0 || error > 24)
         return NULL;
-    return janus_srtp_error[error];
+    return srtp_error[error];
 }
 
 
-const gchar *janus_get_dtls_srtp_state(janus_dtls_state state) {
+const gchar *get_dtls_srtp_state(dtls_state state) {
     switch(state) {
-    case JANUS_DTLS_STATE_CREATED:
+    case DTLS_STATE_CREATED:
         return "created";
-    case JANUS_DTLS_STATE_TRYING:
+    case DTLS_STATE_TRYING:
         return "trying";
-    case JANUS_DTLS_STATE_CONNECTED:
+    case DTLS_STATE_CONNECTED:
         return "connected";
-    case JANUS_DTLS_STATE_FAILED:
+    case DTLS_STATE_FAILED:
         return "failed";
     default:
         return NULL;
@@ -221,18 +221,18 @@ const gchar *janus_get_dtls_srtp_state(janus_dtls_state state) {
 #define SRTP_MASTER_LENGTH (SRTP_MASTER_KEY_LENGTH + SRTP_MASTER_SALT_LENGTH)
 
 static gchar local_fingerprint[160];
-gchar *janus_dtls_get_local_fingerprint(void) 
+gchar *dtls_get_local_fingerprint(void) 
 {
     return (gchar *)local_fingerprint;
 }
 
-int janus_dtls_verify_callback(int preverify_ok, X509_STORE_CTX *ctx) 
+int dtls_verify_callback(int preverify_ok, X509_STORE_CTX *ctx) 
 {
     /* We just use the verify_callback to request a certificate from the client */
     return 1;
 }
 
-static int janus_dtls_generate_keys(X509** certificate, EVP_PKEY** private_key) 
+static int dtls_generate_keys(X509** certificate, EVP_PKEY** private_key) 
 {
     static const int num_bits = 2048;
     BIGNUM* bne = NULL;
@@ -350,9 +350,8 @@ error:
 }
 
 
-static int janus_dtls_load_keys(const char* server_pem, const char* server_key, X509** certificate, EVP_PKEY** private_key) 
+static int dtls_load_keys(const char* server_pem, const char* server_key, X509** certificate, EVP_PKEY** private_key) 
 {
-
     X509* cert = X509_new();
     BIO* bio_cert = BIO_new_file(server_pem, "rb");
     PEM_read_bio_X509(bio_cert, &cert, NULL, NULL);
@@ -365,37 +364,6 @@ static int janus_dtls_load_keys(const char* server_pem, const char* server_key, 
     BIO_free(bio_key);
     *private_key = key;
 
-    /*FILE* f = NULL;
-    int x = 0;
-    f = fopen(server_pem, "r");    
-
-    if (!f)
-    {
-        printf("Error opening certificate file\n");
-        goto error;
-    }
-    printf("PEM_read_X509 will start\n");
-    *certificate = PEM_read_X509(f, NULL, NULL, NULL);
-    if (!*certificate) 
-    {
-        printf("PEM_read_X509 failed\n");
-        goto error;
-    }
-    fclose(f);*/
-
-    /*FILE* f = fopen(server_key, "r");
-    if (!f) 
-    {
-        printf("Error opening key file\n");
-        goto error;
-    }
-    *private_key = PEM_read_PrivateKey(f, NULL, NULL, NULL);
-    if (!*private_key) 
-    {
-        printf("PEM_read_PrivateKey failed\n");
-        goto error;
-    }
-    fclose(f);*/
     return 0;
 
 error:
@@ -430,13 +398,13 @@ int dtls_srtp::init(const char* server_pem, const char* server_key)
         printf("Ops, error creating DTLS context?\n");
         return -1;
     }
-    SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, janus_dtls_verify_callback);
+    SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, dtls_verify_callback);
     SSL_CTX_set_tlsext_use_srtp(ssl_ctx, "SRTP_AES128_CM_SHA1_80");	/* FIXME Should we support something else as well? */
 
     if (!server_pem && !server_key) 
     {
         printf("No cert/key specified, autogenerating some...\n");
-        if (janus_dtls_generate_keys(&ssl_cert, &ssl_key) != 0) {
+        if (dtls_generate_keys(&ssl_cert, &ssl_key) != 0) {
             printf("Error generating DTLS key/certificate\n");
             return -2;
         }
@@ -446,7 +414,7 @@ int dtls_srtp::init(const char* server_pem, const char* server_key)
         printf("DTLS certificate and key must be specified\n");
         return -2;
     }
-    else if (janus_dtls_load_keys(server_pem, server_key, &ssl_cert, &ssl_key) != 0) 
+    else if (dtls_load_keys(server_pem, server_key, &ssl_cert, &ssl_key) != 0) 
     {
         return -3;
     }
@@ -501,6 +469,12 @@ int dtls_srtp::init(const char* server_pem, const char* server_key)
     }
     return 0;
 }
+
+char* dtls_srtp::get_local_fingerprint()
+{
+    return local_fingerprint;
+}
+
 void dtls_srtp::release()
 {
     if (ssl_cert != NULL) {
@@ -518,7 +492,7 @@ void dtls_srtp::release()
 }
 
 
-void janus_dtls_callback(const SSL *ssl, int where, int ret) 
+void dtls_callback(const SSL *ssl, int where, int ret) 
 {
     /* We only care about alerts */
     if (!(where & SSL_CB_ALERT)) 
@@ -530,6 +504,9 @@ void janus_dtls_callback(const SSL *ssl, int where, int ret)
 
 dtls_srtp::dtls_srtp()
 {
+    memset(&remote_policy, 0x0, sizeof(remote_policy));
+    memset(&local_policy, 0x0, sizeof(local_policy));
+    agent = nullptr;
 
 }
 
@@ -538,8 +515,9 @@ dtls_srtp::~dtls_srtp()
     destroy();
 }
 
-int dtls_srtp::create(int streamid, int componetid, janus_dtls_role role) 
+int dtls_srtp::create(nice_agent* niceagent, int streamid, int componetid, dtls_role role) 
 {	
+    this->agent = niceagent;
     stream_id = streamid;
     component_id = componetid;
 
@@ -552,7 +530,7 @@ int dtls_srtp::create(int streamid, int componetid, janus_dtls_role role)
 		return NULL;
 	}
 	SSL_set_ex_data(ssl, 0, this);
-	SSL_set_info_callback(ssl, janus_dtls_callback);
+	SSL_set_info_callback(ssl, dtls_callback);
 	read_bio = BIO_new(BIO_s_mem());
 	if(!read_bio) 
     {
@@ -568,7 +546,7 @@ int dtls_srtp::create(int streamid, int componetid, janus_dtls_role role)
 	}
 	BIO_set_mem_eof_return(write_bio, -1);
 	/* The write BIO needs our custom filter, or fragmentation won't work */
-	filter_bio = BIO_new(BIO_janus_dtls_filter());
+	filter_bio = BIO_new(BIO_dtls_filter());
 	if(!filter_bio) 
     {
 		printf("Error creating filter BIO! (%s)\n", ERR_reason_error_string(ERR_get_error()));		
@@ -578,8 +556,8 @@ int dtls_srtp::create(int streamid, int componetid, janus_dtls_role role)
 	BIO_push(filter_bio, write_bio);
 	/* Set the filter as the BIO to use for outgoing data */
 	SSL_set_bio(ssl, read_bio, filter_bio);
-	dtls_role = role;
-	if(dtls_role == JANUS_DTLS_ROLE_CLIENT) 
+	m_dtls_role = role;
+	if(m_dtls_role == DTLS_ROLE_CLIENT) 
     {
 		printf("Setting connect state (DTLS client)\n");
 		SSL_set_connect_state(ssl);
@@ -629,7 +607,7 @@ void dtls_srtp::destroy()
     if(srtp_valid) 
     {
         if(srtp_in) 
-        {
+        {            
             srtp_dealloc(srtp_in);
             srtp_in = NULL;
         }
@@ -646,9 +624,9 @@ void dtls_srtp::handshake()
 {
 	if(ssl == NULL) {return;}
     
-    if(JANUS_DTLS_STATE_CREATED == dtls_state)
+    if(DTLS_STATE_CREATED == m_dtls_state)
     {
-        dtls_state = JANUS_DTLS_STATE_TRYING;
+        m_dtls_state = DTLS_STATE_TRYING;
     }
 	SSL_do_handshake(ssl);
 	fd_bridge();
@@ -678,7 +656,7 @@ void dtls_srtp::fd_bridge()
         int bytes = agent->send_data(stream_id, component_id, out, outgoing);
 		if(bytes < out) 
         {
-			printf("[%I64u] Error sending DTLS message on component %d of stream %d (%d)\n", component_id, stream_id, bytes);
+			printf("Error sending DTLS message on component %d of stream %d (%d)\n", component_id, stream_id, bytes);
 		} else {
 			printf("[%I64u] >> >> ... and sent %d of those bytes on the socket\n", bytes);
 		}
@@ -747,8 +725,7 @@ void dtls_srtp::incoming_msg(char *buf, uint16_t len)
         }
     }
     else
-    {
-        printf("DTLS established, yay!\n");
+    {        
         /* Check the remote fingerprint */
         X509 *rcert = SSL_get_peer_certificate(ssl);
         if(!rcert) 
@@ -786,15 +763,15 @@ void dtls_srtp::incoming_msg(char *buf, uint16_t len)
             if(1)
             {
                 printf("Fingerprint is a match!\n");
-                dtls_state = JANUS_DTLS_STATE_CONNECTED;
+                m_dtls_state = DTLS_STATE_CONNECTED;
                 dtls_connected = 1;
             } else {
                 /* FIXME NOT a match! MITM? */
                 printf("Fingerprint is NOT a match! got %s, expected %s\n", remote_fingerprint, remote_fingerprint);
-                dtls_state = JANUS_DTLS_STATE_FAILED;
+                m_dtls_state = DTLS_STATE_FAILED;
                 goto done;
             }
-            if(JANUS_DTLS_STATE_CONNECTED == dtls_state)
+            if(DTLS_STATE_CONNECTED == m_dtls_state)
             {                
                 {
                     /* Complete with SRTP setup */
@@ -809,7 +786,7 @@ void dtls_srtp::incoming_msg(char *buf, uint16_t len)
                         goto done;
                     }
                     /* Key derivation (http://tools.ietf.org/html/rfc5764#section-4.2) */
-                    if(dtls_role == JANUS_DTLS_ROLE_CLIENT) 
+                    if(m_dtls_role == DTLS_ROLE_CLIENT) 
                     {
                         local_key = material;
                         remote_key = local_key + SRTP_MASTER_KEY_LENGTH;
@@ -824,7 +801,7 @@ void dtls_srtp::incoming_msg(char *buf, uint16_t len)
                         local_salt = remote_salt + SRTP_MASTER_SALT_LENGTH;
                     }
                     /* Build master keys and set SRTP policies */
-                    /* Remote (inbound) */
+                    /* Remote (inbound) */                    
                     crypto_policy_set_rtp_default(&(remote_policy.rtp));
                     crypto_policy_set_rtcp_default(&(remote_policy.rtcp));
                     remote_policy.ssrc.type = ssrc_any_inbound;
@@ -851,12 +828,12 @@ void dtls_srtp::incoming_msg(char *buf, uint16_t len)
 #endif
                     local_policy.next = NULL;
                     /* Create SRTP sessions */
-                    err_status_t res = srtp_create(&(srtp_in), &(remote_policy));
+                    err_status_t res = srtp_create(&srtp_in, &remote_policy);
                     if(res != err_status_ok) 
                     {
                         /* Something went wrong... */
                         printf("Oops, error creating inbound SRTP session for component %d in stream %d??\n", component_id, stream_id);
-                        printf("  -- %d (%s)\n", res, janus_get_srtp_error(res));
+                        printf("  -- %d (%s)\n", res, get_srtp_error(res));
                         goto done;
                     }
                     printf("Created inbound SRTP session for component %d in stream %d\n", component_id, stream_id);
@@ -865,7 +842,7 @@ void dtls_srtp::incoming_msg(char *buf, uint16_t len)
                     {
                         /* Something went wrong... */
                         printf("Oops, error creating outbound SRTP session for component %d in stream %d??\n", component_id, stream_id);
-                        printf("  -- %d (%s)\n", res, janus_get_srtp_error(res));
+                        printf("  -- %d (%s)\n", res, get_srtp_error(res));
                         goto done;
                     }
                     srtp_valid = 1;
@@ -877,12 +854,12 @@ done:
             if (srtp_valid)
             {
                 // ready u can send data
-                printf("great,,,,,,,,,,,,,,,,,,,,,,,,srtp,,,,,,,,,,,,,,,,,,,,,,,,,it is ok!\r\n");
+                printf("great.......................srtp................................it is ok!\r\n");
             }
             else
             {
-                printf("sad,,,,,,,,,,,,,,,,,,,,,,,srtp,,,,,,,,,,,,,,,,,,,,,,,,,,it is wrong!\r\n");
-                janus_dtls_callback(ssl, SSL_CB_ALERT, 0);
+                printf("sad................................srtp......................................it is wrong!\r\n");
+                dtls_callback(ssl, SSL_CB_ALERT, 0);
             }            
         }
     }

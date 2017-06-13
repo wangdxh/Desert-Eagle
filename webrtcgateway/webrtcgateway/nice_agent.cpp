@@ -2,7 +2,7 @@
 #include "nice_agent.h"
 #include "dtls_srtp.h"
 
-static gboolean janus_is_dtls(gchar *buf) 
+static gboolean is_dtls(gchar *buf) 
 {
     return ((*buf >= 20) && (*buf <= 64));
 }
@@ -36,8 +36,10 @@ GMainLoop* nice_agent::gloop = NULL;
 GThread* nice_agent::gloopthread = NULL;
 void nice_agent::init()
 {
-    dtls_srtp::init("D:\\github\\Desert-Eagle\\webrtcgateway\\bin\\file\\certs\\mycert.pem",
-                        "D:\\github\\Desert-Eagle\\webrtcgateway\\bin\\file\\certs\\mycert.key");
+    /*dtls_srtp::init("D:\\github\\Desert-Eagle\\webrtcgateway\\bin\\file\\certs\\mycert.pem",
+                        "D:\\github\\Desert-Eagle\\webrtcgateway\\bin\\file\\certs\\mycert.key");*/
+    dtls_srtp::init(NULL, NULL);
+
     g_networking_init();
     gloop = g_main_loop_new(NULL, FALSE);
     gloopthread = g_thread_new("loop thread", &loop_thread, gloop);    
@@ -110,7 +112,7 @@ int32_t nice_agent::add_stream(char* szstreamname, uint32_t componentnum)
         nice_agent_set_stream_name (agent, stream_id, szstreamname);
         mapstream_componet[stream_id] = componentnum;
     }
-    dtls_->create(1, 1, JANUS_DTLS_ROLE_SERVER);
+    dtls_->create(this, 1, 1, DTLS_ROLE_SERVER);
     return stream_id;
 }
 bool nice_agent::start_gather(int32_t streamid)
@@ -172,13 +174,14 @@ void nice_agent::candidate_gathering_done(int32_t stream_id)
     char szsdp[1024*10] = {0}; 
     sprintf(szsdp, "v=0\r\no=- 1495799811084970 1495799811084970 IN IP4 172.16.64.92\r\ns=Streaming Test\r\nt=0 0\r\na=group:BUNDLE audio\r\na=msid-semantic: WMS janus\r\nm=audio 1 RTP/SAVPF 0\r\nc=IN IP4 172.16.64.92\r\na=mid:audio\r\na=sendonly\r\na=rtcp-mux\r\n"
         "a=ice-ufrag:%s\r\n"
-        "a=ice-pwd:%s\r\na=ice-options:trickle\r\na=fingerprint:sha-256 D2:B9:31:8F:DF:24:D8:0E:ED:D2:EF:25:9E:AF:6F:B8:34:AE:53:9C:E6:F3:8F:F2:64:15:FA:E8:7F:53:2D:38\r\na=setup:actpass\r\na=connection:new\r\na=rtpmap:0 PCMU/8000\r\n"
+        "a=ice-pwd:%s\r\na=ice-options:trickle\r\na=fingerprint:sha-256 %s\r\na=setup:actpass\r\na=connection:new\r\na=rtpmap:0 PCMU/8000\r\n"
         "a=ssrc:-537150489 cname:janusaudio\r\n"
         "a=ssrc:-537150489 msid:janus janusa0\r\n"
         "a=ssrc:-537150489 mslabel:janus\r\n"
         "a=ssrc:-537150489 label:janusa0\r\n"
         "a=candidate:%s 1 udp %u 172.16.64.92 %d typ host\r\n", 
-        local_ufrag, local_password, c->foundation, c->priority, nice_address_get_port(&c->addr),
+        local_ufrag, local_password,dtls_srtp::get_local_fingerprint(),
+        c->foundation, c->priority, nice_address_get_port(&c->addr),
         candidate_type_name[c->type]
     );
     pserver_->send(hdl_, szsdp, websocketpp::frame::opcode::text);
@@ -249,7 +252,7 @@ void nice_agent::new_selected_pair_full(guint stream_id,guint component_id, Nice
 void nice_agent::nice_recv_data(int32_t streamid, uint32_t componentid, guint len, gchar *buf)
 {
     std::cout << this << " recv data from stream: " << streamid << " componetid: " << componentid << " len: " << len << "first data :"<< (int)buf[0] <<std::endl;
-    if (janus_is_dtls(buf))
+    if (is_dtls(buf))
     {
         dtls_->incoming_msg(buf, len);
     }
@@ -257,6 +260,6 @@ void nice_agent::nice_recv_data(int32_t streamid, uint32_t componentid, guint le
 
 bool nice_agent::send_data(int32_t streamid, uint32_t componentid, guint len, gchar *buf)
 {
-    int nret = nice_agent_send(agent, streamid, componentid, len, buf);
+    int nret = nice_agent_send(this->agent, streamid, componentid, len, buf);
     return nret;
 }
