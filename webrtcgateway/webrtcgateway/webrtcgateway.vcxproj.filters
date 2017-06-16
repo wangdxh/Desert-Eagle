@@ -33,6 +33,9 @@
     <ClInclude Include="dtls_srtp.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="rtp_rtcp.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -48,6 +51,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="dtls_srtp.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="rtp_rtcp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

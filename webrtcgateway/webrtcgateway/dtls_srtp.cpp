@@ -3,6 +3,8 @@
 #include <list>
 #include <openssl/bio.h>
 
+#include "rtp_rtcp.h"
+
 #ifdef WIN32
 #undef X509_NAME //sb windows
 #endif 
@@ -863,5 +865,44 @@ done:
             }            
         }
     }
+}
+
+bool dtls_srtp::srtp_unprotect_rtp_buf(void *srtp_hdr, int *len_ptr)
+{
+    if (0 == this->srtp_valid)
+    {
+        return false;
+    }
+    int nlen = *len_ptr;
+    err_status_t res = srtp_unprotect(srtp_in, srtp_hdr, len_ptr);
+    if (res != err_status_ok)
+    {
+        if(res != err_status_replay_fail && res != err_status_replay_old) 
+        {
+            printf("SRTP unprotect error: rtp \n");
+        }
+        return false;
+    }
+    rtp_header* pheader = (rtp_header*) srtp_hdr;
+    printf("rtp info: type is %d beforelen %d afterlen %d \r\n", pheader->type, nlen, *len_ptr);
+    return true;
+}
+
+bool dtls_srtp::srtp_unprotect_rtcp_buf(void *srtp_hdr, int *len_ptr)
+{
+    if (0 == this->srtp_valid)
+    {
+        return false;
+    }
+    int nlen = *len_ptr;
+    err_status_t res = srtp_unprotect_rtcp(srtp_in, srtp_hdr, len_ptr);
+    if (res != err_status_ok)
+    {
+        printf("SRTP unprotect error: rtcp\n");     
+        return false;
+    }
+    rtcp_header* pheader = (rtcp_header*) srtp_hdr;
+    printf("rtcp info: type is %d beforelen %d afterlen %d \r\n", pheader->type, nlen, *len_ptr);
+    return true;
 }
 

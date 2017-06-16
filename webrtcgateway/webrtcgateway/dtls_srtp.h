@@ -48,6 +48,8 @@ public:
     void handshake();
     void fd_bridge();
     void incoming_msg(char *buf, uint16_t len);
+    bool srtp_unprotect_rtp_buf(void *srtp_hdr, int *len_ptr);
+    bool srtp_unprotect_rtcp_buf(void *srtp_hdr, int *len_ptr);
 
 private:
     /*! \brief DTLS role of the gateway for this stream: 1=client, 0=server */

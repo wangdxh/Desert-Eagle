@@ -1,11 +1,7 @@
 #include "stdafx.h"
 #include "nice_agent.h"
 #include "dtls_srtp.h"
-
-static gboolean is_dtls(gchar *buf) 
-{
-    return ((*buf >= 20) && (*buf <= 64));
-}
+#include "rtp_rtcp.h"
 
 static const gchar *candidate_type_name[] = {"host", "srflx", "prflx", "relay"};
 
@@ -93,6 +89,15 @@ nice_agent::~nice_agent()
 {
     if (agent)
     {
+        for(auto iter :mapstream_componet )
+        {
+             uint32_t ncomponet = iter.second;
+            for (int inx = 1; inx <= ncomponet; inx++)
+            {
+                nice_agent_attach_recv(agent, iter.first, inx, g_main_loop_get_context (gloop), NULL, NULL);
+            }
+        }        
+
         g_object_unref(agent);            
     }         
     if (dtls_)
@@ -252,10 +257,21 @@ void nice_agent::new_selected_pair_full(guint stream_id,guint component_id, Nice
 void nice_agent::nice_recv_data(int32_t streamid, uint32_t componentid, guint len, gchar *buf)
 {
     std::cout << this << " recv data from stream: " << streamid << " componetid: " << componentid << " len: " << len << "first data :"<< (int)buf[0] <<std::endl;
+    
+    
+    int buflen = len;
     if (is_dtls(buf))
     {
-        dtls_->incoming_msg(buf, len);
+        dtls_->incoming_msg(buf, len);        
     }
+    else if (is_rtp(buf))
+    {        
+        this->dtls_->srtp_unprotect_rtp_buf(buf, &buflen);   
+    }
+    else if (is_rtcp(buf))
+    {        
+        this->dtls_->srtp_unprotect_rtcp_buf(buf, &buflen);
+    }    
 }
 
 bool nice_agent::send_data(int32_t streamid, uint32_t componentid, guint len, gchar *buf)
