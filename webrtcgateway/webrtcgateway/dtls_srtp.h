@@ -51,7 +51,7 @@ public:
     bool srtp_unprotect_rtp_buf(void *srtp_hdr, int *len_ptr);
     bool srtp_unprotect_rtcp_buf(void *srtp_hdr, int *len_ptr);
 
-private:
+public:
     /*! \brief DTLS role of the gateway for this stream: 1=client, 0=server */
     dtls_role m_dtls_role;
     /*! \brief DTLS state of this component: -1=failed, 0=nothing, 1=trying, 2=connected */

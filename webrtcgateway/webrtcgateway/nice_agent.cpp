@@ -64,6 +64,7 @@ nice_agent::nice_agent(websocket_server* pserver, connection_hdl hdl, gboolean c
     hdl_ = hdl;
     agent = nullptr;        
     agent = nice_agent_new(g_main_loop_get_context (gloop), NICE_COMPATIBILITY_RFC5245);
+    thread_audio_ = nullptr;
 
     if (stun_addr)
     {
@@ -89,6 +90,13 @@ nice_agent::~nice_agent()
 {
     if (agent)
     {
+        if (thread_audio_)
+        {
+            thread_audio_->interrupt();
+            thread_audio_->join();
+            delete thread_audio_;
+            thread_audio_ = nullptr;
+        }
         for(auto iter :mapstream_componet )
         {
              uint32_t ncomponet = iter.second;
@@ -175,17 +183,18 @@ void nice_agent::candidate_gathering_done(int32_t stream_id)
         candidate_type_name[c->type]);
 
 
-
+    int nssrc = 12345678;
     char szsdp[1024*10] = {0}; 
     sprintf(szsdp, "v=0\r\no=- 1495799811084970 1495799811084970 IN IP4 172.16.64.92\r\ns=Streaming Test\r\nt=0 0\r\na=group:BUNDLE audio\r\na=msid-semantic: WMS janus\r\nm=audio 1 RTP/SAVPF 0\r\nc=IN IP4 172.16.64.92\r\na=mid:audio\r\na=sendonly\r\na=rtcp-mux\r\n"
         "a=ice-ufrag:%s\r\n"
         "a=ice-pwd:%s\r\na=ice-options:trickle\r\na=fingerprint:sha-256 %s\r\na=setup:actpass\r\na=connection:new\r\na=rtpmap:0 PCMU/8000\r\n"
-        "a=ssrc:-537150489 cname:janusaudio\r\n"
-        "a=ssrc:-537150489 msid:janus janusa0\r\n"
-        "a=ssrc:-537150489 mslabel:janus\r\n"
-        "a=ssrc:-537150489 label:janusa0\r\n"
-        "a=candidate:%s 1 udp %u 172.16.64.92 %d typ host\r\n", 
+        "a=ssrc:%d cname:janusaudio\r\n"
+        "a=ssrc:%d msid:janus janusa0\r\n"
+        "a=ssrc:%d mslabel:janus\r\n"
+        "a=ssrc:%d label:janusa0\r\n"
+        "a=candidate:%s 1 udp %u 172.16.64.92 %d typ %s\r\n", 
         local_ufrag, local_password,dtls_srtp::get_local_fingerprint(),
+        nssrc, nssrc, nssrc, nssrc,
         c->foundation, c->priority, nice_address_get_port(&c->addr),
         candidate_type_name[c->type]
     );
@@ -254,6 +263,8 @@ void nice_agent::new_selected_pair_full(guint stream_id,guint component_id, Nice
     dtls_->handshake();
 }
 
+void read_send_audio(void* pdata);
+
 void nice_agent::nice_recv_data(int32_t streamid, uint32_t componentid, guint len, gchar *buf)
 {
     std::cout << this << " recv data from stream: " << streamid << " componetid: " << componentid << " len: " << len << "first data :"<< (int)buf[0] <<std::endl;
@@ -262,7 +273,7 @@ void nice_agent::nice_recv_data(int32_t streamid, uint32_t componentid, guint le
     int buflen = len;
     if (is_dtls(buf))
     {
-        dtls_->incoming_msg(buf, len);        
+        dtls_->incoming_msg(buf, len);
     }
     else if (is_rtp(buf))
     {        
@@ -271,6 +282,11 @@ void nice_agent::nice_recv_data(int32_t streamid, uint32_t componentid, guint le
     else if (is_rtcp(buf))
     {        
         this->dtls_->srtp_unprotect_rtcp_buf(buf, &buflen);
+        
+        if (nullptr == thread_audio_)
+        {
+            thread_audio_ = new boost::thread(boost::bind(read_send_audio, this));            
+        }
     }    
 }
 
@@ -278,4 +294,91 @@ bool nice_agent::send_data(int32_t streamid, uint32_t componentid, guint len, gc
 {
     int nret = nice_agent_send(this->agent, streamid, componentid, len, buf);
     return nret;
+}
+
+bool nice_agent::send_data_need_protect(int32_t streamid, uint32_t componentid, guint len, gchar *buf)
+{
+    int protectedlen = len;
+    
+    int res = srtp_protect(dtls_->srtp_out, buf, &protectedlen);
+    //~ JANUS_LOG(LOG_VERB, "[%I64u] ... SRTP protect %s (len=%d-->%d)...\n", handle->handle_id, janus_get_srtp_error(res), pkt->length, protectedlen);
+    if(res != err_status_ok) 
+    {
+        rtp_header *header = (rtp_header *)buf;
+        guint32 timestamp = ntohl(header->timestamp);
+        guint16 seq = ntohs(header->seq_number);
+        printf("SRTP protect error... %d (len=%d-->%d, ts=%d, seq=%d)\n", res, len, protectedlen, timestamp, seq);
+        return false;
+    }
+    else 
+    {
+        /* Shoot! */
+        //~ JANUS_LOG(LOG_VERB, "[%I64u] ... Sending SRTP packet (pt=%u, ssrc=%u, seq=%u, ts=%u)...\n", handle->handle_id,
+        //~ header->type, ntohl(header->ssrc), ntohs(header->seq_number), ntohl(header->timestamp));
+        int sent = nice_agent_send(agent, streamid, componentid, protectedlen, buf);
+        if(sent < protectedlen) 
+        {
+            printf("only sent %d bytes? (was %d)\n", sent, protectedlen);
+        }
+    }
+    return TRUE;
+}
+
+void read_send_audio(void* pdata)
+{
+    nice_agent* pagent = (nice_agent*)pdata;
+    // ./file/music.mulaw payload is 0
+    char readbuf[1024] = {0};
+    gint16 seq = 1;
+    gint32 ts = 0;
+    rtp_header *header = (rtp_header *)readbuf;
+    header->version = 2;
+    header->markerbit = 1;
+    header->type = 0;
+    header->seq_number = htons(seq);
+    header->timestamp = htonl(ts);
+    header->ssrc = htonl(12345678);	/* The gateway will fix this anyway */
+
+    char filename[MAX_PATH] = {0};
+    strcpy(filename, "D:\\github\\Desert-Eagle\\webrtcgateway\\bin\\file\\music.mulaw");
+    FILE *audio = fopen(filename, "rb");
+    if (!audio)
+    {
+        printf("[%s] Ooops, audio file missing!\n", filename);
+        return;
+    }
+    else
+    {
+        printf("[%s] open file ok!\n", filename);
+    }
+    try
+    {
+        while (true)
+        {        
+            Sleep(18);
+            boost::this_thread::interruption_point();
+
+            int read = fread(readbuf + RTP_HEADER_SIZE, sizeof(char), 160, audio);
+            if(feof(audio)) 
+            {
+                printf("file is over\r\n");
+                break;
+            }
+            if(read < 0)
+                break;
+
+            pagent->send_data_need_protect(1, 1, read + RTP_HEADER_SIZE, readbuf);
+
+            seq++;
+            header->seq_number = htons(seq);
+            ts += 160;
+            header->timestamp = htonl(ts);
+            header->markerbit = 0;
+        }
+    }
+    catch (...)
+    {
+         std::cout << "Interrupt exception was thrown." << std::endl;   
+    }
+    fclose(audio);
 }

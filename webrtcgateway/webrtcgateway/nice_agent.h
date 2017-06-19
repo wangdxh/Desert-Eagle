@@ -35,6 +35,8 @@ public:
     bool set_remote_sdp(const char* sdp);
     bool set_remote_candidate(const char* szcandidate);
     bool send_data(int32_t streamid, uint32_t componentid, guint len, gchar *buf);
+    bool send_data_need_protect(int32_t streamid, uint32_t componentid, guint len, gchar *buf);
+    
 private:
     NiceAgent *agent;
     std::map < int32_t, uint32_t> mapstream_componet;
@@ -42,6 +44,8 @@ private:
     connection_hdl hdl_;
     std::string remote_sdp;
     dtls_srtp* dtls_;
+    
+    boost::thread* thread_audio_;
 
     static GMainLoop *gloop;
     static GThread *gloopthread;
