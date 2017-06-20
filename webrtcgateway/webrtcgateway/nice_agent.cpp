@@ -470,7 +470,8 @@ void read_send_video(void* pdata)
     header->ssrc = htonl(12345678);
 
     char filename[MAX_PATH] = {0};
-    strcpy(filename, "D:\\github\\Desert-Eagle\\streampushclient\\testokmy.h264");
+    //strcpy(filename, "D:\\github\\Desert-Eagle\\streampushclient\\testokmy.h264");
+    strcpy(filename, "..\\..\\streampushclient\\testokmy.h264");
     FILE *video = fopen(filename, "rb");
     if (!video)
     {
