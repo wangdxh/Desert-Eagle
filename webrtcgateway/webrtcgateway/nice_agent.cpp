@@ -185,19 +185,41 @@ void nice_agent::candidate_gathering_done(int32_t stream_id)
 
     int nssrc = 12345678;
     char szsdp[1024*10] = {0}; 
-    sprintf(szsdp, "v=0\r\no=- 1495799811084970 1495799811084970 IN IP4 172.16.64.92\r\ns=Streaming Test\r\nt=0 0\r\na=group:BUNDLE audio\r\na=msid-semantic: WMS janus\r\nm=audio 1 RTP/SAVPF 0\r\nc=IN IP4 172.16.64.92\r\na=mid:audio\r\na=sendonly\r\na=rtcp-mux\r\n"
-        "a=ice-ufrag:%s\r\n"
-        "a=ice-pwd:%s\r\na=ice-options:trickle\r\na=fingerprint:sha-256 %s\r\na=setup:actpass\r\na=connection:new\r\na=rtpmap:0 PCMU/8000\r\n"
-        "a=ssrc:%d cname:janusaudio\r\n"
-        "a=ssrc:%d msid:janus janusa0\r\n"
-        "a=ssrc:%d mslabel:janus\r\n"
-        "a=ssrc:%d label:janusa0\r\n"
-        "a=candidate:%s 1 udp %u 172.16.64.92 %d typ %s\r\n", 
-        local_ufrag, local_password,dtls_srtp::get_local_fingerprint(),
-        nssrc, nssrc, nssrc, nssrc,
-        c->foundation, c->priority, nice_address_get_port(&c->addr),
-        candidate_type_name[c->type]
-    );
+    if (1)
+    {
+        sprintf(szsdp, "v=0\r\no=- 1495799811084970 1495799811084970 IN IP4 172.16.64.92\r\ns=Streaming Test\r\nt=0 0\r\n"
+            "a=group:BUNDLE video\r\na=msid-semantic: WMS janus\r\n"
+            "m=video 1 RTP/SAVPF 96\r\nc=IN IP4 172.16.64.92\r\na=mid:video\r\na=sendonly\r\na=rtcp-mux\r\n"
+            "a=ice-ufrag:%s\r\n"
+            "a=ice-pwd:%s\r\na=ice-options:trickle\r\na=fingerprint:sha-256 %s\r\na=setup:actpass\r\na=connection:new\r\n"
+            "a=rtpmap:96 H264/90000\r\n"
+            "a=ssrc:%d cname:janusvideo\r\n"
+            "a=ssrc:%d msid:janus janusv0\r\n"
+            "a=ssrc:%d mslabel:janus\r\n"
+            "a=ssrc:%d label:janusv0\r\n"
+            "a=candidate:%s 1 udp %u 172.16.64.92 %d typ %s\r\n", 
+            local_ufrag, local_password,dtls_srtp::get_local_fingerprint(),
+            nssrc, nssrc, nssrc, nssrc,
+            c->foundation, c->priority, nice_address_get_port(&c->addr),
+            candidate_type_name[c->type]
+        );
+    }
+    else
+    {
+        sprintf(szsdp, "v=0\r\no=- 1495799811084970 1495799811084970 IN IP4 172.16.64.92\r\ns=Streaming Test\r\nt=0 0\r\na=group:BUNDLE audio\r\na=msid-semantic: WMS janus\r\nm=audio 1 RTP/SAVPF 0\r\nc=IN IP4 172.16.64.92\r\na=mid:audio\r\na=sendonly\r\na=rtcp-mux\r\n"
+            "a=ice-ufrag:%s\r\n"
+            "a=ice-pwd:%s\r\na=ice-options:trickle\r\na=fingerprint:sha-256 %s\r\na=setup:actpass\r\na=connection:new\r\na=rtpmap:0 PCMU/8000\r\n"
+            "a=ssrc:%d cname:janusaudio\r\n"
+            "a=ssrc:%d msid:janus janusa0\r\n"
+            "a=ssrc:%d mslabel:janus\r\n"
+            "a=ssrc:%d label:janusa0\r\n"
+            "a=candidate:%s 1 udp %u 172.16.64.92 %d typ %s\r\n", 
+            local_ufrag, local_password,dtls_srtp::get_local_fingerprint(),
+            nssrc, nssrc, nssrc, nssrc,
+            c->foundation, c->priority, nice_address_get_port(&c->addr),
+            candidate_type_name[c->type]
+        );
+    }
     pserver_->send(hdl_, szsdp, websocketpp::frame::opcode::text);
     printf("\r\n%s\r\n", szsdp);
 
@@ -264,6 +286,7 @@ void nice_agent::new_selected_pair_full(guint stream_id,guint component_id, Nice
 }
 
 void read_send_audio(void* pdata);
+void read_send_video(void* pdata);
 
 void nice_agent::nice_recv_data(int32_t streamid, uint32_t componentid, guint len, gchar *buf)
 {
@@ -285,7 +308,7 @@ void nice_agent::nice_recv_data(int32_t streamid, uint32_t componentid, guint le
         
         if (nullptr == thread_audio_)
         {
-            thread_audio_ = new boost::thread(boost::bind(read_send_audio, this));            
+            thread_audio_ = new boost::thread(boost::bind(read_send_video, this));            
         }
     }    
 }
@@ -382,3 +405,194 @@ void read_send_audio(void* pdata)
     }
     fclose(audio);
 }
+
+
+void set_buf_rtp_video_header(uint8_t* pbuffer, uint32_t dwssrc, uint32_t dwtimestample, uint16_t dwseqnum, bool marker)
+{
+    rtp_header* rtp_hdr = (rtp_header*)pbuffer;
+    rtp_hdr->type     = 96;  //负载类型号，  
+    rtp_hdr->version     = 2;  //版本号，此版本固定为2              
+    rtp_hdr->ssrc        = htonl(dwssrc);  
+    rtp_hdr->timestamp=htonl(dwtimestample);
+    //设置rtp M 位；  
+    rtp_hdr->markerbit = marker;      
+    rtp_hdr->seq_number = htons(dwseqnum); //序列号，每发送一个RTP包增1，htons，将主机字节序转成网络字节序。  
+}
+
+#define MAX_RTP_PKT_LENGTH     1400  
+
+void get_rtsp_rtp_video_total_len(const uint8_t* pbuffer, uint32_t dwbuflen, uint32_t& ntotallen, uint32_t& numbernalus)
+{
+    // last nalu marker is 1, return number of nalus
+    ntotallen = 0;
+    numbernalus = 0;
+    uint8_t* pdata = (uint8_t*)pbuffer; // first 5 byte is the flv video prefix
+    uint8_t* pend = (uint8_t*)pbuffer+dwbuflen; // the last 4 bytes is the flv last tag len
+    while (pdata < pend)
+    {
+        int nnallen = (pdata[0]<<24) | (pdata[1]<<16) | (pdata[2]<<8) | (pdata[3]);
+        pdata += 4;
+
+        if ((nnallen-1) <= MAX_RTP_PKT_LENGTH)
+        {
+            ntotallen += 4 + 12 + nnallen;        //may be max_len + 1 
+        }
+        else
+        {
+            int npacket = (nnallen - 1 + MAX_RTP_PKT_LENGTH - 1) / MAX_RTP_PKT_LENGTH;
+            ntotallen += npacket * (4 + 2 + 12) + nnallen - 1;         
+        }
+        pdata += nnallen;
+        numbernalus += 1;
+    }
+    // 4个字节头，when rtp over rtsp
+    if (pdata != pend)
+    {
+        printf("**************************************************error rtp total len wrong\r\n");
+    }
+}
+
+#include "../streampushclient/h264frame.h"
+void read_send_video(void* pdata)
+{
+    nice_agent* pagent = (nice_agent*)pdata;
+    // ./file/music.mulaw payload is 0
+    char rtpbuffer[8*1024] = {0};
+    gint16 seq = 1;
+    gint32 ts = 0;
+
+    rtp_header *header = (rtp_header *)rtpbuffer;
+    header->version = 2;
+    header->markerbit = 0;
+    header->type = 96;
+    header->seq_number = htons(seq);
+    header->timestamp = htonl(ts);
+    header->ssrc = htonl(12345678);
+
+    char filename[MAX_PATH] = {0};
+    strcpy(filename, "D:\\github\\Desert-Eagle\\streampushclient\\testokmy.h264");
+    FILE *video = fopen(filename, "rb");
+    if (!video)
+    {
+        printf("[%s] Ooops, video file missing!\n", filename);
+        return;
+    }
+    else
+    {
+        printf("[%s] open file ok!\n", filename);
+    }
+
+    uint32_t dwLen = 0;	
+    uint8_t* buffer = new uint8_t[1*1024*1024];
+    uint32_t dwrealbufLen = 0;	
+    uint8_t* realbuffer = new uint8_t[1*1024*1024];
+    try
+    {
+        while (true)
+        {
+            Sleep(35);
+            boost::this_thread::interruption_point();
+
+
+            int nRet = fread(&dwLen, 1, 4, video);
+            if (4 != nRet) 
+            {
+                break;
+            }
+
+            nRet = fread(buffer, 1, dwLen, video);
+            if (nRet != dwLen)
+            {
+                break;	
+            }
+            
+            if(feof(video)) 
+            {
+                printf("file is over\r\n");
+                break;
+            }            
+
+            H264Frame tframe(buffer, dwLen, 0);
+            dwrealbufLen = tframe.GetTotalFrameSize();
+            tframe.WriteFrameToBuffer(realbuffer);
+
+            uint32_t dwtotallen = 0;
+            uint32_t dwnumnalus = 0;
+            get_rtsp_rtp_video_total_len(realbuffer, dwrealbufLen, dwtotallen, dwnumnalus);
+
+
+
+            uint8_t* pdata = (uint8_t*)realbuffer;
+            uint8_t* pend = (uint8_t*)realbuffer+dwrealbufLen;
+             
+            bool bmarker = false;
+            for (int inx = 0; inx < dwnumnalus; inx++)
+            {
+                if (inx == dwnumnalus-1) { bmarker = true;}
+
+                int nnallen = (pdata[0]<<24) | (pdata[1]<<16) | (pdata[2]<<8) | (pdata[3]);
+                pdata += 4;
+
+                uint8_t bynaltype = pdata[0];
+                if ((nnallen-1) <= MAX_RTP_PKT_LENGTH)
+                {
+                    memset(rtpbuffer, 0, sizeof(rtpbuffer));
+                    set_buf_rtp_video_header((uint8_t*)rtpbuffer, 12345678, ts, seq++, bmarker);
+                    memcpy(&rtpbuffer[12], pdata, nnallen);
+                    pagent->send_data_need_protect(1, 1, 12+nnallen, rtpbuffer);
+                }
+                else
+                {
+                    bool blastfu = false;
+                    int npacket = (nnallen - 1 + MAX_RTP_PKT_LENGTH - 1) / MAX_RTP_PKT_LENGTH;
+                    for(int inxpack = 0; inxpack < npacket; inxpack++)
+                    {
+                        int npacketsize = MAX_RTP_PKT_LENGTH;
+                        uint8_t* psrcnalu = pdata + 1 + inxpack * MAX_RTP_PKT_LENGTH;
+                        if (inxpack == npacket-1)
+                        {
+                            npacketsize = (nnallen - 1) - inxpack * MAX_RTP_PKT_LENGTH; // 2801 nallen  
+                            blastfu = true;
+                        }
+                        memset(rtpbuffer, 0, sizeof(rtpbuffer));
+
+                        set_buf_rtp_video_header((uint8_t*)rtpbuffer, 12345678, ts, seq++, bmarker&blastfu);
+                        int dwdestinx = 0;
+                        dwdestinx += 12;
+
+                        rtpbuffer[dwdestinx++] = (bynaltype & 0xe0) | 28;
+
+                        if (inxpack == 0)
+                        {
+                            rtpbuffer[dwdestinx++] = (bynaltype & 0x1f) | 0x80;//S
+                        }
+                        // last pack
+                        else if (inxpack == npacket - 1)
+                        {
+                            rtpbuffer[dwdestinx++] = (bynaltype & 0x1f) | 0x40;//E
+                        }
+                        else
+                        {
+                            rtpbuffer[dwdestinx++] = bynaltype & 0x1f;
+                        }
+                        memcpy(&rtpbuffer[dwdestinx], psrcnalu, npacketsize);
+                        pagent->send_data_need_protect(1, 1, dwdestinx+npacketsize, rtpbuffer);
+                        dwdestinx += npacketsize;
+                    }  
+                }
+
+                pdata += nnallen;
+            }
+
+            ts += 40*90;
+        }
+    }
+    catch (...)
+    {
+        std::cout << "Interrupt exception was thrown." << std::endl;   
+    }
+    fclose(video);
+    delete [] buffer;
+    delete [] realbuffer;
+}
+
