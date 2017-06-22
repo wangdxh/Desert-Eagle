@@ -53,7 +53,7 @@ void offer_answer_server::on_message(connection_hdl hdl, websocket_server::messa
 }
 
 connection_data& offer_answer_server::get_data_from_hdl(connection_hdl hdl) 
-{
+{    
     auto it = m_connections.find(hdl);
 
     if (it == m_connections.end()) {

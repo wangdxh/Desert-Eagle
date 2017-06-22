@@ -75,10 +75,13 @@ nice_agent::nice_agent(websocket_server* pserver, connection_hdl hdl, gboolean c
     g_object_set(agent, "ice-tcp", false, NULL);
     g_object_set(agent, "controlling-mode", controlling, NULL);        
 
+    websocket_server::connection_ptr conn = pserver->get_con_from_hdl(hdl);
+    std::string strhost = conn->get_host();
+    
 
     NiceAddress addr_local;
     nice_address_init (&addr_local);
-    nice_address_set_from_string (&addr_local, "172.16.64.92");
+    nice_address_set_from_string (&addr_local, strhost.c_str());
     nice_agent_add_local_address (agent, &addr_local);
 
     g_signal_connect(agent, "candidate-gathering-done", G_CALLBACK(cb_candidate_gathering_done), this);
