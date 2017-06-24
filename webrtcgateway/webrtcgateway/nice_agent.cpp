@@ -190,9 +190,9 @@ void nice_agent::candidate_gathering_done(int32_t stream_id)
     char szsdp[1024*10] = {0}; 
     if (1)
     {
-        sprintf(szsdp, "v=0\r\no=- 1495799811084970 1495799811084970 IN IP4 172.16.64.92\r\ns=Streaming Test\r\nt=0 0\r\n"
+        sprintf(szsdp, "v=0\r\no=- 1495799811084970 1495799811084970 IN IP4 %s\r\ns=Streaming Test\r\nt=0 0\r\n"
             "a=group:BUNDLE video\r\na=msid-semantic: WMS janus\r\n"
-            "m=video 1 RTP/SAVPF 96\r\nc=IN IP4 172.16.64.92\r\na=mid:video\r\na=sendonly\r\na=rtcp-mux\r\n"
+            "m=video 1 RTP/SAVPF 96\r\nc=IN IP4 %s\r\na=mid:video\r\na=sendonly\r\na=rtcp-mux\r\n"
             "a=ice-ufrag:%s\r\n"
             "a=ice-pwd:%s\r\na=ice-options:trickle\r\na=fingerprint:sha-256 %s\r\na=setup:actpass\r\na=connection:new\r\n"
             "a=rtpmap:96 H264/90000\r\n"
@@ -200,26 +200,28 @@ void nice_agent::candidate_gathering_done(int32_t stream_id)
             "a=ssrc:%d msid:janus janusv0\r\n"
             "a=ssrc:%d mslabel:janus\r\n"
             "a=ssrc:%d label:janusv0\r\n"
-            "a=candidate:%s 1 udp %u 172.16.64.92 %d typ %s\r\n", 
+            "a=candidate:%s 1 udp %u %s %d typ %s\r\n", 
+            ipaddr, ipaddr,
             local_ufrag, local_password,dtls_srtp::get_local_fingerprint(),
             nssrc, nssrc, nssrc, nssrc,
-            c->foundation, c->priority, nice_address_get_port(&c->addr),
+            c->foundation, c->priority, ipaddr, nice_address_get_port(&c->addr),
             candidate_type_name[c->type]
         );
     }
     else
     {
-        sprintf(szsdp, "v=0\r\no=- 1495799811084970 1495799811084970 IN IP4 172.16.64.92\r\ns=Streaming Test\r\nt=0 0\r\na=group:BUNDLE audio\r\na=msid-semantic: WMS janus\r\nm=audio 1 RTP/SAVPF 0\r\nc=IN IP4 172.16.64.92\r\na=mid:audio\r\na=sendonly\r\na=rtcp-mux\r\n"
+        sprintf(szsdp, "v=0\r\no=- 1495799811084970 1495799811084970 IN IP4 %s\r\ns=Streaming Test\r\nt=0 0\r\na=group:BUNDLE audio\r\na=msid-semantic: WMS janus\r\nm=audio 1 RTP/SAVPF 0\r\nc=IN IP4 %s\r\na=mid:audio\r\na=sendonly\r\na=rtcp-mux\r\n"
             "a=ice-ufrag:%s\r\n"
             "a=ice-pwd:%s\r\na=ice-options:trickle\r\na=fingerprint:sha-256 %s\r\na=setup:actpass\r\na=connection:new\r\na=rtpmap:0 PCMU/8000\r\n"
             "a=ssrc:%d cname:janusaudio\r\n"
             "a=ssrc:%d msid:janus janusa0\r\n"
             "a=ssrc:%d mslabel:janus\r\n"
             "a=ssrc:%d label:janusa0\r\n"
-            "a=candidate:%s 1 udp %u 172.16.64.92 %d typ %s\r\n", 
+            "a=candidate:%s 1 udp %u %s %d typ %s\r\n", 
+            ipaddr, ipaddr,
             local_ufrag, local_password,dtls_srtp::get_local_fingerprint(),
             nssrc, nssrc, nssrc, nssrc,
-            c->foundation, c->priority, nice_address_get_port(&c->addr),
+            c->foundation, c->priority, ipaddr, nice_address_get_port(&c->addr),
             candidate_type_name[c->type]
         );
     }
